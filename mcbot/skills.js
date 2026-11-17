@@ -280,6 +280,10 @@ function createSkills(bot, mcData, env = {}) {
 
   // a cell where a block can be placed: replaceable (air/grass/snow), solid block below, not where we stand
   const replaceable = b => b && (b.name === 'air' || b.name === 'cave_air' || b.name === 'short_grass' || b.name === 'tall_grass' || b.name === 'snow')
+  // cells where a placement failed (server refused, nothing appeared): skipped for 5 min. Before this, findPlaceSpot
+  // returned the same bad cell every time -> "place X" failed 3x and got banned (B5 run, place furnace at y 0).
+  const badCells = new Map() // "x,y,z" -> expiry ms
+  const cellKey = c => `${c.x},${c.y},${c.z}`
   function findPlaceSpot(r = 3) {
     const me = pos().floored()
     const cells = []
@@ -287,6 +291,7 @@ function createSkills(bot, mcData, env = {}) {
       if (!dx && !dz) continue
       const c = me.offset(dx, dy, dz)
       if (!replaceable(bot.blockAt(c))) continue
+      if ((badCells.get(cellKey(c)) || 0) > Date.now()) continue
       const below = bot.blockAt(c.offset(0, -1, 0))
       if (!below || below.boundingBox !== 'block') continue
       const d = c.offset(0.5, 0, 0.5).distanceTo(pos())
@@ -332,8 +337,9 @@ function createSkills(bot, mcData, env = {}) {
         await bot.placeBlock(bot.blockAt(spot.below.position), new Vec3(0, 1, 0))
       } catch (e) { err = e; await sleepMs(300) }
     }
-    if (bot.blockAt(spot.c)?.name !== name && err) return 'failed: ' + short(err)
-    return bot.blockAt(spot.c)?.name === name ? `ok placed ${name}` : 'failed: block not placed'
+    if (bot.blockAt(spot.c)?.name === name) return `ok placed ${name}`
+    badCells.set(cellKey(spot.c), Date.now() + 5 * 60000)
+    return err ? 'failed: ' + short(err) : 'failed: block not placed'
   }
 
   async function smelt(input, n = 8) {
