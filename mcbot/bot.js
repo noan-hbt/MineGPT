@@ -1,6 +1,7 @@
 // Minecraft bot driven by local LFM3-1.7B (llama.cpp server, start-game.ps1).
-// Loop: observe -> ask LLM for ONE high-level action (grammar limited to options valid right now)
-//       -> execute it with Mineflayer (pathfinder / collectblock) -> repeat.
+// Loop (B5, hierarchical): reflexes (code) > current task (a skill+arg, repeated without the LLM while the plan step
+//       holds) > LLM decider, asked only when there is no task, it ended/failed, or an event fired (control.js).
+//       The LLM picks ONE skill+arg (grammar limited to options valid right now and not banned).
 // In-game chat: "goal <text>" sets the goal, "stop" pauses, "go" resumes, "come" brings the bot to you.
 //
 // Usage: node bot.js [--host localhost] [--port 25565] [--name LFM] [--llm http://127.0.0.1:8080]
@@ -17,9 +18,16 @@ const fs = require('fs')
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? process.argv[i + 1] : d }
 const LLM = arg('llm', 'http://127.0.0.1:8080')
 const { createMemory } = require('./memory')
+const { createController, planCost } = require('./control')
+// B5: task persistence + bans + progress watchdog (control.js)
+const C = createController()
 // B4: long-term memory (memory/<name>.json). Episode summaries come from the LLM (code fallback inside memory.js)
 const M = createMemory(arg('name', 'LFM'), { summarize: summarizeEpisode })
 // goal: --goal wins, else resume the remembered task, else default
+// --goals a,b,c: queue several goals (a first); each one resumes the next when done (B4 task stack)
+for (const g of (arg('goals', '') || '').split(',').map(x => x.trim()).filter(Boolean).reverse()) M.pushGoal(g)
+// true = a remembered task is resumed (computed before setGoal pushes the default goal)
+const RESUMED = !!M.goal() && !arg('goal', null) && !arg('goals', null)
 let goal = arg('goal', null) || M.goal() || 'iron_pickaxe' // "goal <item> [n]" -> B2 planner target; free text otherwise
 let paused = false
 let following = null // player name in follow mode (bot follows, fights hostiles nearby, no LLM)
@@ -27,7 +35,7 @@ let following = null // player name in follow mode (bot follows, fights hostiles
 const SYSTEM = `You control a Minecraft survival bot. Each turn you get the state and answer with ONE action.
 Actions:
 collect <block> - walk to the nearest blocks of that type, mine a few, pick up drops
-goto <ore> - walk back to a place where you saw that ore before (from memory)
+goto <ore|crafting_table|furnace> - walk back to a place you remember (ore vein, or a station you placed)
 mine <ore> - dig down to where that ore is and tunnel until you find and mine it
 craft <item> - craft one item (some need a crafting_table nearby)
 place <crafting_table|furnace|chest> - put it on the ground
@@ -40,7 +48,7 @@ sleep bed - sleep in a bed (night only)
 farm crops - harvest ripe crops nearby and replant
 store chest - put spare items in a chest
 home base - walk back to the base
-explore <north|south|east|west|down> - walk 24 blocks (or dig 10 down) to find new things
+explore <north|south|east|west|down|up> - walk 24 blocks (or dig 10 down, or climb to the surface) to find new things
 come player - walk to the player
 wait 1 - do nothing
 The Plan line lists the next steps computed from recipes to reach the goal. Home/Remembered/Chest/Earlier lines are your memory.
@@ -91,7 +99,7 @@ bot.once('spawn', () => {
     keep: () => new Set(target ? P.plan(target.item, target.n, { inv: invCounts() }).steps.flatMap(st => [st.item, st.input, st.fuel]).filter(Boolean) : []),
     onStore: (p, items) => M.stored(p, items),
   })
-  const resumed = M.data.tasks.length > 0 && !arg('goal', null)
+  const resumed = RESUMED
   if (home) console.log(`[mem] home ${M.home} (${M.where(snap().pos, M.home)}), ${M.data.actions} past actions, session #${M.data.sessions}`)
   console.log(`[bot] spawned (${bot.version}) at ${bot.entity.position.floored()} | goal: ${goal}`)
   bot.chat(resumed ? `back online, resuming: ${goal}` + (home ? ` (home ${M.where(snap().pos, M.home)})` : '') : 'LFM3 bot online. Chat: goal <text> | stop | go | come')
@@ -106,8 +114,8 @@ bot.on('chat', (user, msg) => {
   const cmd = msg.split(' ')[0]
   if (['goal', 'stop', 'go', 'follow', 'where', 'help', 'come', 'sethome', 'tasks', 'memory'].includes(cmd)) L.event('chat_cmd', { user, msg })
   else L.event('chat', { user, msg })
-  if (msg.startsWith('goal ')) { setGoal(msg.slice(5)); bot.chat('New goal: ' + goal + (target ? ` (target ${target.n} ${target.item})` : '')) }
-  else if (msg === 'stop') { paused = true; following = null; bot.pathfinder.setGoal(null); bot.chat('paused') }
+  if (msg.startsWith('goal ')) { C.drop(); setGoal(msg.slice(5)); bot.chat('New goal: ' + goal + (target ? ` (target ${target.n} ${target.item})` : '')) }
+  else if (msg === 'stop') { C.drop(); paused = true; following = null; bot.pathfinder.setGoal(null); bot.chat('paused') }
   else if (msg === 'go') { paused = false; following = null; bot.pathfinder.setGoal(null); bot.chat('autonomous mode, goal: ' + goal) }
   else if (msg === 'follow') { following = user; bot.chat(`following ${user} (say go to let me work alone)`) }
   else if (msg === 'where') { const p = bot.entity.position.floored(); bot.chat(`I'm at ${p.x} ${p.y} ${p.z}`) }
@@ -132,6 +140,7 @@ bot.on('death', () => {
   const foe = bot.nearestEntity(e => HOSTILE.has(e.name) && e.position.distanceTo(bot.entity.position) < 8)
   M.died(bot.entity.position, foe ? foe.name : 'unknown', history.slice(-3).map(h => h.a))
   history.push({ a: 'died', r: 'respawned' })
+  C.drop()
   try { bot.collectBlock.cancelTask() } catch {}
   bot.pathfinder.setGoal(null); bot.clearControlStates()
 })
@@ -156,20 +165,30 @@ function setGoal(text, remember = true) {
   if (target) L.event('target', target)
 }
 const DIRS = ['north', 'east', 'south', 'west']
+// explore direction: changes every 3 explores (and when the watchdog fires); banned directions are skipped
+const exploreDir = () => { for (let k = 0; k < 4; k++) { const a = `explore ${DIRS[(Math.floor(exploreCount / 3) + k) % 4]}`; if (!C.isBanned(a)) return a } return 'explore down' }
 const GOTO_RANGE = 128 // remembered ores farther than this are not worth the walk
+const STATION_GOTO = 64 // remembered crafting table / furnace
 const MEM_KINDS = new Set(['crafting_table', 'furnace', 'chest'])
 // plan step blocks -> the base ore name for "mine <ore>" (deepslate_iron_ore -> iron_ore)
 const oreOf = blocks => blocks.map(b => b.replace(/^deepslate_/, '')).find(b => /_ore$/.test(b))
 // plan step -> concrete action string (may be invalid if the world disagrees; the LLM then picks)
 function stepToAction(s, blocks, tier, y) {
+  // B5: banned actions are skipped (visible ore that times out -> walk to a remembered vein / dig for another one)
   if (s.do === 'collect') {
-    const b = s.blocks.find(b => blocks[b] !== undefined && (NEEDS_TIER[b] || 0) <= tier)
+    const b = s.blocks.find(b => blocks[b] !== undefined && (NEEDS_TIER[b] || 0) <= tier && !C.isBanned(`collect ${b}`))
     if (b) return `collect ${b}`
     const ore = oreOf(s.blocks)
-    if (ore && (NEEDS_TIER[ore] || 0) <= tier) return M.nearest(ore, bot.entity.position, GOTO_RANGE) ? `goto ${ore}` : `mine ${ore}`
-    return `explore ${DIRS[Math.floor(exploreCount / 3) % 4]}`
+    if (ore && (NEEDS_TIER[ore] || 0) <= tier) {
+      const alt = [M.nearest(ore, bot.entity.position, GOTO_RANGE) && `goto ${ore}`, `mine ${ore}`].filter(a => a && !C.isBanned(a))[0]
+      if (alt) return alt
+    }
+    if (!ore && !S.underSky() && bot.entity.position.y < 100 && !C.isBanned('explore up')) return 'explore up' // wood/sand/... are on the surface
+    return exploreDir()
   }
   if (s.do === 'smelt') return `smelt ${s.input}`
+  // placing failed again and again (no room, server refuses): walk back to the remembered one instead (B4 memory)
+  if (s.do === 'place' && C.isBanned(`place ${s.item}`) && M.nearest(s.item, bot.entity.position, STATION_GOTO) && !C.isBanned(`goto ${s.item}`)) return `goto ${s.item}`
   return `${s.do} ${s.item}`
 }
 
@@ -283,14 +302,15 @@ function observe() {
     const prev = M.popGoal() // B4 task stack: resume the goal that was interrupted
     if (prev) { setGoal(prev, false); bot.chat('resuming: ' + prev) }
   }
-  const planNext = !plan ? 'pursue the goal' : plan.done ? 'wait 1' : plan.error ? `explore ${DIRS[Math.floor(exploreCount / 3) % 4]}`
+  const planNext = !plan ? 'pursue the goal' : plan.done ? 'wait 1' : plan.error ? exploreDir()
     : stepToAction(plan.steps[0], blocks, tier, Math.floor(p.y))
-  const next = threat ? (bot.health > 8 && threat[0] !== 'creeper' ? `attack ${threat[0]}` : `flee ${threat[0]}`)
+  let next = threat ? (bot.health > 8 && threat[0] !== 'creeper' ? `attack ${threat[0]}` : `flee ${threat[0]}`)
     : bot.food < 14 && foods.length ? `eat ${foods[0]}`
     : night && bedNear && !peaceful ? 'sleep bed'
     : canShelter ? 'shelter here'
     : invFull && chestOk ? 'store chest'
     : planNext
+  if (C.isBanned(next)) next = exploreDir() // B5: never recommend a banned action
   const planTxt = !plan ? 'none (free-text goal)' : plan.done ? 'goal reached' : plan.error ? 'unknown: ' + plan.error
     : plan.steps.slice(0, 4).map(P.fmt).join(' > ') + (plan.steps.length > 4 ? ` (+${plan.steps.length - 4})` : '')
   const memTxt = M.prompt(p, [...new Set(planOresAll(plan))].filter(o => blocks[o] === undefined && blocks['deepslate_' + o] === undefined)) // only ores not in view
@@ -306,21 +326,24 @@ Recommended action: ${next}.`
 
   // grammar: only options valid right now
   // ban an action that just failed 3 times in a row (small model tends to loop)
-  const last3 = history.slice(-3)
-  const banned = last3.length === 3 && last3.every(h => h.a === last3[0].a && !h.r.startsWith('ok')) ? last3[0].a : null
+  // B5: actions banned by the controller (failed 3x in the last 12 actions, or no progress) leave the grammar
+  const banned = C.banned()
   const fightable = Object.keys(mobs).filter(n => n !== 'player')
   // mine: ores the plan needs that we can harvest but don't see (visible ones go through collect)
   const planOres = plan && !plan.error ? plan.steps.filter(s => s.do === 'collect').map(s => oreOf(s.blocks)).filter(Boolean) : []
   const minable = [...new Set(planOres)].filter(o => (NEEDS_TIER[o] || 0) <= tier && blocks[o] === undefined && blocks['deepslate_' + o] === undefined)
   // goto: remembered (B4) but not visible -> walk back to the vein instead of digging blind
   const gotoable = minable.filter(o => M.nearest(o, p, GOTO_RANGE))
+  // + stations the plan wants to place, remembered within STATION_GOTO (walking back beats a refused / wasted placement)
+  if (plan && !plan.error) for (const st of plan.steps.filter(x => x.do === 'place').map(x => x.item))
+    if (MEM_KINDS.has(st) && blocks[st] === undefined && M.nearest(st, p, STATION_GOTO)) gotoable.push(st)
   const opts = { // verb -> allowed args (empty list = verb unavailable)
     collect: collectable, goto: gotoable, mine: minable, craft: craftable, place: placeable, smelt: smeltable,
     attack: fightable, flee: fightable.filter(n => HOSTILE.has(n)),
     eat: bot.food < 20 ? foods : [],
     shelter: canShelter ? ['here'] : [], sleep: night && bedNear ? ['bed'] : [], farm: ripe ? ['crops'] : [],
     store: chestOk && bot.inventory.items().length >= 20 ? ['chest'] : [], home: farFromHome ? ['base'] : [],
-    explore: ['north', 'south', 'east', 'west', ...(p.y > -50 ? ['down'] : [])],
+    explore: ['north', 'south', 'east', 'west', ...(p.y > -50 ? ['down'] : []), ...(S.underSky() ? [] : ['up'])],
     come: mobs.player ? ['player'] : [], wait: ['1'],
   }
   // focus: with an active plan and no danger, only plan-relevant collect/craft stay in the grammar.
@@ -332,7 +355,8 @@ Recommended action: ${next}.`
     opts.craft = opts.craft.filter(c => planCrafts.includes(c))
     opts.come = []; opts.wait = []; opts.farm = []; opts.home = []
   }
-  if (banned) { const [v, a] = banned.split(' '); opts[v] = opts[v].filter(x => x !== a) }
+  for (const b of banned) { const [v, a] = b.split(' '); if (opts[v]) opts[v] = opts[v].filter(x => x !== a) }
+  if (!Object.values(opts).some(xs => xs.length)) opts.wait = ['1'] // never an empty grammar
   const grammar = 'root ::= ' + Object.entries(opts).filter(([, xs]) => xs.length)
     .map(([v, xs]) => `"${v} " (${xs.map(x => JSON.stringify(x)).join(' | ')})`).join(' | ')
   // structured state for the decision log (B1) — same info as `text`, machine-readable
@@ -341,13 +365,14 @@ Recommended action: ${next}.`
     hp: Math.round(bot.health), food: bot.food, time: tod, night: tod >= 12500,
     blocks, mobs, inv, tier, craftable, table: !!table, furnace: furnaceNear, history: history.slice(-4),
     sheltered, home: home && [home.x, home.y, home.z], memory: memTxt,
-    target, focus, plan: plan && { done: plan.done, error: plan.error, steps: plan.steps.map(P.fmt) },
+    target, focus, banned, task: C.task && { id: C.task.id, action: C.task.action, runs: C.task.runs }, plan: plan && { done: plan.done, error: plan.error, steps: plan.steps.map(P.fmt) },
   }
   const options = Object.fromEntries(Object.entries(opts).filter(([, xs]) => xs.length))
   // how many blocks one "collect X" should mine: what the plan still needs (capped), else 2
   const collectN = {}
   if (plan && !plan.error) for (const st of plan.steps) if (st.do === 'collect') for (const b of st.blocks) collectN[b] ??= Math.min(st.n, 4)
-  return { text, grammar, state, options, hint: next, banned, threat, night, sheltered, foods, collectN }
+  return { text, grammar, state, options, hint: next, banned, threat, night, sheltered, foods, collectN,
+    goal, hp: Math.round(bot.health), plan } // goal/hp/plan: B5 task context (control.js)
 }
 
 // ---------- LLM ----------
@@ -404,12 +429,21 @@ const ACTIONS = {
   farm: () => S.farm(),
   store: () => S.storeInChest(),
   home: () => S.goHome(),
-  explore: dir => S.explore(dir),
+  explore: dir => S.explore(dir, dir === 'up' ? 40000 : 20000),
   come: () => S.come('player'),
   async wait(n) { await sleep(1000 * (+n || 1)); return 'ok' },
+  // reflex only (not in the grammar): swim straight up until we can breathe
+  async surface() {
+    bot.pathfinder.setGoal(null)
+    bot.setControlState('jump', true)
+    const t = Date.now()
+    while (Date.now() - t < 7000 && bot.entity.isInWater && bot.oxygenLevel < 20) await sleep(200)
+    bot.setControlState('jump', false)
+    return bot.oxygenLevel >= 15 || !bot.entity.isInWater ? `ok oxygen ${bot.oxygenLevel}` : `failed: still underwater (oxygen ${bot.oxygenLevel})`
+  },
 }
 const TIMEOUT = { collect: 55000, mine: 75000, craft: 20000, place: 15000, attack: 20000, flee: 12000, eat: 8000, shelter: 35000,
-  sleep: 50000, farm: 50000, store: 30000, home: 55000, goto: 65000, explore: 30000, come: 30000, wait: 10000, smelt: 110000 }
+  sleep: 50000, farm: 50000, store: 30000, home: 55000, goto: 65000, explore: 45000, come: 30000, wait: 10000, surface: 9000, smelt: 110000 }
 
 // walk to a remembered place (B4). Arrival: the ore shows up in the next scan and "collect" takes over
 async function gotoPlace(kind) {
@@ -449,6 +483,15 @@ async function act(text, source, extra = {}) {
   L.decision({ source, action: text, verb, arg: a, result, dur_ms, ...extra,
     after: { pos: after.pos, hp: after.hp, food: after.food, inv_delta, died: dead } })
   M.action(text, result, inv_delta)
+  // B5: bans + progress watchdog (cost = what the plan still needs after this action)
+  const cost = target ? planCost(P.plan(target.item, target.n, { inv: after.inv })) : null
+  const ctl = C.done(text, result, { cost, goal, gained: Object.values(inv_delta).filter(v => v > 0).length })
+  if (ctl.banned) { console.log(`[ctl] banned ${ctl.banned} (failed 3x recently)`); L.event('ban', { action: ctl.banned, why: 'failures' }) }
+  if (ctl.stuck) {
+    exploreCount += 3 // next explore goes another way
+    console.log(`[ctl] no progress: banned ${ctl.stuck.top} (escalation ${ctl.stuck.escalations})`)
+    L.event('stuck', { ...ctl.stuck, cost })
+  }
   // first crafting table placed = home, if none was set
   if (!home && verb === 'place' && a === 'crafting_table' && L.isOk(result)) { setHome(bot.entity.position); bot.chat(`home set here (${home})`) }
   return result
@@ -473,7 +516,8 @@ async function loop() {
       const obs = observe()
       collectN = obs.collectN
       // reflexes (code, no LLM): survive first. The LLM decides everything else.
-      const reflex = obs.threat && (bot.health <= 8 || obs.threat[0] === 'creeper') ? `flee ${obs.threat[0]}`
+      const reflex = bot.entity.isInWater && bot.oxygenLevel < 12 ? 'surface up'
+        : obs.threat && (bot.health <= 8 || obs.threat[0] === 'creeper') ? `flee ${obs.threat[0]}`
         : bot.health <= 10 && bot.food < 20 && obs.foods.length && !obs.threat ? `eat ${obs.foods[0]}`
         : obs.night && obs.sheltered && !obs.threat ? 'wait 5'
         : null
@@ -482,11 +526,23 @@ async function loop() {
         console.log(`[reflex] ${reflex.padEnd(28)} | ${res} | hp ${Math.round(bot.health)} food ${bot.food}`)
         continue
       }
+      // B5: the current task goes on without the LLM while its plan step holds (collect/mine repeats)
+      const cont = C.next(obs)
+      if (cont.action) {
+        const t1 = performance.now()
+        const res = await act(cont.action, 'task', { obs: obs.state, obs_text: obs.text, options: obs.options, hint: obs.hint,
+          task: { id: cont.task.id, run: cont.task.runs + 1 } })
+        console.log(`   task#${cont.task.id} run ${cont.task.runs} | ${cont.action.padEnd(28)} | ${((performance.now() - t1) / 1000).toFixed(1)}s ${res} | hp ${Math.round(bot.health)} food ${bot.food}`)
+        continue
+      }
+      if (cont.task) L.event('task_end', { id: cont.task.id, action: cont.task.action, runs: cont.task.runs, why: cont.why })
       fs.writeFileSync(__dirname + `/last_obs${bot.username === 'LFM' ? '' : '_' + bot.username}.txt`, obs.text + '\n\n' + obs.grammar + '\n')
       const { ms, text } = await decide(obs)
       const t0 = performance.now()
+      const task = C.start(text, 'llm', obs)
       const res = await act(text, 'llm', { llm_ms: Math.round(ms), obs: obs.state, obs_text: obs.text, options: obs.options,
-        grammar: obs.grammar, hint: obs.hint, banned: obs.banned, followed_hint: hintIsAction(obs) ? obs.hint === text : null })
+        grammar: obs.grammar, hint: obs.hint, banned: obs.banned, followed_hint: hintIsAction(obs) ? obs.hint === text : null,
+        task: { id: task.id, run: 1, after: cont.why } })
       stats.n++; stats.lat.push(ms)
       const s = [...stats.lat].sort((x, y) => x - y)
       line = `#${stats.n} llm ${ms.toFixed(0)}ms (med ${s[s.length >> 1].toFixed(0)}) | ${text.padEnd(28)} | ${((performance.now() - t0) / 1000).toFixed(1)}s ${res} | hp ${Math.round(bot.health)} food ${bot.food}`

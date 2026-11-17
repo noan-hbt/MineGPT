@@ -11,7 +11,7 @@ node_modules/
 # runtime output
 *.log
 mcbot/logs/
-mcbot/last_obs.txt
+mcbot/last_obs*.txt
 __pycache__/
 
 # remote access credentials

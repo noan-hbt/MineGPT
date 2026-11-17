@@ -109,7 +109,7 @@ function createSkills(bot, mcData, env = {}) {
     for (let attempt = 0; attempt < 3; attempt++) {
       b = bot.blockAt(p)
       if (!b || b.name !== name) break
-      if (!await equipFor(b)) return 'need a better tool'
+      if (!await equipFor(b) && depth === 0) return 'need a better tool' // depth > 0 = clearing a path: by hand is fine
       stop()
       digSlack = [1.15, 2, 5][attempt] // retry = assume we were in water / airborne
       try { await bot.dig(b, true) } catch (e) { if (Date.now() > deadline) return 'timeout'; await sleepMs(150) }
@@ -162,13 +162,13 @@ function createSkills(bot, mcData, env = {}) {
     return 'failed: ' + (reason || 'timeout') + (g.length ? ` (${g.join(' ')})` : '')
   }
 
-  // one step of a 1x2 tunnel: dy = -1 -> staircase down, 0 -> straight. Own digging, no pathfinder search
+  // one step of a 1x2 tunnel: dy = -1 -> staircase down, 0 -> straight, +1 -> staircase up. Own digging, no pathfinder search
   // (GoalY / far GoalXZ underground = "Took to long to decide path"). Refuses steps next to lava / water.
   const LIQUID = /lava|water/
   async function digStep(dx, dz, dy, deadline) {
     const f = pos().floored()
     const t = f.offset(dx, dy, dz) // feet cell after the step
-    const cells = dy < 0 ? [f.offset(dx, 1, dz), f.offset(dx, 0, dz), t] : [t.offset(0, 1, 0), t]
+    const cells = dy < 0 ? [f.offset(dx, 1, dz), f.offset(dx, 0, dz), t] : dy > 0 ? [f.offset(0, 2, 0), t, t.offset(0, 1, 0)] : [t.offset(0, 1, 0), t]
     for (const c of cells) {
       for (const [ox, oy, oz] of [[0, 0, 0], [1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]]) {
         const n = bot.blockAt(c.offset(ox, oy, oz))
@@ -562,9 +562,29 @@ function createSkills(bot, mcData, env = {}) {
     return d <= 3 ? 'ok home' : err === 'timeout' ? `ok on the way, ${d}m left` : `failed: ${err || d + 'm left'}`
   }
 
+  // open sky above the head (sky light 15 = nothing solid above)
+  const underSky = () => (bot.blockAt(pos().floored().offset(0, 1, 0))?.skyLight ?? 0) >= 14
   async function explore(dir, budget = 20000) {
     const p0 = pos().clone()
     let err
+    if (dir === 'up') { // underground -> staircase up until the sky is open (wood, sand... are on the surface)
+      const deadline = Date.now() + budget
+      const dirs = [[1, 0], [0, 1], [-1, 0], [0, -1]]
+      let d = Math.floor(Math.random() * 4), blocked = 0
+      while (!underSky() && Date.now() < deadline - 1000 && blocked < 8) {
+        if (bot.entity.isInWater) { // swim up (digStep refuses cells next to water)
+          const y = pos().y
+          bot.setControlState('jump', true)
+          await waitUntil(() => !bot.entity.isInWater, 6000)
+          bot.setControlState('jump', false)
+          if (pos().y > y + 1) { blocked = 0; continue }
+        }
+        const e = await digStep(...dirs[d % 4], 1, deadline)
+        if (e) { d++; blocked++ } else blocked = 0
+      }
+      const dy = Math.floor(pos().y) - Math.floor(p0.y)
+      return underSky() ? `ok surface at y ${Math.floor(pos().y)}` : dy >= 3 ? `ok went up ${dy}, now at y ${Math.floor(pos().y)}` : 'failed: blocked going up'
+    }
     if (dir === 'down') {
       err = await goto(new goals.GoalY(Math.floor(p0.y) - 10), budget)
       const dy = Math.floor(p0.y) - Math.floor(pos().y)
@@ -597,7 +617,7 @@ function createSkills(bot, mcData, env = {}) {
   return {
     gather, mineOre, craft, place, smelt, eat, fight, flee, buildShelter, sleep, farm, storeInChest, goHome, explore, come, follow,
     // helpers for observe()/grammar
-    canPlace, findPlaceSpot, inShelter, hostiles, danger, goto, mineAt,
+    canPlace, findPlaceSpot, inShelter, underSky, hostiles, danger, goto, mineAt,
     get shelterPos() { return shelterPos },
   }
 }
