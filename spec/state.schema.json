@@ -89,7 +89,8 @@
       "weather": {"enum": ["clear", "rain", "thunder"]},
       "flags": {"type": "array", "items": {"type": "string"}, "description": "in_water, in_lava, on_fire, on_ground, sneaking ..."},
       "slice": {"type": "object", "description": "local 3D slice around the feet block", "properties": {
-        "origin": {"$ref": "#/$defs/pos"}, "size": {"type": "array", "items": {"type": "integer"}},
+        "origin": {"$ref": "#/$defs/pos", "description": "the feet block"},
+        "y_from": {"type": "integer", "description": "y of the first (bottom) layer; default origin y"}, "size": {"type": "array", "items": {"type": "integer"}},
         "legend": {"type": "object", "additionalProperties": {"type": "string"}},
         "layers": {"type": "array", "items": {"type": "array", "items": {"type": "string"}}, "description": "one ascii grid per y, bottom first"}}},
       "blocks": {"type": "array", "description": "blocks of interest within 32", "items": {"type": "object", "required": ["name", "pos"], "properties": {

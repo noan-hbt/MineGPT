@@ -92,6 +92,22 @@ Diff mode (monitor calls): sections 1-9 omitted when unchanged (`## BODY unchang
 Every logged call stores the full structured state (JSON) so datasets can be re-rendered later with a new
 renderer version without replaying the game.
 
+### 3.1 Sheet renderer r1 (H2, 2026-11-17) — `bot/render.js`, snapshot `spec/golden/sheet_example.txt`
+- Header `## NAME [stamp]`, stamp = 4 hex of the section text. Diff mode: stable sections 1-9 whose stamp did not
+  change become `## NAME [stamp] unchanged`; SURROUNDINGS / EVENTS / NOW always sent.
+- KV-cache friendliness: stable sections use coarse ages (`<1m ago`, `5m ago`), MAP distances are measured from the
+  bot's 16x16 cell and rounded, and the MAP state is re-exported every 30 s or on cell change (`Senses.mapState`).
+- No omniscience: blocks of interest are kept only once seen in line of sight (raycast on the 4 nearest blocks of
+  each cluster, then remembered for the session); liquids only at their boundary. Entities = what the server sends.
+- MANUAL is generated from `catalog.json` (verb signatures by family + tools), ~1.05k tokens.
+- Affordances come from `spec/recipes.json` (extracted from the 1.21.11 server jar by `spec/tools/gen_recipes.py`):
+  craftable by hand / at a table with max count, 1-2 steps away with missing items (`tag:planks` when any variant
+  works), smeltable -> outputs, edible, placeable, stations seen.
+- Sound events disabled (mineflayer sound ids wrong for 1.21.11); `MINEGPT_SOUNDS=1` re-enables them.
+- Measured on 279 live calls (`eval/sheet_tokens.py`, LFM2.5-350M tokenizer; LFM3 within 2%): full mean 5.2k,
+  p95 5.9k, max 6.2k; diff-mode calls mean 1.4-1.9k. Biggest: MAP 1.5k, SURROUNDINGS 1.1k (p95 1.8k), MANUAL 1.05k,
+  AFFORDANCES 0.86k. Memory/goals/episode were nearly empty in these runs: they will grow with a real model.
+
 ## 4. Events (JSON, logged; rendered into EVENTS) — schema `spec/events.schema.json`
 `{t, kind, ...}` with kind in: `result, gain, loss, damage, death, respawn, chat, sound, entity_appear, entity_leave,
 time (dusk/dawn), weather, surprise, interrupt, goal (set/done/failed), note, tool_answer, invalid_output`.

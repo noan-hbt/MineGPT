@@ -22,5 +22,7 @@ Session 6 (2026-11-17 ~12:25): real-log test was leaky (split by 30-tick blocks,
 
 Session 7 (2026-11-17): v2 started. Branch `v2`; v1 code removed from tree, v1 data in data/v1/, big v1 outputs in archive/v1/, venv at .venv/, node deps in bot/. ROADMAP.md = H1-H9. H1 frozen in spec/ (DSL lines for both models, parser bot/dsl). Keep models/LFM2.5-350M-wedit* + base models as reference baselines to measure fine-tuning gains (user, don't delete). Next = H2.
 
+Session 8 (2026-11-17): H2 done (bot/state, bot/render.js sheet r1, bot/harness.js live log, eval/sheet_tokens.py). Full sheet measured ~5.2k tokens (p95 5.9k), diff ~1.5k: under the 10-20k budget the user asked for, room left. Next = H3 DSL interpreter. Resume from HANDOFF.md session #8.
+
 **Why:** 8GB VRAM can't host a 2nd model process; LLM latency isn't the bottleneck, architecture is.
 **How to apply:** start with B1 log → B2 recipe planner → B3 skills → B4 memory → B5 hierarchical loop; kick off B11 HF weight download early (slow network). Related: [[lfm3-local-setup]].

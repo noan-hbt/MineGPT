@@ -1,0 +1,161 @@
+## MANUAL [62fa]
+MineGPT harness r1. You read this sheet and answer with tagged lines (tag: content).
+decision turn: think:* then either 1-4 tool: lines (results come back, continue) or a final turn:
+  plan:? act: <stmt> expect: <cond, cond in DUR> note:* say:? goal:? ask:?
+monitor turn (an action is running): think:? then one of: continue | adjust: k=v [until(cond)] | interrupt: <stmt> + expect:
+stmt: verb positional... key=value... [until(cond)] [timeout=DUR] ; seq[a; b] ; if(cond) a else b ; repeat(n) a ; routine name
+values: id, tag:x, @place, #kind.id, #player.Name, (x,y,z) or (~dx,~dy,~dz), ((x,y,z),(x,y,z)), [a,b], 30s, "text"
+cond: flags (night, sky, inv_full, ...) and comparisons (hp<8, have(x)>=+4, dist(t)<5, y<20) with & | ! ( )
+goal: push <text> | replace <text> | done | fail <reason> ; plan: step | step | ...
+verbs:
+  movement: goto <target> [dist=] ; follow <target> [dist=] ; flee <from> [dist=] ; explore [dir=] [radius=] [prefer=] ; descend [to_y=] [mode=] ; ascend [to_y=] ; pillar <n> [block=] ; bridge <dir> <n> [block=] ; swim_up ; look <target> ; wander [radius=]
+  gathering: mine <block> [n=] [near=] [tool=] ; chop [n=] [species=] ; strip_mine <dir> [len=] [y=] ; branch_mine [len=] [spacing=] [y=] ; dig <area> ; break <at> ; collect <item> [radius=] ; harvest <crop> [n=] [replant=] ; fish [n=] ; shear <target> ; milk <target>
+  craft: craft <item> [n=] ; smelt <input> [n=] [fuel=] ; blast <input> [n=] [fuel=] ; smoke <input> [n=] [fuel=] ; enchant <item> [level=] ; repair <item> [with=] ; brew <potion> [n=] ; stonecut <input> <output> [n=] ; smith <base> <addition> [template=] ; trade <with> <offer> [n=]
+  build: place <block> [at=] [face=] ; use <item> [on=]
+  combat: attack <target> ; fight <target> ; shoot <target> [n=] ; shield [dur=] ; retreat [to=] ; avoid <target> [radius=] ; eat <food> ; sleep [at=] ; equip_best [slot=] ; set_spawn [at=] ; water_bucket_save ; extinguish
+  inventory: equip <item> [slot=] ; drop <item> [n=] ; store [chest=] [filter=] ; take <item> [n=] [chest=] ; sort ; toss_junk [keep=] ; keep <items>
+  farm: plant <seed> [at=] ; bonemeal <target> ; breed <target> [n=] ; lead <target> ; tame <target> ; feed <target> <item>
+  social: say <text> ; whisper <to> <text> ; give <to> <item> [n=] ; come_to <to> [dist=] ; obey ; refuse <reason>
+  meta: wait <dur> ; note <text> [key=] ; forget <key> ; name_place <name> [at=] ; save_routine <name> <body> ; stop
+tools: recipe <item> ; uses <item> ; where <target> [n=] ; scan [radius=] [filter=] ; path_cost <target> ; inv ; chest <at> ; recall <query> ; wiki <query> ; mob_info <mob> ; loot <block> ; biome_info <biome> ; simulate <body>
+sheet: times are relative to now; dist in blocks; dir N=-z E=+x; slice rows go north->south, columns west->east.
+
+## MEMORY [954e]
+notes (2, newest first):
+- oak forest 20 m east of spawn (6m ago)
+- [home_danger] creepers come out of the cave west of @home at night (4m ago)
+places (2):
+- @home (12,70,-8): dirt hut, crafting_table, furnace (seen 1m ago)
+- @iron_vein_1 (-40,12,88): 6 iron_ore seen in a cave wall (seen <1m ago)
+routines (1):
+- wood = seq[chop n=4; craft oak_planks n=16] (runs 2, ok 2)
+
+## MAP [8507]
+grid of 16x16 columns around you (15x15, north up): letter = biome (UPPER = visited), - = seen biome unknown, ? = never seen, @ = you
+  ???????????????
+  ??????????P????
+  ????????????f??
+  ???????????????
+  ???????????????
+  ???????????????
+  ???????????????
+  ???????@???????
+  ???????????????
+  ???????????????
+  ???????????????
+  ???????????????
+  ???????????????
+  ???????????????
+  ???????????????
+  biomes: p=plains, f=forest
+known cells with resources / structures / dangers (3, nearest first, dist from your cell x-48..-33 z80..95):
+- x0..15 z-16..-1 107m NE plains surface y70 visited seen 1m ago | oak_log 40
+- x-48..-33 z80..95 0m here plains surface y68 visited seen <1m ago | iron_ore 6, coal_ore 11 | structures: cave | dangers: lava
+- x32..47 z0..15 113m NE forest seen 3m ago | birch_log 25
+unexplored: N ~30m, E ~50m
+to places (straight line): @home ~100m ~40s, @iron_vein_1 ~10m ~10s
+
+## EPISODE [26d9]
+summary (written <1m ago): Spawned in plains, made wooden then stone tools, built a dirt hut at @home. Went down the cave at (-40,60,80) for iron, mined 3 iron_ore. One death at night 1 (creeper near @home).
+deaths this session: 1
+- 2m ago at (8,70,-10): blown up by Creeper
+goals finished:
+- done "stone tools" 3m ago
+
+## GOALS [3cbc]
+goal stack (top = current):
+1. iron pickaxe (from self, 3m ago)
+2. bring me 4 bread (from player Noan, <1m ago)
+plan:
+[ ] mine 3 iron_ore at @iron_vein_1
+[ ] smelt at @home
+[ ] craft iron_pickaxe
+
+## LEDGER [dc87]
+attempts by action (2, most recent first):
+- mine iron_ore: ok 1, partial 1, failed 2 (no_path 2), last <1m ago
+- chop: ok 3, interrupted 1, last 4m ago
+last results (newest first):
+- <1m ago partial `mine iron_ore n=3` in 5s | gained raw_iron x1 | cause interrupted_until | until(hp<8) became true
+- <1m ago failed `mine iron_ore n=3` in 12s | cause no_path | water between the bot and (-41,11,90)
+
+## BODY [f0f4]
+hp 7/20, food 14/20, saturation 2.5, xp level 3, armor 0
+effects: none
+held: stone_pickaxe, offhand: nothing, worn: - / - / - / -
+durability: stone_pickaxe 40/131, stone_sword 110/131, wooden_axe 51/59
+
+## INVENTORY [99a3]
+tools: -
+ores: coal x9, raw_iron x4
+food: bread x6
+blocks: cobblestone x52, dirt x14, oak_planks x6, torch x7
+misc: stick x5
+free slots: 25/36
+known chests: none
+
+## AFFORDANCES [4b56]
+craftable now by hand (2x2): torch x20, crafting_table x1
+craftable now at a crafting_table (3x3): furnace x6, stone_pickaxe x3
+one or two steps away:
+- iron_pickaxe: missing iron_ingot x3 (makeable from inventory)
+- bucket: missing iron_ingot x3 (makeable from inventory)
+smeltable: raw_iron -> iron_ingot, cobblestone -> stone
+edible: bread
+placeable: cobblestone, dirt, oak_planks, torch
+stations seen nearby: crafting_table (13,70,-8), furnace (11,70,-8)
+
+## SURROUNDINGS [a6d3]
+pos (-38,12,86) in overworld, biome plains, facing south
+day 2, time 12950 (dusk, night in 3s), weather clear, light 4, no sky above
+flags: on_ground
+local slice: x-42..-34 (west->east), z82..90 (north->south), top layer first, legend: #=stone I=iron_ore ~=water .=air @=bot c=coal_ore
+  y14:
+    #########
+    #########
+    ####c####
+    ###...###
+    ##.....##
+    ###....##
+    #########
+    #########
+    #########
+  y13 (head):
+    #########
+    #####I###
+    ####..###
+    ###...###
+    ##.....##
+    ###..~~##
+    ####~~~##
+    #########
+    #########
+  y12 (feet):
+    #########
+    #####I###
+    ####.I###
+    ###...###
+    ##..@..##
+    ###..~~##
+    ####~~~##
+    #########
+    #########
+blocks of interest within 32 that you have seen (nearest first, 3):
+- iron_ore x3 (-37,12,89) 3.2m S
+- water x7 (-37,12,87) 1.4m S
+- lava x12 (-30,9,95) 12.4m SE 3 below (seen before, not in sight now)
+entities within 48 (2):
+- #zombie.417 5.1m NW same level HOSTILE approaching hp 20
+- #bat.52 9m E 2 above
+players: none
+
+## EVENTS [9498]
+since your last call (4, oldest first):
+- 12s ago chat <Noan> ramène moi 4 pains quand tu peux
+- 3s ago took 3 damage from #zombie.417, hp now 7
+- result partial `mine iron_ore n=3` in 5s | gained raw_iron x1 | cause interrupted_until | until(hp<8) became true (3s ago)
+- 2s ago SURPRISE: expected `have(raw_iron)>=+3, hp>=~-2 in 60s` but hp>=~-2 -> actual -6
+
+## NOW [b198]
+running: nothing (idle)
+this is a decision call, 320 ms since the previous call

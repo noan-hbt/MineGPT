@@ -5,7 +5,9 @@ v1 (blocks B1-B23, one verb from a closed grammar + code hint) is archived on br
 
 - [x] **H1 spec**: sheet schema, turn formats, full DSL + tools, events, ledger -> `spec/` (grammar, JSON schemas, golden examples)
   Done 2026-11-17: `spec/` + reference parser `bot/dsl/` (176 golden cases, `cd bot; npm test`).
-- [ ] **H2 sheet**: big situation sheet renderer + ledger + mental map + more inputs in `bot/`, logged live
+- [x] **H2 sheet**: big situation sheet renderer + ledger + mental map + more inputs in `bot/`, logged live
+  Done 2026-11-17: `bot/state/` (perception, events, ledger, map, memory, affordances from `spec/recipes.json`),
+  `bot/render.js` (sheet r1), `bot/harness.js` (live log), `eval/sheet_tokens.py`. Full sheet ~5.2k tokens, diff ~1.4-1.9k.
 - [ ] **H3 DSL interpreter** (JS) covering the action families, rich results -> scripted live runs pass
 - [ ] **H4 MineSim**: vanilla server sprinted + lockstep mineflayer, scenario cards, snapshots; measure throughput first
 - [ ] **H5 knowledge base**: minecraft-data + wiki dump + teacher guides -> RAG + QA sets, facts validated

@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "dsl/parse.js",
   "scripts": {
-    "test": "node test/golden.js"
+    "test": "node test/golden.js && node test/state.js",
+    "harness": "node harness.js"
   },
   "keywords": [],
   "author": "",

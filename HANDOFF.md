@@ -120,7 +120,48 @@ Strip a leading empty `<think></think>` from the content if present. Full workin
 - Bot does not talk (no LLM chat replies). Ideas: LLM chat replies, commands like "mine iron" / "build shelter",
   use RCON for scripted tests.
 
-## State 2026-11-17 session #7 (RESUME HERE) — v2 started, H1 done
+## State 2026-11-17 session #8 (RESUME HERE) — H2 done
+Branch `v2` (not pushed).
+
+### Done (H2)
+- `spec/recipes.json` (crafting 1026, smelting/blasting/smoking/campfire, stonecutting) from the server jar:
+  `.venv/Scripts/python.exe spec/tools/gen_recipes.py`. `spec/state.schema.json`: `slice.y_from` added.
+- `bot/state/`: `perceive.js` (body, inventory, surroundings: 9x9x5 slice, blocks of interest seen in line of
+  sight, entities/items/players, flags), `index.js` (`Senses`: events gain/loss/damage+source/death+message/respawn/
+  chat/entity appear-leave/time phase/weather, builds the full state), `ledger.js`, `map.js` (16x16 cells, biome,
+  surface y, resources, dangers, frontier; persisted `data/own/memory/<bot>.map.json`), `memory.js` (notes, places,
+  routines persisted `data/own/memory/<bot>.json`; episode + goals per session), `afford.js`.
+- `bot/render.js` sheet r1 (see `notes/spec-v2.md` 3.1). `node bot/render.js [state.json]`.
+- `bot/harness.js`: live loop at `--hz 2`, logs `data/own/<date>/<session>.jsonl` (state per call + chars per
+  section + sent mode full/diff, full every 10 calls) + `<session>.sheet.txt`. `bot/drive.js` = TEST driver
+  (random goto, chop seen logs, craft planks/sticks; chat orders follow/come/stop/wander) to make the state move,
+  never a policy nor training data. Chat hooks: `goal <text>`, `done`, `note <text>`, `place <name>`, `plan a | b`.
+- `eval/sheet_tokens.py`: tokens per section with the real tokenizers. `bot/rcon.js` restored from v1.
+- Tests: `cd bot; npm test` = 176 DSL golden + 5 state/render tests (renderer snapshot `spec/golden/sheet_example.txt`).
+- 6 live runs of 1 min, all logs valid (`spec/tools/validate.py`). Perf: build 45-65 ms/call, render 0.6 ms.
+  Log volume ~2.5 MB/min at 2 Hz (state JSON per call).
+
+### Measured (279 live calls, 350M tokenizer)
+Full sheet mean 5.2k tokens (p95 5.9k, max 6.2k), diff calls 1.4-1.9k. MAP 1.5k, SURROUNDINGS 1.1k (p95 1.8k),
+MANUAL 1.05k, AFFORDANCES 0.86k, rest < 250. Well under the 10-20k budget: room for a bigger slice, more cells,
+knowledge cards, longer ledger, once a model shows what it needs.
+
+### Known issues / open
+- Server has `advance_time false` (time frozen at 1000): the tester script turns it on then restores it.
+- Sounds disabled: mineflayer's sound id -> name table is wrong for 1.21.11 (zombie hit heard as zombie_horse.hurt).
+- A second mineflayer bot ("Tester") that joins near LFM is never seen by LFM (its client does not even follow the
+  tp; looks like the 1.21 "player loaded" handshake). A probe teleporting a bot from far IS seen, so player
+  perception works; check with the real client (ZeiK_0) next time the user plays.
+- Driver `goto` places scaffolding (pathfinder) -> `lost cobblestone` in results: real, not a bug.
+- Session names use UTC time.
+- Open points from H1 still open: catalogue macros (strip_mine, chop, toss_junk, sort, equip_best,
+  water_bucket_save) keep or drop? HANDOFF mentions the Tailscale funnel hostname: scrub before any push.
+
+### Next = H3
+DSL interpreter in `bot/` (replaces drive.js): each verb -> mineflayer skill with rich `result` events (gained/lost,
+causes from the closed set), `until()` / `timeout`, `expect:` checking -> `surprise` events, monitor-call hooks.
+
+## State 2026-11-17 session #7 — v2 started, H1 done
 Branch `v2` (not pushed). Commits: `22df018` clean restart layout, `13a59d3` DSL + turns frozen, then schemas.
 
 ### Done
