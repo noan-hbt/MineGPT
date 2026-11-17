@@ -1,6 +1,7 @@
 // B4 long live session (unattended). Runs bot.js in a restart loop + a spectator "Tester" player that
 // sends the chat commands of the B4 checklist, kills the bot once (restart test), and records everything.
-// Usage: node longrun.js [minutes=60]
+// Usage: node longrun.js [minutes=60] [--name X] [--goals a,b,c]
+// Extra args go to bot.js. --goals is only passed on the first start (restarts resume the remembered task stack).
 'use strict'
 const { spawn } = require('child_process')
 const fs = require('fs')
@@ -15,8 +16,11 @@ fs.writeFileSync(EV, ''); fs.writeFileSync(BOTLOG, '')
 const ev = s => { const l = `${el()} ${s}`; console.log(l); fs.appendFileSync(EV, l + '\n') }
 
 let child = null, stopping = false, restarts = 0
+const EXTRA = process.argv.slice(3)
+const gi = EXTRA.indexOf('--goals'), RESTART_ARGS = gi < 0 ? EXTRA : EXTRA.filter((_, i) => i !== gi && i !== gi + 1)
 function startBot() {
-  child = spawn(process.execPath, ['--max-old-space-size=2048', 'bot.js'], { cwd: __dirname })
+  const args = restarts ? RESTART_ARGS : EXTRA
+  child = spawn(process.execPath, ['--max-old-space-size=2048', 'bot.js', ...args], { cwd: __dirname })
   const out = d => fs.appendFileSync(BOTLOG, d)
   child.stdout.on('data', out); child.stderr.on('data', out)
   child.on('exit', code => {
