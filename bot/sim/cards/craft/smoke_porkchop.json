@@ -1,0 +1,105 @@
+{
+  "card": 1,
+  "id": "craft.smoke_porkchop",
+  "title": "Cook raw porkchops in a placed smoker",
+  "tags": [
+    "smoke",
+    "fuel"
+  ],
+  "difficulty": 2,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "params": {
+    "sx": {
+      "int": [
+        -2,
+        2
+      ]
+    },
+    "n": {
+      "int": [
+        2,
+        6
+      ]
+    },
+    "fuel": {
+      "choice": [
+        "coal",
+        "charcoal"
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "easy",
+    "gamerules": {
+      "spawn_monsters": false,
+      "advance_time": false,
+      "advance_weather": false
+    }
+  },
+  "player": {
+    "at": "<0,0,0>",
+    "spawn": "<0,0,0>",
+    "inventory": [
+      {
+        "item": "porkchop",
+        "count": "${n}"
+      },
+      {
+        "item": "${fuel}",
+        "count": 1
+      }
+    ]
+  },
+  "fail": {
+    "died": true
+  },
+  "build": [
+    {
+      "set": "<${sx},0,2>",
+      "block": "smoker[facing=north]"
+    }
+  ],
+  "order": {
+    "from": "Noan",
+    "text": "cuis tes ${n} côtelettes de porc dans le fumoir et garde-les",
+    "at_tick": 0
+  },
+  "success": {
+    "have": "cooked_porkchop",
+    "min": "${n}"
+  },
+  "milestones": [
+    {
+      "name": "first_output",
+      "check": {
+        "have": "cooked_porkchop",
+        "min": 1
+      }
+    },
+    {
+      "name": "half_batch",
+      "check": {
+        "have": "cooked_porkchop",
+        "min": "${ceil(n / 2)}"
+      }
+    }
+  ],
+  "limits": {
+    "ticks": "${3 * (100 * n + 200)}",
+    "decisions": 6
+  },
+  "solution": [
+    "smoke porkchop n=${n} fuel=${fuel}"
+  ],
+  "solution_ticks": "${100 * n + 200}"
+}

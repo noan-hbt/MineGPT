@@ -63,7 +63,7 @@ async function chop(ctx, a) {
   const bot = ctx.bot
   const ids = a.species ? C.idsOf(a.species, 'block') : LOGS
   ctx.total = ctx.args.n ?? 1
-  let logs = 0, missed = 0
+  let logs = 0, missed = 0, why = null
   const skip = new Set()
   while (ctx.done < (ctx.args.n ?? 1)) {
     ctx.check()
@@ -75,19 +75,25 @@ async function chop(ctx, a) {
     const name = bot.blockAt(base).name
     const parts = trunk(bot, base, name)
     let got = 0
-    for (const p of parts) {
-      ctx.check()
-      const b = bot.blockAt(p, false)
-      if (!b || b.name !== name) continue
-      try { await C.digAt(ctx, p, { check: false }); got++; logs++ } catch (e) { if (!(e instanceof Fail)) throw e; missed++ }
-      ctx.progress(`tree ${ctx.done + 1}/${ctx.args.n ?? 1}, ${logs} logs`)
+    // second pass: a log missed from one standing spot is often reachable once the lower ones are gone
+    for (const pass of [0, 1]) {
+      for (const p of parts) {
+        ctx.check()
+        const b = bot.blockAt(p, false)
+        if (!b || b.name !== name) continue
+        try { await C.digAt(ctx, p, { check: false }); got++; logs++ } catch (e) {
+          if (!(e instanceof Fail)) throw e
+          if (pass) { missed++; why = why || e.message }
+        }
+        ctx.progress(`tree ${ctx.done + 1}/${ctx.args.n ?? 1}, ${logs} logs`)
+      }
     }
     for (const p of parts) skip.add(C.k3(p))
     await C.pickup(ctx, { at: base.offset(0.5, 0, 0.5), radius: 6, maxMs: 6000 })
     if (got) ctx.done++
     else if (skip.size > 80) break
   }
-  return { detail: `${ctx.done} tree(s), ${logs} logs dug${missed ? `, ${missed} logs out of reach` : ''}` }
+  return { detail: `${ctx.done} tree(s), ${logs} logs dug${missed ? `, ${missed} logs missed (${why})` : ''}` }
 }
 
 async function tunnel(ctx, v, len, { count = true } = {}) {
@@ -183,6 +189,8 @@ async function collect(ctx, a) {
   const names = a.item ? C.idsOf(a.item) : null
   const match = e => e.name === 'item' && e.position.distanceTo(bot.entity.position) <= R &&
     (!names || (e.getDroppedItem && e.getDroppedItem() && names.includes(e.getDroppedItem().name)))
+  // a drop's item stack arrives in a metadata packet after the spawn: give fresh drops a moment to be identified
+  for (let i = 0; i < 15 && !C.nearest(bot, match, R + 1); i++) await ctx.sleep(100)
   if (!C.nearest(bot, match, R + 1)) throw new Fail('no_target_known', `no dropped ${names ? C.label(a.item) : 'item'} within ${R}`)
   let n = 0
   for (; n < 40; n++) {
@@ -197,6 +205,11 @@ async function collect(ctx, a) {
 const CROPS = { wheat: [7, 'wheat_seeds'], carrots: [7, 'carrot'], potatoes: [7, 'potato'], beetroots: [3, 'beetroot_seeds'],
   nether_wart: [3, 'nether_wart'], cocoa: [2, 'cocoa_beans'] }
 async function harvest(ctx, a) {
+  const mv = ctx.bot.pathfinder.movements, lc = mv.liquidCost
+  mv.liquidCost = 50
+  try { return await harvestCrops(ctx, a) } finally { mv.liquidCost = lc }
+}
+async function harvestCrops(ctx, a) {
   const bot = ctx.bot
   const crop = a.crop.name
   const info = CROPS[crop]
@@ -204,7 +217,7 @@ async function harvest(ctx, a) {
   const ripe = p => { const b = bot.blockAt(p, false); if (!b || b.name !== crop) return false; if (!info) return true; const pr = b.getProperties(); return +pr.age >= info[0] }
   const want = () => ctx.args.n ?? 64
   ctx.total = 0
-  let any = false
+  let any = false, unplanted = 0
   while (ctx.done < want()) {
     ctx.check()
     const ps = C.knownBlocks(ctx, [crop], { radius: 24, max: 64, rays: 128 }).filter(ripe)
@@ -213,14 +226,30 @@ async function harvest(ctx, a) {
     const p = ps[0]
     await C.digAt(ctx, p, { check: false })
     ctx.done++
-    await C.pickup(ctx, { at: p.offset(0.5, 0.5, 0.5), radius: 3, maxMs: 2000 })
-    if (replant && info && crop !== 'cocoa' && C.count(bot, [info[1]])) {
-      try { await C.equip(ctx, info[1]); await C.placeAt(ctx, p, [0, -1, 0]) } catch (e) { if (!(e instanceof Fail)) throw e }
+    const plant = async () => {
+      // picking up the drop can leave the bot standing in the cell: step off it, then plant
+      const inCell = () => bot.entity.position.floored().equals(p) || bot.entity.position.offset(0, 0, 0).distanceTo(p.offset(0.5, 0, 0.5)) < 0.8
+      for (let k = 0; k < 2; k++) {
+        try {
+          if (inCell()) await C.go(ctx, new C.G.GoalInvert(new C.G.GoalNear(p.x, p.y, p.z, 1)))
+          await C.equip(ctx, info[1]); await C.placeAt(ctx, p, [0, -1, 0])
+          if (bot.blockAt(p, false) && bot.blockAt(p, false).name === crop) return
+        } catch (e) { if (!(e instanceof Fail)) throw e }
+      }
+      unplanted++
     }
+    const canPlant = () => replant && info && crop !== 'cocoa' && C.count(bot, [info[1]])
+    // replant before collecting when seeds are already in hand: chasing drops can trample the plot. Drops roll into
+    // the irrigation channel; the bot follows, then jumps out of the water onto the farmland and turns it to dirt
+    // (VAL3/FIX5: "1 not replanted", farmland -> dirt). Water is made costly for the whole harvest.
+    let planted = false
+    if (canPlant()) { await plant(); planted = true }
+    await C.pickup(ctx, { at: p.offset(0.5, 0.5, 0.5), radius: 3, maxMs: 2000 })
+    if (!planted && canPlant()) await plant()
     ctx.progress(`${ctx.done} harvested`)
   }
   if (!any) throw new Fail('no_target_known', `no grown ${crop} seen (age ${info ? info[0] : '?'} needed)`)
-  return { detail: `${ctx.done} ${crop} harvested${replant ? ', replanted' : ''}` }
+  return { detail: `${ctx.done} ${crop} harvested${replant ? (unplanted ? `, ${unplanted} not replanted` : ', replanted') : ''}` }
 }
 
 async function fish(ctx, a) {
@@ -230,13 +259,42 @@ async function fish(ctx, a) {
   if (!w) throw new Fail('no_target_known', 'no open water seen within 12')
   await C.near(ctx, w, 4)
   ctx.total = a.n ?? 1
+  let lost = 0
   while (ctx.done < (ctx.args.n ?? 1)) {
+    await C.equip(ctx, 'fishing_rod')
     await ctx.wait(bot.lookAt(w.offset(0.5, 1, 0.5)))
-    try { await ctx.wait(bot.fish()) } catch (e) { if (e instanceof C.Abort) throw e; throw new Fail('unreachable', 'fishing: ' + e.message) }
-    ctx.done++; ctx.progress(`${ctx.done}/${ctx.args.n ?? 1}`)
+    if (await ctx.wait(castOnce(bot))) {
+      ctx.done++; ctx.progress(`${ctx.done}/${ctx.args.n ?? 1}`)
+      await C.pickup(ctx, { at: bot.entity.position, radius: 6, maxMs: 1500 })
+    } else if (++lost > 2 * (ctx.args.n ?? 1) + 2) throw new Fail('unreachable', `fishing: ${lost} casts without a bite`)
     await ctx.sleep(400)
   }
   return {}
+}
+// One cast. mineflayer's bot.fish() spots the bite from particle packets: on 1.21 it reels on the approach
+// particles (empty casts) and rejects 'Fishing cancelled' when the bobber despawns. The bite is the bobber splash
+// sound at the bobber: reel on it. minecraft-data's sound ids are shifted by one on this version: the splash arrives
+// named fishing_bobber.retrieve and the throw (at the player) named .splash, so take either name, but only at a
+// bobber that has left the player. Resolves true when reeled on a bite, false when the bobber was lost or stuck.
+function castOnce(bot, maxMs = 45000) {
+  return new Promise(resolve => {
+    let bobber = null, over = false
+    const finish = ok => {
+      if (over) return
+      over = true; clearTimeout(t)
+      bot.removeListener('entitySpawn', onSpawn); bot.removeListener('soundEffectHeard', onSound); bot.removeListener('entityGone', onGone)
+      resolve(ok)
+    }
+    const onSpawn = e => { if (!bobber && e.name === 'fishing_bobber' && e.position.distanceTo(bot.entity.position) < 4) bobber = e }
+    const onSound = (name, pt) => {
+      if (!bobber || !/fishing_bobber[._](splash|retrieve)/.test(name)) return
+      if (pt.distanceTo(bobber.position) < 2.5 && bobber.position.distanceTo(bot.entity.position) > 2) { bot.activateItem(); finish(true) }
+    }
+    const onGone = e => { if (bobber && e.id === bobber.id) finish(false) }
+    bot.on('entitySpawn', onSpawn); bot.on('soundEffectHeard', onSound); bot.on('entityGone', onGone)
+    const t = setTimeout(() => { if (bobber) bot.activateItem(); finish(false) }, maxMs)
+    bot.activateItem()
+  })
 }
 
 async function useOnMob(ctx, target, item, verb) {

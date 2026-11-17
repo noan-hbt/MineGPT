@@ -12,3 +12,4 @@
 - [LLM speed levers](llm-speed-levers.md) — reasoning budget = the lever (Nemotron x2.2 correct/min); flags/spec ~0
 - [RAM budget](ram-budget.md) — 16 GB tight: don't stack llama-server + card runs + Codex; jobs got killed
 - [Codex helper](codex-helper.md) — use Codex gpt-6.1-sol medium in parallel for bulk work (cards), brief + id lists
+- [LFM 350M experiments](lfm350m-experiments.md) — next track: improve LFM2.5-350M (SFT/distill/RL/DPO/compress); teachers DeepSeek/Claude/ChatGPT, not LFM3

@@ -220,7 +220,14 @@ function compile(ep, bot) {
   const dim = `minecraft:${w.dimension}`
   const lo = [o.x - R, o.y, o.z - R], hi = [o.x + R, o.y + w.height, o.z + R]
   const region = { x: o.x, y: o.y, z: o.z, r: R + w.height + w.depth } // entity cleanup sphere
+  // holding cell above the arena for the setup: the bot no longer stays where the last card left it while the arena
+  // is rebuilt (it sank into the next card's lava and the fire outlived tick 0). Barrier box, water source at the
+  // feet: water puts out any fire, even one saved with the player from a previous run.
+  const hy = o.y + w.height + 6
   const reset = [
+    `execute in ${dim} run fill ${o.x - 1} ${hy - 1} ${o.z - 1} ${o.x + 1} ${hy + 2} ${o.z + 1} minecraft:barrier hollow`,
+    `execute in ${dim} run setblock ${o.x} ${hy} ${o.z} minecraft:water`,
+    `execute in ${dim} run tp ${bot} ${o.x + 0.5} ${hy} ${o.z + 0.5}`,
     `clear ${bot}`, `effect clear ${bot}`, `xp set ${bot} 0 levels`, `xp set ${bot} 0 points`,
     `effect give ${bot} minecraft:instant_health 1 28 true`, // health persists across episodes and runs: back to 20
     `kill @e[type=!player,x=${o.x},y=${o.y},z=${o.z},distance=..${region.r}]`,
@@ -258,7 +265,8 @@ function compile(ep, bot) {
 
   const p = ep.player
   const player = [`gamemode ${p.gamemode} ${bot}`, `execute in ${dim} run tp ${bot} ${tpPos(ep.pos(p.at))} ${p.yaw} ${p.pitch}`,
-    `spawnpoint ${bot} ${ep.rconPos(p.spawn || p.at)}`]
+    `spawnpoint ${bot} ${ep.rconPos(p.spawn || p.at)}`,
+    `execute in ${dim} run fill ${o.x - 1} ${hy - 1} ${o.z - 1} ${o.x + 1} ${hy + 2} ${o.z + 1} minecraft:air`] // holding cell gone (sky)
   if (p.health < 20) player.push(`damage ${bot} ${20 - p.health} minecraft:generic_kill`) // before armor: not reduced
   const used = new Set(p.inventory.filter(i => i.slot != null).map(i => i.slot))
   let free = 0

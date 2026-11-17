@@ -82,7 +82,10 @@ async function craft(ctx, a) {
     }
     await settle(ctx)
     if (made() <= before) {
-      if (++stuck >= 2) throw new Fail('server_refused', `craft ${name}: ${made() ? `made ${made()}/${want}, then ` : ''}no result${err ? ` (${err.message})` : ''}`.slice(0, 160))
+      // a click on a grid the server has not caught up with gives nothing (VAL3: 4/12 planks, then 2 empty clicks
+      // in lockstep): back off and resync before giving up
+      if (++stuck >= 4) throw new Fail('server_refused', `craft ${name}: ${made() ? `made ${made()}/${want}, then ` : ''}no result${err ? ` (${err.message})` : ''}`.slice(0, 160))
+      await ctx.sleep(250 * stuck); await settle(ctx)
     } else stuck = 0
     ctx.done = Math.min(want, made()); ctx.progress(`${made()}/${want}`)
   }

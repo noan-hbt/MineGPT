@@ -1,0 +1,205 @@
+{
+  "card": 1,
+  "id": "combat.creeper_bow_open",
+  "title": "Kill an approaching creeper with a bow before it enters four-block range",
+  "tags": [
+    "combat",
+    "creeper_bow_open"
+  ],
+  "difficulty": 3,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "x": {
+      "int": [
+        -2,
+        2
+      ]
+    },
+    "z": {
+      "int": [
+        11,
+        12
+      ]
+    },
+    "arrows": {
+      "int": [
+        20,
+        28
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "radius": 18,
+    "height": 8,
+    "depth": 6,
+    "floor": "stone",
+    "dimension": "overworld",
+    "time": 18000,
+    "weather": "clear",
+    "difficulty": "easy",
+    "gamerules": {
+      "advance_time": false,
+      "advance_weather": false,
+      "spawn_monsters": false,
+      "natural_health_regeneration": false,
+      "mob_griefing": false
+    }
+  },
+  "build": [
+    {
+      "fill": [
+        "<-18,0,-18>",
+        "<-18,4,18>"
+      ],
+      "block": "bedrock"
+    },
+    {
+      "fill": [
+        "<18,0,-18>",
+        "<18,4,18>"
+      ],
+      "block": "bedrock"
+    },
+    {
+      "fill": [
+        "<-17,0,-18>",
+        "<17,4,-18>"
+      ],
+      "block": "bedrock"
+    },
+    {
+      "fill": [
+        "<-17,0,18>",
+        "<17,4,18>"
+      ],
+      "block": "bedrock"
+    },
+    {
+      "set": "<15,-2,15>",
+      "block": "obsidian"
+    }
+  ],
+  "entities": [],
+  "player": {
+    "at": "<0,0,-4>",
+    "spawn": "<0,0,-12>",
+    "health": 20,
+    "food": 20,
+    "saturation": 5,
+    "xp_levels": 0,
+    "yaw": 0,
+    "pitch": 0,
+    "held": 0,
+    "inventory": [
+      {
+        "item": "bow",
+        "slot": 0,
+        "enchant": {
+          "power": 2
+        }
+      },
+      {
+        "item": "arrow",
+        "count": "${arrows}",
+        "slot": 1
+      }
+    ],
+    "armor": {},
+    "offhand": null,
+    "effects": []
+  },
+  "timeline": [
+    {
+      "at_tick": 0,
+      "summon": {
+        "type": "creeper",
+        "at": "<${x},0,${z}>",
+        "tag": "combat_creeper_bow_open_foe",
+        "nbt": "{PersistenceRequired:1b,powered:0b}"
+      }
+    },
+    {
+      "when": {
+        "entity": "creeper",
+        "tag": "combat_creeper_bow_open_foe",
+        "min": 1
+      },
+      "once": false,
+      "rcon": "execute as @e[type=minecraft:creeper,tag=combat_creeper_bow_open_foe] at @s if entity @a[distance=..4] run setblock <15,-2,15> minecraft:redstone_block"
+    }
+  ],
+  "fail": {
+    "any": [
+      {
+        "died": true
+      },
+      {
+        "block": "<15,-2,15>",
+        "is": "redstone_block"
+      },
+      {
+        "not": {
+          "damage_taken": {
+            "max": 0
+          }
+        }
+      }
+    ]
+  },
+  "milestones": [
+    {
+      "name": "first_arrow_fired",
+      "check": {
+        "have": "arrow",
+        "max": "${arrows-1}"
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 800,
+    "decisions": 20
+  },
+  "solution": [
+    "wait 1s",
+    "shoot #creeper n=8",
+    "wait 2s"
+  ],
+  "order": {
+    "from": "Noan",
+    "text": "Abats le creeper à l'arc avant qu'il arrive à moins de quatre blocs de toi.",
+    "at_tick": 0
+  },
+  "success": {
+    "all": [
+      {
+        "entity": "creeper",
+        "tag": "combat_creeper_bow_open_foe",
+        "max": 0
+      },
+      {
+        "have": "arrow",
+        "max": "${arrows-1}"
+      },
+      {
+        "block": "<15,-2,15>",
+        "is": "obsidian"
+      },
+      {
+        "damage_taken": {
+          "max": 0
+        }
+      }
+    ]
+  },
+  "solution_ticks": 300,
+  "notes": [
+    "No random gunpowder drop is required. The proximity latch forbids reaching normal creeper explosion range; arrow consumption and disappearance establish the ranged kill."
+  ]
+}

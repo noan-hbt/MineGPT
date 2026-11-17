@@ -128,4 +128,18 @@ function installManual() {
   return clock
 }
 
-module.exports = { install, installManual }
+// Lockstep: mineflayer-pathfinder's A* budgets its work with performance.now() (40 ms per tick, 5 s total). With a
+// frozen virtual clock a whole search (even a hopeless one) ran inside one tick: no game time passed while the
+// bot "thought", unlike live. During compute(), time = virtual time at entry + real time spent computing, so the
+// per-tick budget is real CPU time and the total timeout counts game ticks, as in a live run.
+function patchPathfinder(clock) {
+  const AStar = require('mineflayer-pathfinder/lib/astar')
+  const orig = AStar.prototype.compute
+  AStar.prototype.compute = function () {
+    const v = perf.now, vt0 = v(), r0 = clock.realNow()
+    perf.now = () => vt0 + (clock.realNow() - r0)
+    try { return orig.call(this) } finally { perf.now = v }
+  }
+}
+
+module.exports = { install, installManual, patchPathfinder }

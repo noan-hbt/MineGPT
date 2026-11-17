@@ -1,0 +1,155 @@
+{
+  "card": 1,
+  "id": "nav.parkour_one_gap",
+  "title": "Jump one missing floor block to reach the opposite platform",
+  "tags": [
+    "nav",
+    "pathfinding"
+  ],
+  "difficulty": 2,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "x": {
+      "int": [
+        -3,
+        2
+      ]
+    },
+    "z": {
+      "int": [
+        -3,
+        3
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "radius": 15,
+    "height": 12,
+    "depth": 15,
+    "floor": "bedrock",
+    "dimension": "overworld",
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "normal",
+    "gamerules": {
+      "spawn_monsters": false,
+      "advance_time": false,
+      "advance_weather": false
+    }
+  },
+  "build": [
+    {
+      "fill": [
+        "<${x},-5,-14>",
+        "<${x},-1,14>"
+      ],
+      "block": "air"
+    },
+    {
+      "set": "<${x+4},-1,${z}>",
+      "block": "gold_block"
+    },
+    {
+      "fill": [
+        "<-15,0,-15>",
+        "<-15,4,15>"
+      ],
+      "block": "bedrock"
+    },
+    {
+      "fill": [
+        "<15,0,-15>",
+        "<15,4,15>"
+      ],
+      "block": "bedrock"
+    },
+    {
+      "fill": [
+        "<-15,0,-15>",
+        "<15,4,-15>"
+      ],
+      "block": "bedrock"
+    },
+    {
+      "fill": [
+        "<-15,0,15>",
+        "<15,4,15>"
+      ],
+      "block": "bedrock"
+    }
+  ],
+  "player": {
+    "at": "<${x-4},0,${z}>",
+    "spawn": "<${x-4},0,${z}>",
+    "health": 20,
+    "food": 20,
+    "saturation": 5,
+    "inventory": []
+  },
+  "fail": {
+    "any": [
+      {
+        "died": true
+      },
+      {
+        "y": {
+          "max": -2
+        }
+      }
+    ]
+  },
+  "milestones": [
+    {
+      "name": "at_jump_edge",
+      "check": {
+        "at": "<${x-1},0,${z}>",
+        "radius": 1
+      }
+    },
+    {
+      "name": "landed_across",
+      "check": {
+        "at": "<${x+1},0,${z}>",
+        "radius": 1
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 900,
+    "decisions": 8
+  },
+  "solution": [
+    "goto <${x-1},0,${z}> dist=0",
+    "goto @plateforme dist=0"
+  ],
+  "solution_ticks": 300,
+  "mind": {
+    "places": {
+      "plateforme": "<${x+4},0,${z}>"
+    }
+  },
+  "order": {
+    "from": "Noan",
+    "text": "saute le trou d'un bloc et rejoins @plateforme en face, sans poser de blocs"
+  },
+  "success": {
+    "all": [
+      {
+        "at": "<${x+4},0,${z}>",
+        "radius": 1.2
+      },
+      {
+        "block": "<${x},-1,${z}>",
+        "is": "air"
+      }
+    ]
+  },
+  "notes": "The dry start is four blocks from the gap. The trench spans the enclosed arena, has an explicit bedrock bottom, and falling below the platform fails. No blocks are supplied."
+}

@@ -118,6 +118,30 @@ async function fight(ctx, a) {
   } finally { bot.removeListener('entityDead', onDead); bot.pathfinder.setGoal(null) }
 }
 
+// Arrow ballistics (vanilla AbstractArrow): spawn at eye - 0.1, full charge 3.0 b/t (crossbow 3.15), each tick
+// pos += v, then v *= 0.99, v.y -= 0.05. Solve the pitch that lands on the target at horizontal distance h (lower
+// branch, bisection) and return it with the flight time in ticks.
+function arrowPitch(h, dy, speed) {
+  const fly = th => {
+    let x = 0, y = 0, vx = Math.cos(th) * speed, vy = Math.sin(th) * speed
+    for (let t = 1; t <= 200; t++) {
+      const nx = x + vx, ny = y + vy
+      if (nx >= h) { const f = (h - x) / (nx - x); return { y: y + f * (ny - y), t: t - 1 + f } }
+      x = nx; y = ny; vx *= 0.99; vy = vy * 0.99 - 0.05
+      if (vx < 1e-3) break
+    }
+    return null
+  }
+  let lo = -Math.PI / 2 + 0.01, hi = Math.PI / 4, best = null
+  const top = fly(hi)
+  if (!top || top.y < dy) return null // out of range
+  for (let i = 0; i < 40; i++) {
+    const m = (lo + hi) / 2, r = fly(m)
+    if (r && r.y >= dy) { hi = m; best = { pitch: m, ticks: r.t } } else lo = m
+  }
+  return best
+}
+
 async function shoot(ctx, a) {
   const bot = ctx.bot
   const e = target(ctx, a.target)
@@ -125,19 +149,45 @@ async function shoot(ctx, a) {
   if (!w) throw new Fail('missing_tool', 'no bow or crossbow')
   if (!C.count(bot, ['arrow', 'spectral_arrow', 'tipped_arrow'])) throw new Fail('missing_items', 'no arrows')
   await C.equip(ctx, w.name)
+  const speed = w.name === 'crossbow' ? 3.15 : 3.0
   const n = a.n ?? 1
   ctx.total = n
+  // target velocity per tick from its own recent positions (velocity packets are sparse for mobs)
+  const hist = []
+  const track = () => { hist.push({ t: Date.now(), p: e.position.clone() }); while (hist.length > 8) hist.shift() }
+  const vel = () => {
+    if (hist.length < 2) return e.position.minus(e.position)
+    const p = hist[0], q = hist[hist.length - 1], dt = (q.t - p.t) / 50
+    return dt > 0 ? q.p.minus(p.p).scaled(1 / dt) : e.position.minus(e.position)
+  }
+  const aimAt = async () => {
+    const eye = bot.entity.position.offset(0, bot.entity.height * 0.9 - 0.1, 0) // 1.62 - 0.1 = 1.52 = arrow spawn
+    const v = vel()
+    let p = aim(e), sol = null
+    for (let k = 0; k < 3; k++) { // lead: aim where the target will be after the flight time
+      const dx = p.x - eye.x, dz = p.z - eye.z
+      sol = arrowPitch(Math.hypot(dx, dz), p.y - eye.y, speed)
+      if (!sol) return null
+      p = aim(e).offset(v.x * sol.ticks, e.onGround === false ? v.y * sol.ticks : 0, v.z * sol.ticks)
+    }
+    const dx = p.x - eye.x, dz = p.z - eye.z
+    await ctx.wait(bot.look(Math.atan2(-dx, -dz), sol.pitch, true))
+    return sol
+  }
   for (let i = 0; i < n; i++) {
     if (!bot.entities[e.id]) return { status: i ? 'partial' : 'failed', cause: 'no_target_known', detail: `${C.entRef(e)} gone after ${i} shots` }
     const d = e.position.distanceTo(bot.entity.position)
-    if (d > 40) throw new Fail('unreachable', `${C.entRef(e)} is ${Math.round(d)}m away (max 40)`)
+    if (d > 60) throw new Fail('unreachable', `${C.entRef(e)} is ${Math.round(d)}m away (max 60)`)
     bot.activateItem()
     const t0 = Date.now()
+    let sol = null
     while (Date.now() - t0 < (w.name === 'crossbow' ? 1300 : 1100)) {
-      const dd = e.position.distanceTo(bot.entity.position)
-      await ctx.wait(bot.lookAt(aim(e).offset(0, dd * dd * 0.0045, 0), true))
+      track()
+      sol = await aimAt()
       await ctx.sleep(50)
     }
+    track(); sol = await aimAt()
+    if (!sol) { bot.deactivateItem(); throw new Fail('unreachable', `${C.entRef(e)} is out of bow range`) }
     bot.deactivateItem()
     if (w.name === 'crossbow') { await ctx.sleep(150); bot.activateItem(); await ctx.sleep(100); bot.deactivateItem() }
     ctx.done++; ctx.progress(`${ctx.done}/${n}`)
@@ -151,9 +201,17 @@ async function shield(ctx, a) {
   const off = bot.inventory.slots[45]
   if (!off || off.name !== 'shield') await C.equip(ctx, 'shield', 'off-hand')
   bot.activateItem(true)
-  await ctx.sleep((a.dur ? a.dur.dur : 5) * 1000)
-  bot.deactivateItem()
-  return {}
+  // a shield only blocks hits coming from the front: keep facing the nearest hostile while it is raised
+  const end = Date.now() + (a.dur ? a.dur.dur : 5) * 1000
+  let faced = null
+  try {
+    while (Date.now() < end) {
+      const h = C.nearest(bot, e => P.HOSTILE.has(e.name), 24)
+      if (h) { faced = h; await ctx.wait(bot.lookAt(h.position.offset(0, h.height * 0.85, 0), true)) }
+      await ctx.sleep(100)
+    }
+  } finally { bot.deactivateItem() }
+  return faced ? { detail: `blocked facing ${C.entRef(faced)}` } : {}
 }
 
 async function retreat(ctx, a) {

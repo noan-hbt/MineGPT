@@ -1,0 +1,24 @@
+{
+  "card": 1,
+  "id": "mine.lapis",
+  "title": "Harvest lapis ore and collect lapis lazuli",
+  "tags": ["mine", "drops", "tool_tier"],
+  "difficulty": 1,
+  "split": "train",
+  "seeds": [1, 2, 3, 4],
+  "params": {"dx": {"int": [3, 7]}, "dz": {"int": [-4, 1]}, "n": {"int": [2, 4]}},
+  "world": {"template": "arena", "gamerules": {"advance_time": false, "block_drops": true}},
+  "build": [{"fill": ["<${dx},0,${dz}>", "<${dx},0,${dz + n - 1}>"], "block": "lapis_ore"}],
+  "player": {"at": "<0,0,0>", "spawn": "<0,0,0>", "inventory": [{"item": "stone_pickaxe", "slot": 0}]},
+  "order": {"from": "Noan", "text": "mine le lapis avec ta pioche en pierre et ramène-moi au moins ${4 * n} lapis-lazuli", "at_tick": 0},
+  "success": {"have": "lapis_lazuli", "min": "${4 * n}"},
+  "fail": {"died": true},
+  "milestones": [
+    {"name": "first_lapis", "check": {"have": "lapis_lazuli", "min": 4}},
+    {"name": "half_lapis", "check": {"have": "lapis_lazuli", "min": "${2 * n}"}}
+  ],
+  "limits": {"ticks": 1800, "decisions": 8},
+  "solution": ["mine lapis_ore n=${n} tool=stone_pickaxe"],
+  "solution_ticks": 600,
+  "notes": "Each lapis ore drops at least four lapis lazuli with this unenchanted pickaxe. Variable bonus drops may let the judge finish the episode before the whole vein is mined."
+}

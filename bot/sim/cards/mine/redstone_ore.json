@@ -1,0 +1,24 @@
+{
+  "card": 1,
+  "id": "mine.redstone_ore",
+  "title": "Mine redstone ore with an iron pickaxe and collect its dust",
+  "tags": ["mine", "tool_tier", "drops"],
+  "difficulty": 1,
+  "split": "train",
+  "seeds": [1, 2, 3, 4],
+  "params": {"dx": {"int": [3, 6]}, "dz": {"int": [-4, 1]}, "n": {"int": [2, 4]}},
+  "world": {"template": "arena", "gamerules": {"advance_time": false, "block_drops": true}},
+  "build": [{"fill": ["<${dx},0,${dz}>", "<${dx},0,${dz + n - 1}>"], "block": "redstone_ore"}],
+  "player": {"at": "<0,0,0>", "spawn": "<0,0,0>", "inventory": [{"item": "iron_pickaxe", "slot": 0}]},
+  "order": {"from": "Noan", "text": "mine le filon de redstone avec ta pioche en fer et récupère au moins ${4 * n} poudres de redstone", "at_tick": 0},
+  "success": {"have": "redstone", "min": "${4 * n}"},
+  "fail": {"died": true},
+  "milestones": [
+    {"name": "first_dust", "check": {"have": "redstone", "min": 4}},
+    {"name": "half_dust", "check": {"have": "redstone", "min": "${2 * n}"}}
+  ],
+  "limits": {"ticks": 1800, "decisions": 8},
+  "solution": ["mine redstone_ore n=${n} tool=iron_pickaxe"],
+  "solution_ticks": 600,
+  "notes": "Unenchanted iron pickaxe: each ore drops at least four dust. The target uses the minimum drop, so no lucky rolls are required."
+}

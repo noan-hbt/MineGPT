@@ -1,0 +1,195 @@
+{
+  "card": 1,
+  "id": "nav.stairs_down_cave",
+  "title": "Descend an existing covered staircase into a cave to its marked floor",
+  "tags": [
+    "nav",
+    "pathfinding",
+    "stairs",
+    "cave"
+  ],
+  "difficulty": 2,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "n": {
+      "int": [
+        4,
+        6
+      ]
+    },
+    "z": {
+      "int": [
+        -4,
+        4
+      ]
+    },
+    "marker": {
+      "choice": [
+        "gold_block",
+        "emerald_block",
+        "lapis_block"
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "radius": 15,
+    "height": 12,
+    "depth": 15,
+    "floor": "bedrock",
+    "dimension": "overworld",
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "normal",
+    "gamerules": {
+      "spawn_monsters": false,
+      "advance_time": false,
+      "advance_weather": false
+    }
+  },
+  "build": [
+    {
+      "fill": [
+        "<0,-9,${z-2}>",
+        "<11,2,${z+2}>"
+      ],
+      "block": "bedrock"
+    },
+    {
+      "fill": [
+        "<0,${-min(0,n)},${z-1}>",
+        "<0,${-min(0,n)+2},${z+1}>"
+      ],
+      "block": "air"
+    },
+    {
+      "fill": [
+        "<1,${-min(1,n)},${z-1}>",
+        "<1,${-min(1,n)+2},${z+1}>"
+      ],
+      "block": "air"
+    },
+    {
+      "fill": [
+        "<2,${-min(2,n)},${z-1}>",
+        "<2,${-min(2,n)+2},${z+1}>"
+      ],
+      "block": "air"
+    },
+    {
+      "fill": [
+        "<3,${-min(3,n)},${z-1}>",
+        "<3,${-min(3,n)+2},${z+1}>"
+      ],
+      "block": "air"
+    },
+    {
+      "fill": [
+        "<4,${-min(4,n)},${z-1}>",
+        "<4,${-min(4,n)+2},${z+1}>"
+      ],
+      "block": "air"
+    },
+    {
+      "fill": [
+        "<5,${-min(5,n)},${z-1}>",
+        "<5,${-min(5,n)+2},${z+1}>"
+      ],
+      "block": "air"
+    },
+    {
+      "fill": [
+        "<6,${-min(6,n)},${z-1}>",
+        "<6,${-min(6,n)+2},${z+1}>"
+      ],
+      "block": "air"
+    },
+    {
+      "fill": [
+        "<7,${-n},${z-1}>",
+        "<10,${-n+2},${z+1}>"
+      ],
+      "block": "air"
+    },
+    {
+      "set": "<9,${-n-1},${z}>",
+      "block": "${marker}"
+    },
+    {
+      "set": "<10,${-n+2},${z}>",
+      "block": "sea_lantern"
+    }
+  ],
+  "player": {
+    "at": "<-3,0,${z}>",
+    "spawn": "<-3,0,${z}>",
+    "health": 20,
+    "food": 20,
+    "saturation": 5,
+    "inventory": []
+  },
+  "fail": {
+    "died": true
+  },
+  "milestones": [
+    {
+      "name": "cave_entrance",
+      "check": {
+        "at": "<0,0,${z}>",
+        "radius": 1.2
+      }
+    },
+    {
+      "name": "halfway_down",
+      "check": {
+        "y": {
+          "max": "${-floor(n/2)}"
+        }
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 1200,
+    "decisions": 8
+  },
+  "solution": [
+    "goto <0,0,${z}> dist=0",
+    "goto <3,-3,${z}> dist=0",
+    "goto @fond dist=0"
+  ],
+  "solution_ticks": 400,
+  "mind": {
+    "places": {
+      "fond": "<9,${-n},${z}>"
+    }
+  },
+  "order": {
+    "from": "Noan",
+    "text": "descends les marches dans la grotte et rejoins @fond, sur le bloc repère, sans creuser"
+  },
+  "success": {
+    "all": [
+      {
+        "at": "<9,${-n},${z}>",
+        "radius": 1.2
+      },
+      {
+        "y": {
+          "min": "${-n}",
+          "max": "${-n}"
+        }
+      },
+      {
+        "block": "<9,${-n-1},${z}>",
+        "is": "${marker}"
+      }
+    ]
+  },
+  "notes": "The bedrock shell, floor and three-block-high stair passage are explicitly built. Each step drops at most one block; the cave is lit and the spawn remains on the surface."
+}

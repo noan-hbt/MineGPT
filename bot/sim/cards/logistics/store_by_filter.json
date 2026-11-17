@@ -1,0 +1,225 @@
+{
+  "card": 1,
+  "id": "logistics.store_by_filter",
+  "title": "Store ores and ingots while retaining held and spare tools",
+  "tags": [
+    "logistics",
+    "inventory",
+    "containers"
+  ],
+  "difficulty": 2,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "x": {
+      "int": [
+        4,
+        8
+      ]
+    },
+    "z": {
+      "int": [
+        -5,
+        -2
+      ]
+    },
+    "ore": {
+      "choice": [
+        "iron_ore",
+        "deepslate_copper_ore",
+        "gold_ore"
+      ]
+    },
+    "ingot": {
+      "choice": [
+        "iron_ingot",
+        "copper_ingot",
+        "gold_ingot"
+      ]
+    },
+    "n": {
+      "int": [
+        5,
+        18
+      ]
+    },
+    "m": {
+      "int": [
+        3,
+        14
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "radius": 15,
+    "height": 12,
+    "depth": 15,
+    "floor": "stone",
+    "dimension": "overworld",
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "peaceful",
+    "gamerules": {
+      "advance_time": false,
+      "advance_weather": false,
+      "keep_inventory": false
+    }
+  },
+  "player": {
+    "at": "<0,0,0>",
+    "spawn": "<0,0,0>",
+    "health": 20,
+    "food": 20,
+    "saturation": 5,
+    "inventory": [
+      {
+        "item": "${ore}",
+        "count": "${n}",
+        "slot": 0
+      },
+      {
+        "item": "iron_pickaxe",
+        "count": 1,
+        "slot": 1
+      },
+      {
+        "item": "stone_axe",
+        "count": 1,
+        "slot": 9
+      },
+      {
+        "item": "${ingot}",
+        "count": "${m}",
+        "slot": 10
+      },
+      {
+        "item": "bread",
+        "count": 6,
+        "slot": 11
+      },
+      {
+        "item": "dirt",
+        "count": 12,
+        "slot": 12
+      }
+    ],
+    "held": 0
+  },
+  "fail": {
+    "died": true
+  },
+  "build": [
+    {
+      "container": "<${x},0,${z}>",
+      "block": "chest[facing=south]",
+      "items": [
+        {
+          "item": "torch",
+          "count": 8,
+          "slot": 0
+        }
+      ]
+    }
+  ],
+  "mind": {
+    "places": {
+      "minerais": "<${x},0,${z}>"
+    }
+  },
+  "order": {
+    "from": "Noan",
+    "text": "Range seulement les minerais et les lingots dans @minerais, y compris le minerai que tu tiens. Garde tes outils, ton pain et la terre.",
+    "at_tick": 0
+  },
+  "success": {
+    "all": [
+      {
+        "container": "<${x},0,${z}>",
+        "item": "${ore}",
+        "min": "${n}",
+        "max": "${n}"
+      },
+      {
+        "container": "<${x},0,${z}>",
+        "item": "${ingot}",
+        "min": "${m}",
+        "max": "${m}"
+      },
+      {
+        "container": "<${x},0,${z}>",
+        "item": "torch",
+        "min": 8,
+        "max": 8
+      },
+      {
+        "have": "${ore}",
+        "min": 0,
+        "max": 0
+      },
+      {
+        "have": "${ingot}",
+        "min": 0,
+        "max": 0
+      },
+      {
+        "have": "iron_pickaxe",
+        "min": 1,
+        "max": 1
+      },
+      {
+        "have": "stone_axe",
+        "min": 1,
+        "max": 1
+      },
+      {
+        "have": "bread",
+        "min": 6,
+        "max": 6
+      },
+      {
+        "have": "dirt",
+        "min": 12,
+        "max": 12
+      },
+      {
+        "block": "<${x},0,${z}>",
+        "is": "chest"
+      }
+    ]
+  },
+  "milestones": [
+    {
+      "name": "ore_stored",
+      "check": {
+        "container": "<${x},0,${z}>",
+        "item": "${ore}",
+        "min": "${n}",
+        "max": "${n}"
+      }
+    },
+    {
+      "name": "ingots_stored",
+      "check": {
+        "container": "<${x},0,${z}>",
+        "item": "${ingot}",
+        "min": "${m}",
+        "max": "${m}"
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 750,
+    "decisions": 6
+  },
+  "solution_ticks": 250,
+  "solution": [
+    "store chest=@minerais filter=[${ore},${ingot}]"
+  ],
+  "notes": "The ore is in the selected hotbar slot: an explicit store filter must include held ore. The spare axe is not held, so retaining only the current hand item cannot satisfy the task."
+}

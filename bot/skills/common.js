@@ -23,7 +23,43 @@ function makeMovements(bot) {
   const { Movements } = require('mineflayer-pathfinder')
   dying(bot) // start tracking deaths now (every bot setup goes through here)
   const mv = new Movements(bot)
+  // prismarine-item returns the 1.21 enchantments component raw ({enchantments:[{id,level}]}) where digTime and the
+  // pathfinder expect [{name,lvl}] ("enchantments is not iterable" when digging with an enchanted tool)
+  const fixEnch = it => {
+    if (!it || !it.componentMap || !it.componentMap.has('enchantments') || Object.prototype.hasOwnProperty.call(it, 'enchants')) return
+    const d = it.componentMap.get('enchantments').data
+    const list = Array.isArray(d) ? d : (d && d.enchantments) || []
+    Object.defineProperty(it, 'enchants', { value: list.map(e => ({ name: e.name || (bot.registry.enchantments[e.id] || {}).name || null, lvl: e.lvl ?? e.level ?? 0 })) })
+  }
+  bot.inventory.slots.forEach(fixEnch)
+  bot.inventory.on('updateSlot', (slot, old, it) => fixEnch(it))
   mv.canDig = true; mv.allow1by1towers = true
+  // doors, fence gates, trapdoors are never dug. The stock pathfinder sees an open door's full collision box and
+  // digs through it; an open door or gate is a doorway to walk through, a closed one a wall until `use` opens it.
+  const doorish = Object.values(bot.registry.blocksByName).filter(b => /_(door|fence_gate|trapdoor)$/.test(b.name))
+  for (const b of doorish) mv.blocksCantBreak.add(b.id)
+  const doorways = new Set(doorish.filter(b => !b.name.endsWith('_trapdoor')).map(b => b.id))
+  const getBlock = mv.getBlock.bind(mv)
+  mv.getBlock = function (pos, dx, dy, dz) {
+    const b = getBlock(pos, dx, dy, dz)
+    if (b && doorways.has(b.type) && b.getProperties().open) { b.safe = true; b.physical = false; b.height = b.position.y }
+    return b
+  }
+  // the pathfinder's path post-processing moves each waypoint on top of its cell's collision shape, so a waypoint
+  // in an open doorway lands on top of the door panel and the bot tries to climb it (stuck). Put it back on the floor.
+  if (!bot._doorwayFix) {
+    bot._doorwayFix = true
+    bot.on('path_update', r => {
+      for (const p of r.path) {
+        const under = bot.blockAt(new Vec3(Math.floor(p.x), Math.floor(p.y) - 1, Math.floor(p.z)), false)
+        if (under && doorways.has(under.type) && under.getProperties().open) { p.x = Math.floor(p.x) + 0.5; p.y = Math.floor(p.y) - 1; p.z = Math.floor(p.z) + 0.5 }
+      }
+    })
+  }
+  // walking into a crop cell means stepping (and jumping) on farmland: it gets trampled into dirt with the crop
+  for (const n of ['wheat', 'carrots', 'potatoes', 'beetroots', 'farmland']) if (bot.registry.blocksByName[n]) mv.blocksToAvoid.add(bot.registry.blocksByName[n].id)
+  // ...and never dug: with canDig an avoided crop is still "breakable", so a path through a fresh replant digs it
+  for (const n of ['wheat', 'carrots', 'potatoes', 'beetroots']) if (bot.registry.blocksByName[n]) mv.blocksCantBreak.add(bot.registry.blocksByName[n].id)
   const lava = bot.registry.blocksByName.lava.id
   const parkour = mv.getMoveParkourForward.bind(mv)
   mv.getMoveParkourForward = function (node, dir, neighbors) {
@@ -32,6 +68,47 @@ function makeMovements(bot) {
       if (b && b.type === lava) return
     }
     return parkour(node, dir, neighbors)
+  }
+  // Swimming. The stock pathfinder can drop into water but never plans a way out (no swim-up, "can't jump from
+  // water"), so across a channel it digs a tunnel under it instead. Add: swim up one block inside water, and climb
+  // a ledge from the water surface (the executor holds jump in water, which also carries the bot over the edge).
+  const water = bot.registry.blocksByName.water.id
+  const Move = require('mineflayer-pathfinder/lib/move')
+  const up = mv.getMoveUp.bind(mv)
+  mv.getMoveUp = function (node, neighbors) {
+    const cur = this.getBlock(node, 0, 0, 0), above = this.getBlock(node, 0, 1, 0), head = this.getBlock(node, 0, 2, 0)
+    if (cur.type === water && (above.type === water || above.safe) && (head.type === water || head.safe)) {
+      neighbors.push(new Move(node.x, node.y + 1, node.z, node.remainingBlocks, 1 + this.liquidCost, [], []))
+      return
+    }
+    return up(node, neighbors)
+  }
+  const jumpUp = mv.getMoveJumpUp.bind(mv)
+  mv.getMoveJumpUp = function (node, dir, neighbors) {
+    const cur = this.getBlock(node, 0, 0, 0)
+    if (cur.type === water && this.getBlock(node, 0, 1, 0).safe && this.getBlock(node, 0, 1, 0).type !== water) {
+      const C = this.getBlock(node, dir.x, 0, dir.z), B = this.getBlock(node, dir.x, 1, dir.z)
+      const H = this.getBlock(node, dir.x, 2, dir.z), A = this.getBlock(node, 0, 2, 0)
+      if (C.physical && C.height - node.y <= 1.2 && B.safe && H.safe && A.safe) {
+        neighbors.push(new Move(B.position.x, B.position.y, B.position.z, node.remainingBlocks, 2 + this.liquidCost, [], []))
+      }
+      return
+    }
+    return jumpUp(node, dir, neighbors)
+  }
+  // landing on farmland from a jump or a drop tramples it to dirt (and pops the crop): the bot climbing out of an
+  // irrigation channel onto a plot it just replanted (VAL3 carrots_replant). Walking onto it at the same level is fine.
+  const farmland = bot.registry.blocksByName.farmland.id
+  for (const k of ['getMoveJumpUp', 'getMoveDropDown']) {
+    const orig = mv[k]
+    mv[k] = function (node, dir, neighbors) {
+      const n0 = neighbors.length
+      orig.call(this, node, dir, neighbors)
+      for (let i = neighbors.length - 1; i >= n0; i--) {
+        const m = neighbors[i]
+        if (m.y !== node.y && this.getBlock(m, 0, -1, 0).type === farmland) neighbors.splice(i, 1)
+      }
+    }
   }
   return mv
 }
@@ -117,11 +194,22 @@ function canSee(bot, p) {
     const b = bot.blockAt(p, false)
     if (!b) return false
     const eye = bot.entity.position.offset(0, bot.entity.eyeHeight, 0)
-    const dir = b.position.offset(0.5, 0.5, 0.5).minus(eye)
-    const len = dir.norm() // before normalize(): it mutates dir
-    const hit = bot.world.raycast(eye, dir.normalize(), len + 1,
-      (blk, iter) => !!iter.intersect(blk.shapes, blk.position) || blk.position.equals(b.position))
-    return !!hit && hit.position.equals(b.position)
+    const c = b.position.offset(0.5, 0.5, 0.5)
+    // the center, then the center of each face turned toward the eye (an ore at foot level in a tunnel wall:
+    // the ray to its center clips the block above, its face is in plain view)
+    const targets = [c]
+    for (const ax of ['x', 'y', 'z']) {
+      const d = eye[ax] - c[ax]
+      if (Math.abs(d) > 0.5) { const t = c.clone(); t[ax] += Math.sign(d) * 0.49; targets.push(t) }
+    }
+    for (const t of targets) {
+      const dir = t.minus(eye)
+      const len = dir.norm() // before normalize(): it mutates dir
+      const hit = bot.world.raycast(eye, dir.normalize(), len + 1,
+        (blk, iter) => !!iter.intersect(blk.shapes, blk.position) || blk.position.equals(b.position))
+      if (hit && hit.position.equals(b.position)) return true
+    }
+    return false
   } catch { return false }
 }
 // blocks of the given ids the bot knows about: seen before (senses.seen) or visible now. Nearest first.
@@ -218,12 +306,13 @@ function pathFail(e) {
 }
 // pathfinder.goto resolves silently when it finds no move at all: check the goal really is reached
 async function go(ctx, goal, retried = false) {
+  const DBG = process.env.DBG_GO && setInterval(() => { const b = ctx.bot.entity; console.log('GO', b.position.toString(), 'water', b.isInWater, 'ground', b.onGround, 'ctl', JSON.stringify(ctx.bot.controlState), 'moving', ctx.bot.pathfinder.isMoving()) }, 1000)
   try { await ctx.wait(ctx.bot.pathfinder.goto(goal)) } catch (e) {
     const f = pathFail(e)
     // mineflayer-pathfinder finds no path from a water surface: swim ashore, then plan again (once)
     if (!retried && f instanceof Fail && f.cause === 'no_path' && ctx.bot.entity.isInWater && await swimOut(ctx)) return go(ctx, goal, true)
     throw f
-  }
+  } finally { if (DBG) clearInterval(DBG) }
   const p = ctx.bot.entity.position.floored()
   if (!goal.isEnd(p)) throw new Fail('no_path', `no way to get closer, stopped at ${fmtPos(p)}`)
 }

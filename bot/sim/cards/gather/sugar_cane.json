@@ -1,0 +1,17 @@
+{
+  "card": 1, "id": "gather.sugar_cane", "title": "Collect sugar cane on a river bank",
+  "tags": ["gather", "harvest", "sugar_cane"], "difficulty": 1, "split": "train", "seeds": [1, 2, 3, 4],
+  "params": {"n": {"int": [3, 6]}, "dx": {"int": [2, 4]}, "dz": {"int": [3, 5]}, "soil": {"choice": ["sand", "dirt"]}},
+  "world": {"template": "arena", "gamerules": {"advance_time": false, "random_tick_speed": 0, "block_drops": true}},
+  "build": [
+    {"fill": ["<${dx - 1},-1,${dz}>", "<${dx + n},-1,${dz}>"], "block": "${soil}"},
+    {"fill": ["<${dx - 2},-1,${dz + 1}>", "<${dx + n + 1},-1,${dz + 2}>"], "block": "water"},
+    {"fill": ["<${dx},0,${dz}>", "<${dx + n - 1},0,${dz}>"], "block": "sugar_cane[age=0]"}
+  ],
+  "player": {"at": "<0,0,0>", "spawn": "<0,0,0>", "inventory": []},
+  "order": {"from": "Noan", "text": "ramasse ${n} cannes à sucre sur la berge"},
+  "success": {"have": "sugar_cane", "min": "${n}"}, "fail": {"died": true},
+  "milestones": [{"name": "first_cane", "check": {"have": "sugar_cane", "min": 1}}, {"name": "half_collected", "check": {"have": "sugar_cane", "min": "${ceil(n/2)}"}}],
+  "limits": {"ticks": 2400, "decisions": 8}, "solution": ["harvest sugar_cane n=${n} replant=no"], "solution_ticks": 800,
+  "notes": "Single-block stalks on supported soil beside a contained two-block-wide river. harvest.n counts broken blocks, not inventory gains. Random ticks disabled to keep stalk counts fixed."
+}

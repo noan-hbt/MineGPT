@@ -1,10 +1,12 @@
 // H4 scenario-card runner (notes/scenario-cards.md). Runs cards x seeds on a MineSim instance with a policy:
-//   node sim/run_cards.js [--sim 0] [--lock] [--only id1,id2|area.] [--seeds 1,2] [--policy script] [--name LFM]
+//   node sim/run_cards.js [--sim 0] [--lock] [--only id1,id2|area.] [--seeds 1,2] [--policy script|mind] [--name LFM]
+//     mind: [--llm http://127.0.0.1:8080] [--max-tokens 1024] (llama-server running; DBG_MIND=1 prints each turn)
 // policy script = the card's reference solution (validates that the card is solvable and the judge agrees).
 // One `episode` record per run in data/own/<day>/<stamp>_<name>_cards.jsonl (+ the usual call/result records).
 'use strict'
 const LOCK = process.argv.includes('--lock')
 const clock = LOCK ? require('./clock').installManual() : null // before mineflayer
+if (LOCK) require('./clock').patchPathfinder(clock)
 const fs = require('fs')
 const path = require('path')
 const mineflayer = require('mineflayer')
@@ -54,26 +56,52 @@ async function main() {
   const write = o => log.write(JSON.stringify(o) + '\n')
   write({ type: 'session', session, bot: NAME, cards: true, policy: POLICY, lockstep: LOCK, start: new Date().toISOString() })
 
-  const bot = mineflayer.createBot({ host: s.host, port: s.port, username: NAME, version: '1.21.11', ...(LOCK ? { checkTimeoutInterval: 30000 * 1000 } : {}) })
-  bot.loadPlugin(pathfinder)
-  await new Promise((res, rej) => { bot.once('spawn', res); bot.once('kicked', rej); bot.once('error', rej) })
-  const mv = C.makeMovements(bot)
-  bot.pathfinder.setMovements(mv); bot.pathfinder.thinkTimeout = 5000
-  await cmd(`op ${NAME}`) // not needed by the bot; keeps `tick` etc. usable from a client if debugging
-  await cmd(`tp ${NAME} ${ORIGIN.x} ${ORIGIN.y} ${ORIGIN.z}`)
-  await C.sleep(3000)
-  await bot.waitForChunksToLoad()
-  if (LOCK) await lock.start()
-
+  // the bot and everything bound to it; rebuilt if the bot gets disconnected (the runner then goes on with the
+  // next episode instead of failing every later one with "No player was found")
+  let bot, mv, senses, interp, turns, lost = null
   // server death messages ("LFM was slain by Zombie"), kept per episode for the record
   let deathMsgs = []
   // what the bot says in chat this episode, for `said` checks (the server echoes the bot's own messages)
   let said = []
-  bot.on('chat', (user, msg) => { if (user === NAME) said.push(msg) })
-  bot.on('messagestr', (msg, pos) => { if (pos !== 'chat' && msg.startsWith(NAME + ' ') && !msg.includes('<')) deathMsgs.push(msg) })
-  const senses = new Senses(bot, { session, dataDir: path.join(dir, session + '_mem') })
-  const interp = new Interpreter(bot, senses, { log: write })
-  const turns = new Turns({ bot, senses, interp })
+  const connect = async () => {
+    bot = mineflayer.createBot({ host: s.host, port: s.port, username: NAME, version: '1.21.11', ...(LOCK ? { checkTimeoutInterval: 30000 * 1000 } : {}) })
+    bot.loadPlugin(pathfinder)
+    await new Promise((res, rej) => { bot.once('spawn', res); bot.once('kicked', rej); bot.once('error', rej) })
+    lost = null
+    const me = bot
+    me.on('end', reason => { if (bot === me) lost = lost || `disconnected (${reason})` })
+    me.on('kicked', reason => { if (bot === me) lost = `kicked: ${typeof reason === 'string' ? reason : reason && reason.value != null ? reason.value : JSON.stringify(reason)}` })
+    me.on('error', e => { if (bot === me) lost = lost || `error: ${e.message}` })
+    if (process.env.DBG_HP) { let h = 20; bot.on('health', () => { if (bot.health !== h) console.log(`  HP ${h} -> ${bot.health} at ${bot.entity.position} fire=${bot.entity.onFire}`); h = bot.health }); bot.on('entityHurt', e => { if (e === bot.entity) console.log('  HURT', bot.entity.position.toString()) }) }
+    mv = C.makeMovements(bot)
+    bot.pathfinder.setMovements(mv); bot.pathfinder.thinkTimeout = 5000
+    await cmd(`op ${NAME}`) // not needed by the bot; keeps `tick` etc. usable from a client if debugging
+    await cmd(`tp ${NAME} ${ORIGIN.x} ${ORIGIN.y} ${ORIGIN.z}`)
+    await C.sleep(3000)
+    await bot.waitForChunksToLoad()
+    bot.on('chat', (user, msg) => { if (user === NAME) said.push(msg) })
+    bot.on('messagestr', (msg, pos) => { if (pos !== 'chat' && msg.startsWith(NAME + ' ') && !msg.includes('<')) deathMsgs.push(msg) })
+    senses = new Senses(bot, { session, dataDir: path.join(dir, session + '_mem') })
+    interp = new Interpreter(bot, senses, { log: write })
+    turns = new Turns({ bot, senses, interp })
+  }
+  const reconnect = async why => {
+    console.log(`  bot lost (${why}): reconnecting`)
+    write({ type: 'reconnect', why })
+    try { interp.close() } catch {}
+    try { bot.removeAllListeners(); bot.quit() } catch {}
+    if (LOCK) await lock.pause()
+    await C.sleep(2000)
+    await connect()
+    if (LOCK) await lock.start()
+  }
+  // the server's view: is the bot still a connected player?
+  const online = async () => (await r.cmd('list')).split(':').slice(1).join(':').split(',').map(x => x.trim()).includes(NAME)
+  await connect()
+  if (LOCK) await lock.start()
+  const mind = POLICY === 'mind' ? new (require('./mind').Mind)({ url: arg('llm', 'http://127.0.0.1:8080'), maxTokens: +arg('max-tokens', 1024),
+    hold: LOCK ? fn => lock.hold(fn) : fn => fn(), setT: LOCK ? clock.realSetTimeout : setTimeout, write }) : null
+
   // a fresh mind per episode (throwaway memory): same Senses listeners, new stores
   const freshMind = ep => {
     const mem = path.join(dir, session + '_mem', `${ep.id}_${ep.seed}`)
@@ -86,7 +114,10 @@ async function main() {
 
   const results = []
   for (const card of cards) {
-    for (const seed of SEEDS || card.seeds || [1]) {
+    const queue = [...(SEEDS || card.seeds || [1])], retried = new Set()
+    while (queue.length) {
+      const seed = queue.shift()
+      if (lost || !(await online())) await reconnect(lost || 'not in the player list')
       const ep = K.expand(card, seed, ORIGIN)
       const plan = K.compile(ep, NAME)
       const judge = new K.Judge(r, ep, NAME, plan)
@@ -94,6 +125,7 @@ async function main() {
       interp.stop('episode')
       // ---- setup
       for (const c of plan.reset) await cmd(c)
+      await C.sleep(150) // a few ticks in the holding cell's water: any fire is out
       for (const c of plan.world) await cmd(/^(fill|setblock|place|summon)/.test(c) ? inDim(c) : c)
       for (const c of plan.build) await cmd(/^(fill|setblock|place|summon|item replace block)/.test(c) ? inDim(c) : c)
       for (const c of plan.player) await cmd(c)
@@ -137,6 +169,7 @@ async function main() {
       let stop = false
       const watcher = (async () => {
         while (!stop && !outcome) {
+          if (lost) { outcome = 'error'; err = err || `bot ${lost}`; interp.stop('episode_end'); break }
           const o = await step()
           if (o && !outcome) { outcome = o; interp.stop('episode_end') }
           if (!outcome) await C.sleep(JUDGE_EVERY * 50)
@@ -162,7 +195,18 @@ async function main() {
           if (!outcome) { const o = await step(); outcome = outcome || o } // final judgement after the last statement
           // the script finished: give the world 2 s (drops, smelting...) then judge once more
           if (!outcome) { await C.sleep(2000); const o = await step(); outcome = outcome || o || 'fail' }
-        } else throw new Error(`policy ${POLICY} not implemented (mind loop is H5)`)
+        } else if (POLICY === 'mind') {
+          { const o = await step(); outcome = outcome || o } // deliver the order before the first decision
+          while (!outcome) {
+            decisions++
+            const { r: tr, done } = await mind.decide({ senses, interp, turns, bot, ep })
+            const ev = done ? await done : null
+            write({ type: 'card_step', id: ep.id, seed, policy: 'mind', stmt: ev ? ev.stmt : null, result: ev })
+            if (process.env.DBG_MIND && ev) console.log(`  -> ${ev.status}${ev.cause ? ' ' + ev.cause : ''} | ${ev.stmt} | ${(ev.detail || '').slice(0, 160)}`)
+            if (!ev && !outcome) await C.sleep(500)
+            if (decisions >= (ep.limits.decisions ?? Infinity) && !outcome) { const o = await step(); outcome = outcome || o || 'timeout' }
+          }
+        } else throw new Error(`unknown policy ${POLICY} (script | mind)`)
       } catch (e) { err = e.stack; outcome = 'error' }
       stop = true; await watcher
       const ticks = await tick()
@@ -170,12 +214,16 @@ async function main() {
         real_s: +((real() - realStart) / 1000).toFixed(1), decisions, milestones: reached,
         died: await judge.value({ died: true }), death_msgs: deathMsgs, damage: await judge.value({ damage_taken: {} }),
         judge: await judge.explain(ep.success), err }
-      write(rec); results.push(rec)
+      write(rec)
+      // an episode cut by a lost bot says nothing about the policy: run it again once (after the reconnect)
+      if (lost && !retried.has(seed)) { retried.add(seed); queue.unshift(seed); console.log(`  ${ep.id}#${seed}: bot lost (${lost}), episode will be rerun`); continue }
+      results.push(rec)
       console.log(`${outcome === 'success' ? 'PASS' : 'FAIL'} ${`${ep.id}#${seed}`.padEnd(34)} ${outcome.padEnd(7)} ${String(ticks).padStart(5)} ticks ${rec.real_s}s ${JSON.stringify(ep.params)}${outcome !== 'success' ? ' judge ' + JSON.stringify(rec.judge) : ''}${err ? '\n     ' + err.split('\n')[0] : ''}`)
     }
   }
   const ok = results.filter(x => x.outcome === 'success').length
-  write({ type: 'end', pass: ok, total: results.length })
+  write({ type: 'end', pass: ok, total: results.length, ...(mind ? { mind: mind.stats } : {}) })
+  if (mind) console.log(`mind: ${JSON.stringify(mind.stats)}`)
   const realS = (real() - real0) / 1000
   console.log(`\n${ok}/${results.length} episodes succeeded; log ${logFile}; real ${realS.toFixed(1)} s${LOCK ? `, ${lock.ticks} ticks (${(lock.ticks / realS).toFixed(0)} tps)` : ''}`)
   if (LOCK) await lock.stop()

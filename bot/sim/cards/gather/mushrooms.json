@@ -1,0 +1,18 @@
+{
+  "card": 1, "id": "gather.mushrooms", "title": "Collect both mushroom colors beneath a dark canopy",
+  "tags": ["gather", "harvest", "mushrooms", "darkness"], "difficulty": 2, "split": "train", "seeds": [1, 2, 3, 4],
+  "params": {"n": {"int": [2, 3]}, "dx": {"int": [2, 4]}, "dz": {"int": [3, 5]}, "roof": {"choice": ["oak_planks", "spruce_planks"]}},
+  "world": {"template": "arena", "time": 18000, "gamerules": {"advance_time": false, "random_tick_speed": 0, "spawn_monsters": false, "block_drops": true}},
+  "build": [
+    {"fill": ["<${dx - 2},-1,${dz - 2}>", "<${dx + n + 1},-1,${dz + 4}>"], "block": "podzol"},
+    {"fill": ["<${dx - 2},3,${dz - 2}>", "<${dx + n + 1},3,${dz + 4}>"], "block": "${roof}"},
+    {"fill": ["<${dx},0,${dz}>", "<${dx + n - 1},0,${dz}>"], "block": "brown_mushroom"},
+    {"fill": ["<${dx},0,${dz + 2}>", "<${dx + n - 1},0,${dz + 2}>"], "block": "red_mushroom"}
+  ],
+  "player": {"inventory": []},
+  "order": {"from": "Noan", "text": "ramasse ${n} champignons bruns et ${n} rouges sous l'abri sombre"},
+  "success": {"all": [{"have": "brown_mushroom", "min": "${n}"}, {"have": "red_mushroom", "min": "${n}"}]}, "fail": {"died": true},
+  "milestones": [{"name": "brown_mushrooms_collected", "check": {"have": "brown_mushroom", "min": "${n}"}}, {"name": "first_red_mushroom", "check": {"have": "red_mushroom", "min": 1}}],
+  "limits": {"ticks": 2700, "decisions": 10}, "solution": ["harvest brown_mushroom n=${n} replant=no", "harvest red_mushroom n=${n} replant=no"], "solution_ticks": 900,
+  "notes": "Night is fixed under an opaque roof with open sides and three blocks of headroom. Podzol supports both mushroom colors regardless of residual skylight. Random ticks and natural monster spawning are disabled; no dependency on biome, spread, or mob AI."
+}

@@ -1,0 +1,32 @@
+{
+  "card": 1,
+  "id": "mine.ore_next_to_lava",
+  "title": "Plug an adjacent lava pocket before harvesting floor iron",
+  "tags": ["mine", "lava", "place", "safety", "multi_stage"],
+  "difficulty": 3,
+  "split": "heldout",
+  "seeds": [1, 2, 3, 4, 5],
+  "params": {"dx": {"int": [3, 6]}, "dz": {"int": [-2, 2]}, "n": {"int": [1, 3]}},
+  "world": {"template": "arena", "gamerules": {"advance_time": false, "block_drops": true}},
+  "build": [{"fill": ["<${dx},-1,${dz}>", "<${dx + n - 1},-1,${dz}>"], "block": "iron_ore"}],
+  "player": {"at": "<${dx},0,${dz - 3}>", "spawn": "<-5,0,-5>", "inventory": [
+    {"item": "stone_pickaxe", "slot": 0}, {"item": "cobblestone", "count": 4}
+  ]},
+  "mind": {"places": {"plug_spot": "<${dx - 1},0,${dz + 1}>"}},
+  "order": {"from": "Noan", "text": "récupère les ${n} fers bruts dans le sol sans mourir ; bouche d'abord la poche de lave en <${dx},-1,${dz + 1}> avec un pavé", "at_tick": 0},
+  "timeline": [{"at_tick": 0, "rcon": "setblock <${dx},-1,${dz + 1}> lava"}],
+  "success": {"all": [
+    {"have": "raw_iron", "min": "${n}"},
+    {"block": "<${dx},-1,${dz + 1}>", "is": "cobblestone"},
+    {"not": {"died": true}}
+  ]},
+  "fail": {"died": true},
+  "milestones": [
+    {"name": "lava_plugged", "check": {"block": "<${dx},-1,${dz + 1}>", "is": "cobblestone"}},
+    {"name": "first_raw_iron", "check": {"have": "raw_iron", "min": 1}}
+  ],
+  "limits": {"ticks": 2400, "decisions": 12},
+  "solution": ["goto @plug_spot dist=0", "place cobblestone at=<${dx},-1,${dz + 1}>", "mine iron_ore n=${n}"],
+  "solution_ticks": 800,
+  "notes": "At tick zero one floor block becomes a lava source, contained by solid stone below and on three sides and the first iron ore on the fourth. The bot starts three blocks north on solid ground. The west rim gives an unobstructed view into the pocket for placing against its bottom. Plugging the source removes digDanger's adjacent-lava refusal. Mining the one-block-deep ore trench leaves stone under every drop."
+}

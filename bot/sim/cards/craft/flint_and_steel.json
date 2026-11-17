@@ -1,0 +1,86 @@
+{
+  "card": 1,
+  "id": "craft.flint_and_steel",
+  "title": "Craft flint and steel using the inventory crafting grid",
+  "tags": [
+    "craft",
+    "inventory"
+  ],
+  "difficulty": 1,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "params": {
+    "px": {
+      "int": [
+        -3,
+        3
+      ]
+    },
+    "extra": {
+      "int": [
+        0,
+        3
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "easy",
+    "gamerules": {
+      "spawn_monsters": false,
+      "advance_time": false,
+      "advance_weather": false
+    }
+  },
+  "player": {
+    "at": "<${px},0,0>",
+    "spawn": "<${px},0,0>",
+    "inventory": [
+      {
+        "item": "iron_ingot",
+        "count": "${1 + extra}"
+      },
+      {
+        "item": "flint",
+        "count": 1
+      }
+    ]
+  },
+  "fail": {
+    "died": true
+  },
+  "order": {
+    "from": "Noan",
+    "text": "fabrique un briquet avec ton silex et un lingot de fer, puis garde-le",
+    "at_tick": 0
+  },
+  "success": {
+    "have": "flint_and_steel",
+    "min": 1
+  },
+  "milestones": [
+    {
+      "name": "lighter_ready",
+      "check": {
+        "have": "flint_and_steel",
+        "min": 1
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 600,
+    "decisions": 4
+  },
+  "solution": [
+    "craft flint_and_steel"
+  ],
+  "solution_ticks": 200
+}

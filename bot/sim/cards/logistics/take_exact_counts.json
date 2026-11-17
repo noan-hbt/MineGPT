@@ -1,0 +1,215 @@
+{
+  "card": 1,
+  "id": "logistics.take_exact_counts",
+  "title": "Withdraw exactly five coal and three iron ingots across split stacks",
+  "tags": [
+    "logistics",
+    "inventory",
+    "containers"
+  ],
+  "difficulty": 2,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "x": {
+      "int": [
+        -8,
+        -4
+      ]
+    },
+    "z": {
+      "int": [
+        3,
+        6
+      ]
+    },
+    "coal_left": {
+      "int": [
+        4,
+        14
+      ]
+    },
+    "iron_left": {
+      "int": [
+        3,
+        10
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "radius": 15,
+    "height": 12,
+    "depth": 15,
+    "floor": "stone",
+    "dimension": "overworld",
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "peaceful",
+    "gamerules": {
+      "advance_time": false,
+      "advance_weather": false,
+      "keep_inventory": false
+    }
+  },
+  "player": {
+    "at": "<0,0,0>",
+    "spawn": "<0,0,0>",
+    "health": 20,
+    "food": 20,
+    "saturation": 5,
+    "inventory": [
+      {
+        "item": "stone_pickaxe",
+        "count": 1,
+        "slot": 0
+      }
+    ],
+    "held": 0
+  },
+  "fail": {
+    "died": true
+  },
+  "let": {
+    "coal_second": "${coal_left + 3}",
+    "iron_second": "${iron_left + 2}"
+  },
+  "build": [
+    {
+      "container": "<${x},0,${z}>",
+      "block": "chest[facing=south]",
+      "items": [
+        {
+          "item": "coal",
+          "count": 2,
+          "slot": 0
+        },
+        {
+          "item": "iron_ingot",
+          "count": 1,
+          "slot": 1
+        },
+        {
+          "item": "coal",
+          "count": "${coal_second}",
+          "slot": 13
+        },
+        {
+          "item": "iron_ingot",
+          "count": "${iron_second}",
+          "slot": 25
+        },
+        {
+          "item": "charcoal",
+          "count": 9,
+          "slot": 5
+        },
+        {
+          "item": "raw_iron",
+          "count": 7,
+          "slot": 6
+        },
+        {
+          "item": "bread",
+          "count": 4,
+          "slot": 8
+        }
+      ]
+    }
+  ],
+  "mind": {
+    "places": {
+      "reserve": "<${x},0,${z}>"
+    }
+  },
+  "order": {
+    "from": "Noan",
+    "text": "Prends exactement 5 charbons et 3 lingots de fer dans @reserve. Laisse le surplus et tout le reste dans le coffre.",
+    "at_tick": 0
+  },
+  "success": {
+    "all": [
+      {
+        "have": "coal",
+        "min": 5,
+        "max": 5
+      },
+      {
+        "have": "iron_ingot",
+        "min": 3,
+        "max": 3
+      },
+      {
+        "have": "stone_pickaxe",
+        "min": 1,
+        "max": 1
+      },
+      {
+        "container": "<${x},0,${z}>",
+        "item": "coal",
+        "min": "${coal_left}",
+        "max": "${coal_left}"
+      },
+      {
+        "container": "<${x},0,${z}>",
+        "item": "iron_ingot",
+        "min": "${iron_left}",
+        "max": "${iron_left}"
+      },
+      {
+        "container": "<${x},0,${z}>",
+        "item": "charcoal",
+        "min": 9,
+        "max": 9
+      },
+      {
+        "container": "<${x},0,${z}>",
+        "item": "raw_iron",
+        "min": 7,
+        "max": 7
+      },
+      {
+        "container": "<${x},0,${z}>",
+        "item": "bread",
+        "min": 4,
+        "max": 4
+      },
+      {
+        "block": "<${x},0,${z}>",
+        "is": "chest"
+      }
+    ]
+  },
+  "milestones": [
+    {
+      "name": "five_coal_taken",
+      "check": {
+        "have": "coal",
+        "min": 5,
+        "max": 5
+      }
+    },
+    {
+      "name": "three_ingots_taken",
+      "check": {
+        "have": "iron_ingot",
+        "min": 3,
+        "max": 3
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 900,
+    "decisions": 8
+  },
+  "solution_ticks": 300,
+  "solution": [
+    "take coal n=5 chest=@reserve",
+    "take iron_ingot n=3 chest=@reserve"
+  ]
+}

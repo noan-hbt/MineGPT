@@ -37,7 +37,7 @@
     "dimension": "overworld",
     "time": 18000,
     "weather": "clear",
-    "difficulty": "easy",
+    "difficulty": "hard",
     "gamerules": {
       "advance_time": false,
       "advance_weather": false,
@@ -196,5 +196,8 @@
         "radius": 25
       }
     ]
-  }
+  },
+  "notes": [
+    "Hard difficulty: on easy the skeleton's arrows spread so much that a whole 10 s shield window could see no hit, and the block milestone never fired."
+  ]
 }

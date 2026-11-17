@@ -120,7 +120,92 @@ Strip a leading empty `<think></think>` from the content if present. Full workin
 - Bot does not talk (no LLM chat replies). Ideas: LLM chat replies, commands like "mine iron" / "build shelter",
   use RCON for scripted tests.
 
-## State 2026-11-17 session #17 (RESUME HERE) — 70 Codex cards, fidelity x1 vs lockstep, bot sync fixes, LLM speed
+## State 2026-11-17 session #19 (RESUME HERE) — VAL3 triage, 4 skill fixes, VAL4 495/495; next: LFM2.5-350M track
+Branch `v2`. Session #18 + #19 work committed together.
+
+### VAL3 -> VAL4
+VAL3 (session #18 fixes): 485/495. All 10 failures were skill/pathfinder bugs, fixed, each card re-run:
+- `gather.fish` 0/4: mineflayer `bot.fish()` detects the bite from particles -> reeled on approach particles
+  (empty casts), then `Fishing cancelled` when the bobber despawned = hard Fail. Now `gather.castOnce`: reel on the
+  bobber splash sound at the bobber. **minecraft-data sound ids are shifted by one on this version**: the splash
+  arrives named `entity.fishing_bobber.retrieve`, the throw named `.splash` -> accept both, only at a bobber > 2 m
+  from the player. Lost casts are recast (fail after 2n+2). 4/4, 138-361 ticks.
+- `nav.door_house` 0/4: canDig + an open door's full collision box -> pathfinder dug the door. Now (makeMovements)
+  doors/gates/trapdoors in blocksCantBreak; an open door/gate is safe, non-physical, flat; plus a `path_update` hook
+  putting waypoints back on the floor (postProcessPath put them on top of the door panel -> "stuck" forever).
+- `craft.boat` #3: 4/12 planks then 2 empty clicks in lockstep. craft retries 4x with backoff + resync.
+- `gather.carrots_replant` (flaky): (a) pathfinder dug fresh replants (avoided != unbreakable) -> crops in
+  blocksCantBreak; (b) bot climbs out of the irrigation channel by jumping onto a plot -> trampled to dirt. harvest
+  replants before collecting when seeds in hand, water liquidCost 50 during harvest, jump/drop moves landing on
+  farmland removed. Residual flake ~1/8 episodes before the last fix, unseen under trace (timing); VAL4 4/4.
+VAL4 (all fixes, full lockstep): **495/495**, 311 s, 337 tps. Log `data/own/2026-11-17/2026-11-17-19-36_VAL4_cards.jsonl`.
+
+### Next: LFM2.5-350M experiments (decided with user, see memory/lfm350m-experiments.md)
+Goal: measure what improves LFM2.5-350M (`models/LFM2.5-350M-hf`, HF safetensors; convert to GGUF with llama.cpp
+`convert_hf_to_gguf.py` for llama-server, or use transformers) as the card policy (`--policy mind`).
+- Teachers / references for traces: **DeepSeek, Claude, ChatGPT** (APIs). Not LFM3-1.7B.
+- Data: card `solution`s (script policy, 495/495) + frontier-model mind-policy traces; judge = verifiable reward.
+- Order: 1 baseline raw 350M on heldout cards (+ a frontier model as ceiling) -> 2 SFT / sequence distillation
+  -> 3 logit distillation (needs open teacher, e.g. DeepSeek weights; check tokenizer) -> 4 RLVR/GRPO with the card
+  judge -> 5 DPO/ORPO/KTO on success/fail rollout pairs -> 6 adaptation (LoRA per domain vs one model; wedit only to
+  inject facts) -> 7 compression (quant/prune) of the best checkpoint, success vs tps.
+- Mind policy itself is still untested (session #18 notes below): debug it first on easy cards with one model.
+- One heavy job at a time (16 GB RAM).
+
+## State 2026-11-17 session #18 — triage, swim, shoot, reconnect, A* fidelity, 34 cards, mind policy
+Branch `v2`. All work below is uncommitted in the working tree (commit it). `eval/results/` is now committed too
+(user doesn't care).
+
+### First thing to do
+A full lockstep validation with every fix below was running when the session ended (`--name VAL3`, output
+`eval/results/val3.txt`, log `data/own/2026-11-17/*_VAL3_cards.jsonl`). Read the FAIL lines, triage, commit.
+Previous full run (VAL2, before most fixes): 348/351. Known flaky: gather.carrots_replant ~1/12 (a replanted
+carrot gets destroyed, cause unknown, maybe trampled during pickup).
+
+### Bot fixes (validated per card)
+- `shoot`: real arrow ballistics (3.0 b/t, drag 0.99, gravity 0.05, bisection on pitch) + target lead from its
+  own position history. Kills in ~3 arrows. Can't hit a mob hugging a 1x1 pillar from on top (geometry).
+- `shield`: keeps facing the nearest hostile while raised (it only blocks frontal hits).
+- Swimming (common.makeMovements): stock pathfinder never plans out of water -> dug a tunnel under the channel.
+  Added moves: swim up inside water, climb a ledge from the water surface. nav.swim_across 85 ticks.
+- Enchanted tools: prismarine-item gives the raw 1.21 component -> digTime threw "enchantments is not iterable".
+  makeMovements normalises `item.enchants` on every inventory slot.
+- `canSee`: center ray + faces turned to the eye (ore at foot level in a tunnel wall was never "seen").
+- Pathfinder avoids crop cells (trampling); `harvest` steps off the cell before replanting, reports failures.
+- `chop`: second pass for logs missed from the first spot; reports the reason. `collect`: waits 1.5 s for a fresh
+  drop's metadata.
+
+### Runner / sim
+- run_cards: detects a lost bot (end/kicked/error or not in `list`), reconnects (lock.pause -> login -> lock.start),
+  reruns the cut episode once. Tested with a real kick.
+- Setup holding cell (cards.js reset): bot is tp'd into a barrier box with water above the arena while the arena is
+  rebuilt (it used to sink into the next card's lava and burn past tick 0; fire is also saved across runs); cell
+  removed in the player step.
+- **Lockstep A* fidelity** (clock.patchPathfinder, on with --lock): A* budgets used the frozen virtual clock, so a
+  whole search ran inside one tick. Now per-tick budget = real compute time, total timeout = game time, like live.
+- survive.drowning gap closed: 98 lockstep vs 105 x1 (was 223 vs 129; the slow goto out of water).
+- Card fixes: bow_zombie_far (island walled: a zombie in the moat is underwater, arrows can't hit), shield_skeleton
+  (hard: on easy arrows could all miss in 10 s), drop_for_owner (radius 6), clay_from_pond (walk to edge: clay not
+  visible from spawn), carrots_replant (random_tick_speed 0), drowned_shore (return to shore).
+- 34 new Codex cards (6 batches: combat/craft/gather/logistics/mine/nav, list in git status); all pass after fixes.
+  Skipped by Codex: logistics.give_to_player, fetch_tools_for_task (need a second player).
+- Debug env hooks: DBG_GO (positions during goto), DBG_HP (health/hurt trace), DBG_MIND (each LLM turn).
+
+### Mind policy (NOT tested yet)
+`node sim/run_cards.js --lock --policy mind --llm http://127.0.0.1:8080 [--max-tokens 1024] --only <cards>`.
+sim/mind.js: per decision builds the state, renders the sheet (MANUAL explains the format), asks llama-server
+(OpenAI API), applies the turn via Turns (tool rounds <= 4, 1 retry on invalid output then `wait 2s`), waits for the
+action result. In lockstep `lock.hold()` freezes the world and the bot clock while the model thinks. v1 = decision
+turns only (no monitor calls). Logs `mind_call` records. Stop the sim card run / free RAM before llama-server.
+Suggested model: Nemotron3-Nano-4B (`models/compare/`), `-fa on --reasoning-budget 256 -c 16384 --jinja
+--reasoning-format deepseek`.
+
+### Next
+1. Read VAL3, fix, commit. 2. First mind-policy run on easy cards (nav.goto_place, gather.chop_tree, craft.planks),
+debug the loop. 3. Confirm reasoning budget on 24 tasks (model_bench, sim stopped). 4. Monitor calls in the mind
+loop. 5. More cards.
+
+## State 2026-11-17 session #17 — 70 Codex cards, fidelity x1 vs lockstep, bot sync fixes, LLM speed
 Branch `v2`. Nothing committed this session yet (all changes below are in the working tree). Don't commit `eval/results/`.
 
 ### First thing to do
