@@ -4,10 +4,12 @@ import argparse
 import hashlib
 import json
 import math
+import os
 import re
 import time
 import urllib.request
 from functools import lru_cache
+from itertools import zip_longest
 from pathlib import Path
 
 from prepare import B21, DATA, ROOT, read_jsonl, write_jsonl
@@ -77,6 +79,7 @@ class GGUF:
 
 class HF:
     def __init__(self, path, device):
+        os.environ.setdefault("HF_HOME", str(B21 / "runs" / "hf-cache"))
         import torch
         from transformers import AutoModelForCausalLM, AutoTokenizer
 
@@ -273,7 +276,8 @@ def main():
                    if row["group"] in {"exact", "choice_exact"} and row["exact"]}
         failed = [fact for fact in facts if fact["family"] == "minecraft" and fact["id"] not in correct]
         world = [fact for fact in facts if fact["family"] != "minecraft"]
-        write_jsonl(args.select, failed[:20] + world)
+        interleaved = [fact for pair in zip_longest(failed[:20], world) for fact in pair if fact]
+        write_jsonl(args.select, interleaved)
     result = dict(model=engine.model, backend="gguf" if args.gguf else args.device,
                   in_context=args.in_context, fact_sha256=hashlib.sha256(args.facts.read_bytes()).hexdigest(),
                   decision_sha256=hashlib.sha256(args.decisions.read_bytes()).hexdigest(),

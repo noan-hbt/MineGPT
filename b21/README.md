@@ -33,7 +33,7 @@ python b21/sanity.py --gguf http://127.0.0.1:18081 --output b21/runs/sanity-qad.
 & $py b21/eval.py --hf --device cuda --facts b21/data/facts.jsonl --in-context --baseline b21/runs/hf-baseline.json --decision-limit 0 --output b21/runs/hf-context.json
 ```
 
-Le criblage garde jusqu'à 20 recettes en échec en génération et parmi les neuf réponses numériques classées par log-probabilité. Il y ajoute 20 faits de navigation synthétiques. Si le criblage produit moins de 40 faits, compléter les candidats Minecraft puis répéter le criblage avant MEMIT-40. Les repères sont fictifs et calibrés à cinq exemples par direction. `--choice-facts` donne aussi un diagnostic sur l'écart entre rappel et respect du format.
+Le criblage garde jusqu'à 20 recettes en échec en génération et parmi les neuf réponses numériques classées par log-probabilité. Il alterne ces recettes et les 20 faits de navigation synthétiques pour que MEMIT-10 couvre les deux familles. Si le criblage produit moins de 40 faits, compléter les candidats Minecraft puis répéter le criblage avant MEMIT-40. Les repères sont fictifs et calibrés à cinq exemples par direction. `--choice-facts` donne aussi un diagnostic sur l'écart entre rappel et respect du format.
 
 L'indicateur d'efficacité utilise le prompt d'édition et la génération libre. Les paraphrases de test sont distinctes des prompts de LoRA. La spécificité compare le texte généré sur les voisins à celui de la baseline du même backend après normalisation de la casse et des espaces. Le score bot somme les log-probabilités des tokens de chaque action valide, hors token de fin. L'argmax porte sur l'action complète. L'accord sur les journaux indique la reproduction d'une action réussie déjà observée. Les cas synthétiques mesurent le choix d'action qui dépend directement du fait. L'injection simule une récupération idéale du fait et son coût en tokens de prompt.
 
@@ -61,7 +61,7 @@ Relancer la meilleure configuration avec `--save models/edited/<nom>`. Le script
 
 ```powershell
 git clone --depth 1 --branch b12445 https://github.com/ggml-org/llama.cpp.git b21/runs/llama-src
-uv pip install --python $py -r b21/runs/llama-src/requirements/requirements-convert_hf_to_gguf.txt
+uv pip install --python $py 'sentencepiece>=0.1.98,<0.3.0' 'protobuf>=4.21,<5'
 $edited = 'models/edited/memit40'
 Measure-Command { & $py b21/runs/llama-src/convert_hf_to_gguf.py $edited --outtype bf16 --outfile b21/runs/edited-bf16.gguf }
 Measure-Command { llama.cpp/llama-quantize.exe b21/runs/edited-bf16.gguf "$edited/model-Q4_0.gguf" Q4_0 }
