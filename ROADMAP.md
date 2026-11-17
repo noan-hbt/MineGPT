@@ -42,9 +42,10 @@ Format : **ID — nom** · priorité (P1 haut) · dépend de · livrables · cri
 - [ ] **B1 — Log des décisions** · P1 · —
   Chaque tick → `mcbot/logs/*.jsonl` : obs structurée + obs texte, options valides, action choisie, source (llm/réflexe/hint), résultat, durée, état après.
   Fini : 1 h de jeu = fichier exploitable, script `stats.py` qui résume taux de réussite par action.
-- [ ] **B2 — Planificateur de recettes** · P1 · —
+- [x] **B2 — Planificateur de recettes** · P1 · —
   Solveur sur `minecraft-data` (recettes, fours, tiers d'outils) : objectif item → liste ordonnée de sous-tâches. Remplace la progression codée en dur.
   Fini : `plan("iron_pickaxe")` depuis inventaire vide donne plan correct ; bot l'exécute.
+  ✔ 2026-11-17 : test live paisible (inventaire vidé) → stone pickaxe en 25 actions, plan suivi. Exécution imparfaite → B3.
 - [ ] **B3 — Bibliothèque de skills** · P1 · B2
   Skills paramétrés robustes (timeout, retry, raison d'échec) : `gather(item,n)`, `craft`, `smelt`, `mineOre(type)`, `buildShelter`, `sleep`, `farm`, `eat`, `fight`, `flee`, `explore`, `goHome`, `storeInChest`, `follow`, `come`.
   Fini : chaque skill a un test RCON (B6) qui passe.

@@ -125,8 +125,16 @@ Strip a leading empty `<think></think>` from the content if present. Full workin
   sets the planner target (default `iron_pickaxe`), Plan line in the observation, grammar focused on plan steps,
   new actions `smelt <item>`, `place furnace`, explore down; blocks the pathfinder failed on are hidden for a while;
   stations farther than STATION_RANGE are ignored (re-place instead of walking back).
-- **NEXT: live test of B2** (was paused right after the bot reached `place crafting_table`). Run start-game, start-mc,
-  run-bot, `goal iron_pickaxe`, watch `mcbot/last_obs.txt` + `mcbot/logs/*.jsonl`. Then tick B2 (and B1 after a real 1 h run).
+- **B2 live-tested 2026-11-17, ticked.** Planner correct; the LLM follows the Plan line (empty inventory -> stone pickaxe in 25
+  actions, ~110 ms/decision). Logs: `mcbot/run_b2f.log` (normal difficulty), `mcbot/run_b2g.log` (peaceful).
+  Execution problems found, to fix in **B3 (NEXT)**:
+  - normal difficulty: bot fights at low hp and dies 5x in 3 min, inventory lost -> plan resets. Needs flee/eat/shelter reflexes (B3/B5).
+  - `place crafting_table` -> "no free spot" repeated 11x: action stays offered when no spot is placeable (bot.js place logic).
+  - `collect iron_ore` -> 25 s timeout 3x in a row; `explore <dir>` -> 30 s timeout.
+  - block breaking sometimes stops before the block breaks (user report).
+  - dumb choices, e.g. went into water for dirt (user: fine-tuning later should help).
+  - test helper: RCON gamerules on 1.21.11 are snake_case (`advance_time`, `keep_inventory`).
+    Server currently left at peaceful + advance_time false + keep_inventory true.
 - **B21 closed: no.** Weight editing (ROME/MEMIT) and a LoRA trained on isolated facts both wreck decisions on logged
   ticks (276 → 205 / 166 of 300). World facts go in context (B4). Verdict in `b21/REPORT.md`.
 - **Reusable from B21:** `b21/eval.py` `compare()` replays logged decisions (argmax log-prob over the valid options)
