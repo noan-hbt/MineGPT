@@ -1,7 +1,8 @@
 // H4 MineSim server instances: own headless vanilla servers for lockstep runs (a frozen server cannot host a
 // human player). Instance n lives in mcserver-sim/<n>/ (gitignored), game port 25600+n, RCON 25700+n, flat world,
 // fixed seed, view/simulation distance 4, random RCON password. Files copied from mcserver/ (jar + extracted
-// libraries/versions, eula).
+// libraries/versions, eula). Runs on Fabric loader with the player-freeze mod (sim/mod/: in lockstep, players tick
+// only on stepped ticks; vanilla `tick freeze` never freezes players).
 //   node sim/instance.js create <n> | start <n> | stop <n> | status [n] | rm <n>
 //   const { info, start } = require('./sim/instance'); const s = await start(0) // {n, port, rconPort, password}
 'use strict'
@@ -10,6 +11,7 @@ const path = require('path')
 const crypto = require('crypto')
 const { spawn } = require('child_process')
 const rcon = require('../rcon')
+const mod = require('./mod/build')
 
 const ROOT = path.join(__dirname, '..', '..')
 const SRC = path.join(ROOT, 'mcserver')
@@ -59,8 +61,9 @@ async function start(n, { mem = '1G', timeoutMs = 180000 } = {}) {
   const s = create(n)
   if (await ping(n)) return s
   if (!fs.existsSync(JAVA)) throw new Error(`java not found: ${JAVA} (set MC_JAVA)`)
+  const jar = await mod.ensure(s.dir, JAVA)
   const out = fs.openSync(path.join(s.dir, 'stdout.log'), 'a')
-  const p = spawn(JAVA, [`-Xms${mem}`, `-Xmx${mem}`, '-jar', 'server.jar', 'nogui'], { cwd: s.dir, detached: true, stdio: ['ignore', out, out], windowsHide: true })
+  const p = spawn(JAVA, [`-Xms${mem}`, `-Xmx${mem}`, '-jar', jar, 'nogui'], { cwd: s.dir, detached: true, stdio: ['ignore', out, out], windowsHide: true })
   p.unref()
   fs.writeFileSync(path.join(s.dir, 'pid'), String(p.pid))
   const t0 = Date.now()
@@ -81,7 +84,7 @@ async function stop(n) {
 
 function rm(n) { fs.rmSync(dir(n), { recursive: true, force: true }) }
 
-module.exports = { info, create, start, stop, ping, rm, dir }
+module.exports = { info, create, start, stop, ping, rm, dir, JAVA }
 
 if (require.main === module) {
   const [cmd, a] = process.argv.slice(2)

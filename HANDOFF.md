@@ -120,7 +120,37 @@ Strip a leading empty `<think></think>` from the content if present. Full workin
 - Bot does not talk (no LLM chat replies). Ideas: LLM chat replies, commands like "mine iron" / "build shelter",
   use RCON for scripted tests.
 
-## State 2026-11-17 session #15 (RESUME HERE) — 21 cards, lockstep player-tick finding
+## State 2026-11-17 session #16 (RESUME HERE) — lockstep player freeze (Fabric mod)
+Branch `v2`. Don't commit `eval/results/`.
+
+### Done
+- **Sim instances run Fabric** (loader 0.20.1, MC 1.21.11) + mod `bot/sim/mod/` (`minesim-freeze.jar`). Two
+  mixins, active only while `TickRateManager.runsNormally()` is false (frozen, no `tick step` tick running):
+  `ServerGamePacketListenerImpl.tickPlayer()` returns false without running (= `ServerPlayer.doTick`: air, regen,
+  hunger, sleep, effects, fire + floating-kick counters), `ServerPlayer.tick()` cancelled (entity loop: vanilla
+  `isEntityFrozen` never freezes players). Unfrozen (x1) = vanilla behaviour.
+- Built WITHOUT Gradle/Loom: sources use Fabric intermediary names, compiled by `java -m jdk.compiler/...` (the
+  bundled Minecraft runtime has jdk.compiler/jdk.jartool) against `.fabric/remappedJars/.../server-intermediary.jar`.
+  `sim/mod/build.js` `ensure(dir)`: Fabric launcher (cached in `mcserver-sim/fabric-cache/`, downloaded from
+  meta.fabricmc.net if missing), first remap via `--initSettings`, rebuild if sources newer, copy to `<inst>/mods/`.
+  Called by `instance.js start()` (launches `fabric-server-launch.jar`). New instances get it automatically.
+- `node sim/mod/map.js <MojangClass> [method]`: Mojang -> obf -> intermediary names (needs `server_mappings.txt` +
+  `mappings/mappings.tiny` in `mcserver-sim/fabric-cache/`, both there now) for future mixins.
+- `node sim/freeze_check.js [--x1]`: fidelity probe. x1 and lockstep identical now: Air -1.00/tick (300 -> 0 in 300
+  ticks), night skipped after 99-100 ticks in bed (before the mod: Air 259 -> 0 in 10 ticks, sleep 58).
+- Validation lockstep: cards 21 x seeds 1-5 **105/105** (survive.drowning 5/5, was 0/5), 23415 ticks in 108 s
+  (216 tps; was 19832 ticks: episodes take more game ticks now, expected); live suite **64/64** (32.5 s, 131 tps).
+
+### Open (carried)
+- craft.planks#4 lockstep flake, ledger noise across seeds, some lockstep episodes waiting on real time (see #15).
+- Other per-loop server work not tied to the player tick is not audited (e.g. anything in the connection tick:
+  keepalive still runs per loop, harmless). Fidelity guard below will show remaining gaps.
+
+### Next
+1. Fidelity guard: all cards x1 vs lockstep (outcome, ticks, damage distributions); `freeze_check.js` style
+   probes for regen/hunger. 2. More cards. 3. Mind loop = policy `mind`.
+
+## State 2026-11-17 session #15 — 21 cards, lockstep player-tick finding
 Branch `v2`. Don't commit `eval/results/`.
 
 ### Validation
