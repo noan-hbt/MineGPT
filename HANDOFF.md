@@ -120,7 +120,66 @@ Strip a leading empty `<think></think>` from the content if present. Full workin
 - Bot does not talk (no LLM chat replies). Ideas: LLM chat replies, commands like "mine iron" / "build shelter",
   use RCON for scripted tests.
 
-## State 2026-11-17 session #5 (RESUME HERE) — B19 executor experiments in `b19/`
+## State 2026-11-17 session #6 (RESUME HERE) — v2 restart decided, v1 archived
+
+### Read first
+- `notes/harness-v2.md` (rev 3 + section 8 MineSim): the agreed v2 plan. `notes/spec-v2.md`: H1 spec draft (turn
+  protocol, DSL grammar + ~80 verbs + 13 tools, results/failure causes, 12-section situation sheet, events, mind
+  loop, logging). User has not reviewed the spec yet.
+- Project memory now lives IN THE REPO: `memory/` (index `memory/MEMORY.md`). Update it there only.
+
+### Decisions (user, this session)
+- v1 harness (one verb from a closed grammar + code hint) judged "très restreint et nul". v2 = model decides
+  everything, code = senses/muscles/reflexes, no recommended action, only facts + affordances.
+- LLM is local, free, fast: call it VERY often (350M "hands" monitor/decision calls 2-5/s; 1.7B "mind" every
+  5-10 s). Situation sheet 10-20k tokens (bigger than first proposed), stable->volatile for KV cache.
+- Huge action space (DSL **lines**, not JSON tool calls) + many read-only tools; models trained on this syntax.
+- Distil 3 teachers into the students: GPT 6.1 sol (Codex), DeepSeek v4.1 flash (Command Code), **Claude via
+  the user's subscription (Claude Code)**. 350M = fast multi-turn tool use, 1.7B = knowledge/reasoning (hypothesis,
+  ablate). Much wider Minecraft KB: minecraft-data + offline minecraft.wiki dump (OK by user) + other sources +
+  teacher-generated, fact-checked data.
+- Continual learning on own logs: prediction loss (`expect:` vs outcome), hindsight relabelling, teacher fixes on
+  surprises (DAgger), GRPO; regression gate before deploy.
+- MineSim must replicate the real engine very faithfully -> NOT a reimplementation: vanilla server accelerated
+  (`/tick sprint`), mineflayer physics stepped in lockstep with server ticks, several small instances, scenario
+  cards via RCON, world snapshots for branching. Measure throughput at start of H4.
+- 1.7B training on gpt_train: NOT started, user said wait for their go (moot now with v2).
+- **Clean restart**: v1 code committed on branch `v1-archive`, tag `v1-final` (commit 7301831, also on `b6-b7`).
+  NOT yet done: restructure into `bot/ sim/ kb/ data/ teach/ train/ eval/ spec/`, moving v1 data to
+  `data/v1/`, removing v1 code from the working tree. Keep: `models/`, `llama.cpp/`, `mcserver/`, venv
+  (`b21/.venv`, torch etc.), `mcbot/node_modules`. **NEVER touch `remote/`** (remote access) nor `.commandcode/`.
+  `b21/runs` (3.1 GB, closed B21 edited models): user not asked yet -> archive by default, ask before deleting.
+  Was waiting for Codex to finish (it writes in `b19/wedit` and `models/LFM2.5-350M-wedit*`).
+
+### Results of the session (b19, option-scoring top1/top3)
+- Real-log test (290) is LEAKY (split by 30-tick blocks, 6/8 test sessions in train) -> high scores = memorisation.
+- GPT vs DeepSeek teacher (same 10 seeds): GPT 10/10 episodes, 200 rows, 2x faster, more distinct actions; DeepSeek
+  7/10, stalls. GPT chosen for volume. Script `b19/compare_teachers.py`.
+- Held-out synthetic tests (31 states each, ±17 pts noise): gpt_test / ds_test / real test
+  - 350M zero .290/.323, .516/.516, .683/.948 (copies the hint 100% -> score = teacher hint-follow rate)
+  - 350M full SFT on gpt_train (168) .290/.387, .484/.581, .659/.683 (no gain, top3 collapses on real)
+  - LFM3 zero .355/.581, .355/.548 ; LFM3 LoRA on real logs .258/.452, .419/.516, .986/1.00
+  - Codex direct weight writing (b19/wedit, lm_head memories, 0 original weights rewritten, +4.6M..+67M params):
+    v1/v2/v3 all = base on unseen (.290, .516 top1), .948-.979 on leaky real test = memorisation. Claude Code's wrapper shell was reaped
+    (low RAM) at clear but codex.exe + a 2.9 GB python collector kept running: check `tasklist`; Codex still
+    running at clear (final collectors, report `b19/wedit/REPORT.md` via `make_report.py`, final message
+    `b19/wedit/codex_final.md`). Conclusion so far: direct writing memorises, does not generalise.
+- Lesson: one-word imitation on ~200 decisions measures hint-copying; v2 needs volume + outcome-based eval.
+
+### Next
+1. Codex was STOPPED by the user before REPORT.md (v4/v5 not evaluated). Conclusion (user): weight writing is
+   effective for retention -> possible tool to inject knowledge later (see `memory/weight-writing-retention.md`).
+   **Clean restructure DONE (session 7, branch `v2` from b6-b7, NOT committed yet)**: v1 code `git rm`'d (b19, b21,
+   mcbot, root scripts, run-*.ps1); v1 data -> `data/v1/` (logs, logs-b5run, memory, evals, b19, b21); big v1
+   outputs -> `archive/v1/` (b21-runs 3.1 GB, b19-wedit, b19-runs, recordings, old *.log); venv -> `.venv/`
+   (was b21/.venv, checked: torch 2.13 cu130 OK); node_modules + package.json -> `bot/` (mineflayer loads);
+   worktree `../localai-b5run` removed; ROADMAP = H1-H9; README = v2 layout. `data/` and `archive/` gitignored.
+   Leftover: empty `mcbot/node_modules/prismarine-viewer` locked by some process -> delete after reboot.
+   models/LFM2.5-350M-wedit* (v1..v5) still in models/.
+2. User reviews `notes/spec-v2.md` -> freeze H1 (+ `spec/` grammar/schemas/golden examples).
+3. H2: big sheet renderer + ledger + mental map + more inputs in the new `bot/`, live logged.
+
+## State 2026-11-17 session #5 — B19 executor experiments in `b19/`
 Goal of the session (user): compare ALL executor options on the existing logs (policy net from scratch vs small LLM SFT
 vs LFM3 LoRA), then go heavier with teacher distillation. Teacher LLMs invent **synthetic logs** of all kinds of
 situations (structure from real logs, content invented). Nothing committed yet (all of `b19/` is untracked).

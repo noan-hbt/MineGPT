@@ -1,0 +1,8 @@
+- [LFM3 local setup](lfm3-local-setup.md) — llama.cpp LFM3-1.7B Q4 tuning flags + measured tps
+- [MC bot roadmap](mc-bot-roadmap.md) — plan B1-B21 in localai/ROADMAP.md; resume from HANDOFF.md session #6 (v2 restart: notes/harness-v2.md, notes/spec-v2.md)
+- [No hardcoded rules](no-hardcoded-rules.md) — user wants models to decide, not code rules; B5 run failed → strategist+executor idea
+- [MineGPT repo](minegpt-repo.md) — public repo noan-hbt/MineGPT, pending docs + profile + site update
+- [Remote access](remote-access.md) — corp net HTTPS only; watch bot at funnel /viewer/; CRD home/4G only; shell not admin
+- [Short test runs](short-test-runs.md) — live bot tests 1 min while iterating, not 5
+- [Project memory location](project-memory-location.md) — memory lives here in localai/memory/, never in the global dir
+- [Weight writing retains](weight-writing-retention.md) — wedit memorises (not generalise); keep as option to inject knowledge

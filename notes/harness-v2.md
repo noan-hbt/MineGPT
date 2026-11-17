@@ -75,7 +75,7 @@ The DSL covers most of what a player does, typed and parameterised. Every action
 | Movement | goto (pos, place, entity), follow, flee, explore (direction, radius, unexplored), swim, pillar, bridge, descend (staircase), climb, sprint, sneak, jump |
 | Gathering | mine (block, n, near, tool), strip-mine pattern, branch-mine, chop tree (whole), dig area, collect drops, fish, shear, milk, harvest crop |
 | Crafting / processing | craft (item, n), smelt (input, fuel, n), smoke, blast, brew, enchant, anvil repair, grindstone, stonecutter, smithing |
-| Building | place (block, pos, face), build shelter (template), wall, door, light area (torches), fill hole, farm plot, chest room, nether portal |
+| Building | place / break (block, positions, face); no predefined structures (H1 review): the model designs builds itself, saves its own routines |
 | Combat / safety | attack (target), shield block, bow shoot, retreat, eat, heal, equip best armor, sleep, set spawn, avoid (entity, radius), extinguish, MLG water |
 | Inventory | equip, drop, store (chest, filter), take, sort, toss junk, keep list |
 | Farming / animals | plant, bonemeal, breed, lead, tame, feed |
@@ -161,12 +161,26 @@ Guards against drift:
 - own decisions count as "good" only when the outcome or a teacher verifies them;
 - held-out scenario cards are never trained on.
 
-## 8. MineSim
-- Python, abstract but spatial: coarse 3D chunks, biomes, ore veins by depth, caves, water and lava.
-- Simulates day/night, mobs, hunger, tool tiers, and minecraft-data recipes and drops.
-- Shares the DSL interpreter and the sheet renderer with the live bot.
-- Thousands of episodes per hour on CPU.
-- Gaps found live feed back into the sim.
+## 8. MineSim = the real engine, accelerated (decided 2026-11-17)
+User requirement: the sim must replicate the real game engine very faithfully, otherwise training is biased.
+
+**Decision: do not reimplement Minecraft.** Rewriting the engine faithfully (worldgen, mob AI, physics,
+fluids...) is out of reach. Instead, MineSim = the vanilla server (fidelity by construction) driven fast:
+- `/tick sprint` / `/tick rate`: the server runs ticks as fast as the CPU allows.
+- The bot runs in **lockstep** with server ticks: patch the mineflayer physics loop to step once per received
+  server tick instead of on a 50 ms wall-clock timer, so the bot speeds up with the world.
+  To be verified: whether mineflayer and the pathfinder stay correct when sped up.
+- Several small headless instances (view-distance 4, flat worlds or prepared seeds), as many as the 16 GB of
+  RAM allows next to the LLM.
+- **Scenario cards** = world template + `/setblock` / `/give` / `/summon` / `/time` setup scripts through RCON.
+- **Branching for counterfactuals / RL**: snapshot the world (region files or structure saves + player
+  state), restore it, try N alternatives.
+- **Fidelity guard**: the same cards run at x1 and at sprint speed must give the same outcome distributions.
+- **Reproducibility**: fixed seeds and gamerules. Residual mob-AI randomness is handled by running several
+  seeds per card.
+
+Only if the throughput measured at H4 is far too low for RL: an abstract fast sim for pre-training only.
+It would be calibrated on real-engine logs (durations, failure rates) and never used for evaluation.
 
 ## 9. Evaluation (outcomes)
 - Held-out scenario cards in sim, plus the live `eval.js` bench.
