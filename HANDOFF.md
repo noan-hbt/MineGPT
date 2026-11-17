@@ -121,31 +121,31 @@ Strip a leading empty `<think></think>` from the content if present. Full workin
   use RCON for scripted tests.
 
 ## State at end of session 2026-11-17 (resume here)
-- **B2 recipe planner committed on main** (`mcbot/planner.js`, `node mcbot/test_planner.js` passes). bot.js: `goal <item> [n]`
-  sets the planner target (default `iron_pickaxe`), Plan line in the observation, grammar focused on plan steps,
-  new actions `smelt <item>`, `place furnace`, explore down; blocks the pathfinder failed on are hidden for a while;
-  stations farther than STATION_RANGE are ignored (re-place instead of walking back).
-- **B2 live-tested 2026-11-17, ticked.** Planner correct; the LLM follows the Plan line (empty inventory -> stone pickaxe in 25
-  actions, ~110 ms/decision). Logs: `mcbot/run_b2f.log` (normal difficulty), `mcbot/run_b2g.log` (peaceful).
-  Execution problems found, to fix in **B3 (NEXT)**:
-  - normal difficulty: bot fights at low hp and dies 5x in 3 min, inventory lost -> plan resets. Needs flee/eat/shelter reflexes (B3/B5).
-  - `place crafting_table` -> "no free spot" repeated 11x: action stays offered when no spot is placeable (bot.js place logic).
-  - `collect iron_ore` -> 25 s timeout 3x in a row; `explore <dir>` -> 30 s timeout.
-  - block breaking sometimes stops before the block breaks (user report).
-  - dumb choices, e.g. went into water for dirt (user: fine-tuning later should help).
-  - test helper: RCON gamerules on 1.21.11 are snake_case (`advance_time`, `keep_inventory`).
-    Server currently left at peaceful + advance_time false + keep_inventory true.
-- **B21 closed: no.** Weight editing (ROME/MEMIT) and a LoRA trained on isolated facts both wreck decisions on logged
-  ticks (276 → 205 / 166 of 300). World facts go in context (B4). Verdict in `b21/REPORT.md`.
-- **Reusable from B21:** `b21/eval.py` `compare()` replays logged decisions (argmax log-prob over the valid options)
-  = offline eval of any HF model/LoRA without Minecraft → use for B6 / B15.
-- **Training plan agreed with the user:** mass DeepSeek-generated tool-calling examples are worth it for the LoRA
-  decider (B12-B15), NOT for weight editing. Rules: label REAL logged observations (teacher sees plan + memory),
-  keep actions that succeeded in game, exact prod format (`verb arg` + bot SYSTEM), diversity over volume,
-  mix general data, low rank / few epochs, judge with the decision replay. Then DAgger loop (student plays, teacher relabels).
-  Only start mass generation after B3/B5 freeze the action format.
-- Codex was judged not very relevant on B21 (bad fact choice, broken metrics). If delegating again, give tight scope + metrics.
-- `mcbot/last_obs_LFM2.txt` = untracked debug leftover, can be deleted.
+- **B3 in progress on branch `b3-skills`** (not merged). Done:
+  - `mcbot/skills.js`: skill library, each skill returns "ok ..." or a reason, own budget/retries: gather, mineOre,
+    craft, place, smelt, eat, fight, flee, buildShelter, sleep, farm, storeInChest, goHome, explore, come, follow.
+  - `mcbot/rcon.js` (RCON client, `node rcon.js <cmd>`), `mcbot/test_skills.js` (one RCON test per skill, sky arena
+    x=3000 z=3000 on a bedrock platform; `node test_skills.js [names] [--skip names]`). **19/19 pass** (except mine_hidden, see below).
+  - Fixes found by the tests: never dig the block under your feet; enclosed ores (dig what blocks the line of sight);
+    place in a 1x1 shaft (dig a wall cell, don't walk into it); crops (rays pass through them); bed = wait for the 2nd half.
+  - **Mining bug (user report "breaking stops before the block breaks", worse in water/ice)**: mineflayer computes the dig
+    time once and only detects water if the eye block is named `water` -> sends "finished" too early, server refuses.
+    Patched in skills.js (`bot.digTime` x5 when physics says in water, + margin 1.15/2/5 per retry). Not yet checked live.
+  - `mineOre`: own staircase/tunnel digging (`digStep`), refuses steps next to liquid, walks to dry ground when boxed in.
+    Pathfinder GoalY was too slow ("Took to long to decide path"). Real terrain test: ~2/3 pass (oceans/frozen biome near
+    x=3400 z=3200). Last change (gather counts success only if it got the block's own drop) is NOT re-tested.
+  - `bot.js` wired to skills (patch applied, syntax OK, **NOT run live yet**): new verbs mine/shelter/sleep/farm/store/home,
+    SYSTEM prompt updated, `collect` mines up to the plan's count (cap 4), reflexes in code (flee when hp<=8 or creeper,
+    eat when hp<=10, wait when sheltered at night), `sethome` chat command (home.json), liquidCost 8 (avoid water).
+- **NEXT (short)**: 1) `node test_skills.js` once to confirm, 2) restart run-bot (LFM still runs OLD code) and watch 5 min
+   (difficulty normal + night) — check mining in water/ice, reflexes, shelter. 3) merge b3-skills, tick B3, then B4 memory.
+- User feedback: sessions felt too long / looping. Keep iterations short, stop debugging edge cases (e.g. mine_hidden
+  flakiness) once the main path works; prefer live test with the user over long offline loops.
+- Server state: peaceful, advance_time false, keep_inventory true. RCON gamerules are snake_case on 1.21.11.
+- **B21 closed: no.** Verdict in `b21/REPORT.md`. `b21/eval.py compare()` = offline decision replay, reuse for B6/B15.
+- **Training plan agreed:** DeepSeek tool-calling examples for the LoRA decider (B12-B15), labelled on REAL logged
+  observations, after B3/B5 freeze the action format. Then DAgger loop.
+- `mcbot/last_obs_LFM2.txt` = debug leftover, can be deleted.
 
 ## Next: see ROADMAP.md
 Plan decided 2026-11-17 (blocks B1-B20): skills+recipe planner+memory, voice chat, LoRA training (option A: 1 base + 2 LoRA), teacher model, control app, Fabric mod.

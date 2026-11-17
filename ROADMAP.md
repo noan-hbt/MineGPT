@@ -49,6 +49,7 @@ Format : **ID — nom** · priorité (P1 haut) · dépend de · livrables · cri
 - [ ] **B3 — Bibliothèque de skills** · P1 · B2
   Skills paramétrés robustes (timeout, retry, raison d'échec) : `gather(item,n)`, `craft`, `smelt`, `mineOre(type)`, `buildShelter`, `sleep`, `farm`, `eat`, `fight`, `flee`, `explore`, `goHome`, `storeInChest`, `follow`, `come`.
   Fini : chaque skill a un test RCON (B6) qui passe.
+  ⏳ 2026-11-17 : branche `b3-skills`, `skills.js` + `test_skills.js` (19/19 en arène, mine réel ~2/3), branché dans bot.js, reste test live.
 - [ ] **B4 — Mémoire longue** · P1 · B1
   `world.json` (base, lit, coffres+contenu, minerais vus, morts, biomes), journal d'épisodes résumé toutes les N actions (résumé par LLM), pile de tâches. Injection sélective (<2k tokens de prompt).
   Fini : redémarrage du bot → il retrouve sa base et reprend sa tâche.
