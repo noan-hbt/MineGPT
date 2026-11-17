@@ -203,7 +203,12 @@ def compare(engine, facts, sample, bot_system, inject=False, exact_only=False,
                 rows.append(dict(group="bot_fact", fact=fact["id"], index=index, text=chosen,
                                  exact=chosen == bot["expected"], scores=scores,
                                  prompt_tokens=len(ids)))
-    for decision in sample:
+    if sample and rows:
+        factual = summarize(rows, {})
+        progress = ", ".join(f"{group} {metric['correct']}/{metric['total']}"
+                             for group, metric in factual.items())
+        print(f"Fact evaluation complete: {progress}", flush=True)
+    for index, decision in enumerate(sample, start=1):
         # This control sample has no attachment to the synthetic world fixtures.
         ids = engine.render(messages(decision["system"], decision["prompt"]))
         scores = engine.score_options(ids, decision["options"])
@@ -211,6 +216,8 @@ def compare(engine, facts, sample, bot_system, inject=False, exact_only=False,
         rows.append(dict(group="bot_log", fact=decision["log"], index=decision["tick"],
                          text=chosen, exact=chosen in decision["references"], scores=scores,
                          prompt_tokens=len(ids)))
+        if index % 50 == 0:
+            print(f"Scored {index}/{len(sample)} logged decisions", flush=True)
     return rows
 
 

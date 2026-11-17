@@ -8,7 +8,7 @@ from pathlib import Path
 
 from editing.algorithms import check_destination, down, edit, lora, save, sweep
 from eval import HF, HF_MODEL, compare, health, neighbor_references, summarize
-from prepare import B21, read_jsonl
+from prepare import B21, DATA, read_jsonl
 
 
 def rome_series(engine, facts, args):
@@ -18,6 +18,7 @@ def rome_series(engine, facts, args):
     sample = read_jsonl(args.decisions)
     bot_system = max(sample, key=lambda row: row["log"])["system"]
     rows, details = [], []
+    instruction_count = len(read_jsonl(DATA / "instructions.jsonl")) if args.health else 0
     nll = tokens = peak = 0
     start = time.perf_counter()
     for index, fact in enumerate(facts):
@@ -33,9 +34,9 @@ def rome_series(engine, facts, args):
             record.update(fact=fact["id"], seconds=time.perf_counter() - editing_started)
             details.append(record)
             rows.extend(compare(engine, [fact], sample[index:args.decision_limit:len(facts)],
-                                bot_system))
+                                bot_system, choice_facts=args.choice_facts))
             if args.health:
-                health_rows, summary = health(engine, range(index, 30, len(facts)))
+                health_rows, summary = health(engine, range(index, instruction_count, len(facts)))
                 rows.extend(health_rows)
                 nll += math.log(summary["perplexity"]) * summary["ppl_tokens"]
                 tokens += summary["ppl_tokens"]
@@ -65,6 +66,7 @@ def main():
     parser.add_argument("--device", choices=["cpu", "cuda"], default="cpu")
     parser.add_argument("--save", type=Path)
     parser.add_argument("--evaluate", action="store_true")
+    parser.add_argument("--choice-facts", action="store_true")
     parser.add_argument("--decisions", type=Path, default=B21 / "runs" / "decisions.jsonl")
     parser.add_argument("--decision-limit", type=int, default=300)
     parser.add_argument("--baseline", type=Path)
@@ -110,10 +112,14 @@ def main():
     result = dict(method=args.method, seconds=time.perf_counter() - start,
                   peak_vram_bytes=(torch.cuda.max_memory_reserved() if args.device == "cuda" else None),
                   fact_ids=[fact["id"] for fact in facts], details=details)
+    if args.method != "sweep":
+        print(f"{args.method} applied to {len(facts)} facts in {result['seconds']:.2f}s",
+              flush=True)
     if args.evaluate:
         sample = read_jsonl(args.decisions)
         bot_system = max(sample, key=lambda row: row["log"])["system"]
-        rows = compare(engine, facts, sample[:args.decision_limit], bot_system)
+        rows = compare(engine, facts, sample[:args.decision_limit], bot_system,
+                       choice_facts=args.choice_facts)
         if args.health:
             health_rows, health_metrics = health(engine)
             rows.extend(health_rows)
