@@ -1,4 +1,4 @@
-# MineGPT v2 — H1 spec (draft 1, 2026-11-17)
+# MineGPT v2 — H1 spec (draft 2, 2026-11-17: turns + DSL frozen in spec/)
 
 Plan and rationale: `notes/harness-v2.md` (rev 3). This file is the contract shared by the live bot (JS),
 MineSim (Python), the dataset generators, the teachers and the trainers. Decisions taken:
@@ -25,79 +25,37 @@ One shared `spec/` folder is the single source of truth: grammar (`dsl.lark`), s
 (`sheet.schema.json`), event schema, golden examples. JS and Python both test against it.
 
 ## 1. Turn protocol
-The mind loop calls the model with `system` = harness manual (static) and `user` = situation sheet
-(full or diff), and gets back **tagged lines**. Two call kinds:
-
-### 1.1 Decision call (on events, or when nothing is running)
-Output, one block, each tag at most once except `tool`/`act`:
-```
-think: <free text, short>
-tool: <tool call>                 # 0..4, the harness answers inline, then the model continues
-plan: <step> | <step> | ...       # optional, replaces the current plan
-act: <dsl statement>              # required (or `act: wait 5s`)
-expect: <outcome prediction>      # required with act
-note: <long-term memory line>     # optional
-say: <chat text>                  # optional
-ask: <mind|strategist> <question> # optional, escalation
-```
-Tool loop (ReAct): when the model emits `tool:` lines and no `act:`, generation stops, the harness appends
-`result: ...` lines and the model continues the same turn. Max 4 rounds, then `act` is forced.
-
-### 1.2 Monitor call (while an action runs, as often as the GPU allows)
-Input = sheet diff since the last call + running action progress. Output = exactly one line:
-```
-continue
-adjust: <param>=<value> [...]       # e.g. adjust: radius=48 / until=hp<6
-interrupt: <dsl statement>          # cancels the running action, starts this one (+ expect: on next line)
-```
-Optional `think:` before. Monitor outputs are ~1-15 tokens.
-
-### 1.3 Expectation format
-`expect: <cond>[, <cond>...] in <duration>` with conditions over the same predicates as `until`:
-`expect: have(oak_log)>=+4, hp>=15 in 30s`. `+N` = delta from now. The harness checks it when the action ends
-or the duration passes, and emits a `surprise` event listing each unmet condition with the actual value.
+**Authoritative: `spec/turns.md` + golden cases `spec/golden/turns.jsonl`; reference parser `bot/dsl/turn.js`.**
+The mind loop calls a model with `system` = harness manual (static) and `user` = situation sheet (full or diff), and
+gets back tagged lines (`tag: content`, one per line). Three turn kinds:
+- **decision** (hands, on events or idle): either a *tool round* (`think:`* + 1-4 `tool:`; the harness appends
+  `result:` lines and the model continues the same turn) or a *final* turn: `think:`* `plan:`? `act:` `expect:`
+  `note:`* `say:`? `ask:`? `goal:`?. `expect:` is required after `act:` except for verbs with no game outcome
+  (wait, note, forget, name_place, save_routine, stop, say, whisper, obey, refuse).
+- **monitor** (hands, while an action runs, 2-5/s): optional `think:` + exactly one of `continue`,
+  `adjust: k=v ... [until(cond)]`, `interrupt: <stmt>` (+ `expect:`).
+- **mind** (1.7B, every 5-10 s or on surprise/ask): `think:`* + any of `plan:`, `note:`*, `say:`, `goal:`,
+  `answer:` (to the hands' `ask: mind`), `override: <stmt>` (+ `expect:`), `ask: strategist ...`; or `continue`.
+- `goal: push <text> | replace <text> | done | fail <reason>`; `plan: step | step | ...` (free text steps).
+- Expectation: `expect: <cond>, <cond> in <dur>`; `+N` / `~N` = relative to the start of the action.
+  The harness emits a `surprise` event for each unmet condition.
 
 ## 2. DSL
-### 2.1 Syntax
-```
-stmt      := call [mods] | "seq[" stmt (";" stmt)* "]" | "if(" cond ")" stmt ["else" stmt]
-           | "repeat(" int ")" stmt | "routine" NAME              # call a saved routine
-call      := VERB arg*                       # positional first, then key=value
-arg       := value | KEY "=" value
-value     := NAME | INT | FLOAT | pos | place | entity | duration | list
-pos       := "(" INT "," INT "," INT ")"     # absolute block coords
-place     := "@" NAME                        # remembered place: @home @iron_vein_1 @spawn
-entity    := "#" NAME [ "." INT ]            # #zombie, #player.Noan, nearest if no index
-duration  := INT ("s"|"m")
-list      := "[" value ("," value)* "]"
-mods      := ("until(" cond ")" | "timeout=" duration | "max=" INT)*
-cond      := pred (("&"|"|") pred)* ; pred := night | day | rain | hp<N | food<N | hostile<D | inv_full
-           | have(ITEM)[op N] | near(TARGET,D) | light<N | y<N | y>N | idle
-```
-Item/block/entity names = minecraft-data 1.21 ids without `minecraft:`. Unknown names are a validation error.
+**Authoritative: `spec/dsl.md` (grammar, values, AST, errors) + `spec/catalog.json` (verbs, tools, argument
+types) + `spec/names.json` (valid ids: minecraft-data 1.21.11 + vanilla jar tags, `spec/tools/gen_names.py`).
+Reference parser `bot/dsl/parse.js`, golden cases `spec/golden/dsl.jsonl` (`cd bot; npm test`), Python access via
+`node bot/dsl/check.js` (JSONL in/out).**
 
-### 2.2 Verb catalogue (v2.0 target; implementation is incremental, the catalogue is the contract)
-Movement: `goto target [dist=]`, `follow entity [dist=]`, `flee from=entity|pos [dist=]`, `explore [dir=] [radius=] [prefer=unexplored|biome:X]`,
-`descend [to_y=] [mode=stairs|shaft_safe]`, `ascend [to_y=]`, `pillar n`, `bridge dir n`, `swim_up`, `look target`, `wander`.
-Gathering: `mine block [n=] [near=] [tool=]`, `chop [n=] [species=]`, `strip_mine dir [len=] [y=]`, `branch_mine [len=] [spacing=]`,
-`dig area=(p1,p2)`, `collect [item] [radius=]`, `harvest crop [n=]`, `fish [n=]`, `shear entity`, `milk entity`.
-Craft/process: `craft item [n=]`, `smelt input [n=] [fuel=]`, `cook food [n=]`, `blast input [n=]`, `smoke food [n=]`,
-`enchant item [level=]`, `repair item`, `brew potion`, `stonecut input output [n=]`, `smith base addition template`.
-Build: `place block at=pos|[pos,...]|front|below [face=]` (positions absolute or `~`-relative to the bot), `break at=pos|[pos,...]`.
-**No predefined structures** (decided at H1 review): no build templates, no `light`/`door`/`bed` macros. The model
-designs its builds block by block and may save its own as routines (`save_routine`).
-Combat/safety: `attack entity`, `fight entity [until=]`, `shoot entity`, `shield [dur]`, `retreat [to=]`, `avoid entity [radius=]`,
-`eat [food]`, `sleep`, `equip_best [slot=armor|weapon|tool]`, `set_spawn`, `water_bucket_save`, `extinguish`.
-Inventory/storage: `equip item [slot=]`, `drop item [n=]`, `store [chest=] [filter=]`, `take item [n=] [chest=]`, `sort`,
-`toss_junk`, `keep list`.
-Farm/animals: `plant seed [area=]`, `bonemeal target`, `breed entity [n=]`, `lead entity`, `tame entity`, `feed entity item`.
-Social: `say text`, `whisper player text`, `give player item [n=]`, `come_to player`, `obey`, `refuse reason`.
-Meta: `wait dur`, `note text`, `forget key`, `name_place NAME [at=]`, `save_routine NAME stmt`, `stop`.
+Summary: `verb positional... key=value... [until(cond)]`, composed with `seq[a; b] [until()]`,
+`if(cond) a else b`, `repeat(n) a`, `routine name`. Values: ids (`iron_ore`, `tag:logs`), `@place`,
+`#entity[.id]` / `#player.Name`, ints, durations (`30s`), `"text"`, positions `(x,y,z)` with `~` relative coords,
+boxes `((..),(..))`, lists `[..]`. Conditions: flags (night, sky, inv_full, ...) and comparisons on metrics
+(hp, food, y, hostile, `have(item)`, `dist(target)`, ...) with `& | ! ( )`.
 
-### 2.3 Tools (read-only, answered inline, cost no game time)
-`recipe item`, `uses item`, `where target [n=]`, `scan [radius=] [filter=]`, `path_cost target`, `inv`, `chest NAME`,
-`recall query`, `wiki query`, `mob_info entity`, `loot block`, `biome_info biome`, `simulate stmt` (feasibility only:
-missing items, unreachable target, estimated duration).
+Changes vs draft 1 (H1 freeze): `near(T,D)` -> `dist(T)<D`; `tag:X` vanilla tags; positional params may also be
+given as `name=value`; no build templates nor `light/door/bed/fill_hole` macros (model places blocks itself,
+`place block at=posset`, `break at=posset`, `use [item] on=target` for doors/levers/buckets); `cook` dropped
+(smelt/smoke/blast); `trade` added; `whisper/give/come_to` take `#player.Name`; `goal:` and `answer:` tags.
 
 ### 2.4 Results
 Every action ends with one result event:
