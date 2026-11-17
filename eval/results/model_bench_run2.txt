@@ -1,0 +1,33 @@
+=== Sharp-Spark-X2.6-4B-Q4_K_XL (load 2.6s)
+  arith0  ok         OK  got=131 want=131 tok=432 6.1s
+  arith1  ok         OK  got=103 want=103 tok=451 6.3s
+  grid0   truncated  --  got=None want=15 tok=1024 14.2s
+  grid1   truncated  --  got=None want=18 tok=1024 14.0s
+  plan0   ok         OK  got=12 want=12 tok=567 7.8s
+  plan1   ok         OK  got=20 want=20 tok=411 5.7s
+  state0  ok         OK  got=44 want=44 tok=686 9.4s
+  state1  ok         OK  got=4 want=4 tok=462 6.4s
+=== Spark-X2.6-4B-Q4_K_M (load 3.6s)
+  arith0  ok         OK  got=131 want=131 tok=507 8.0s
+  arith1  ok         OK  got=103 want=103 tok=444 6.9s
+  grid0   truncated  --  got=None want=15 tok=1024 15.9s
+  grid1   truncated  --  got=None want=18 tok=1024 16.1s
+  plan0   ok         OK  got=12 want=12 tok=373 6.0s
+  plan1   ok         OK  got=20 want=20 tok=377 6.0s
+  state0  ok         OK  got=44 want=44 tok=150 2.5s
+  state1  ok         OK  got=4 want=4 tok=287 4.6s
+=== Ternary-Bonsai-2-2B-Q2_0 (load 1.5s)
+  arith0  truncated  --  got=None want=131 tok=1024 5.3s
+  arith1  ok         OK  got=103 want=103 tok=1024 5.2s
+  grid0   truncated  --  got=None want=15 tok=1024 5.2s
+  grid1   truncated  --  got=None want=18 tok=1024 5.2s
+  plan0   truncated  --  got=None want=12 tok=1024 5.2s
+  plan1   ok         --  got=8 want=20 tok=1024 5.2s
+  state0  ok         OK  got=44 want=44 tok=682 3.5s
+  state1  ok         OK  got=4 want=4 tok=864 4.4s
+
+8 tasks/model (2 per family: arith, grid, plan, state), reasoning=auto; log C:\Users\noanh\Desktop\Dev\localai\eval\results\model_bench_2026-11-17-15-57.jsonl
+model                                        acc        by family ans/trunc/none/err  med s  ttft    tok  tok/s ok/min think
+Sharp-Spark-X2.6-4B-Q4_K_XL                  75%          2/0/2/2    6/2/0/0           7.8  0.22    632     74    5.2     8
+Spark-X2.6-4B-Q4_K_M                         75%          2/0/2/2    6/2/0/0           6.9  0.17    523     65    5.5     8
+Ternary-Bonsai-2-2B-Q2_0                     38%          1/0/0/2    4/4/0/0           5.2  0.12    961    201    4.6     8

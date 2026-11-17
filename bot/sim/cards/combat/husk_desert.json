@@ -1,0 +1,171 @@
+{
+  "card": 1,
+  "id": "combat.husk_desert",
+  "title": "Fight a desert husk on a supported sand floor",
+  "tags": [
+    "combat",
+    "husk_desert"
+  ],
+  "difficulty": 2,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "dx": {
+      "int": [
+        -2,
+        2
+      ]
+    },
+    "dz": {
+      "int": [
+        6,
+        9
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "radius": 15,
+    "height": 8,
+    "depth": 8,
+    "floor": "sandstone",
+    "dimension": "overworld",
+    "time": 18000,
+    "weather": "clear",
+    "difficulty": "easy",
+    "gamerules": {
+      "advance_time": false,
+      "advance_weather": false,
+      "spawn_monsters": false,
+      "natural_health_regeneration": false,
+      "mob_griefing": false
+    }
+  },
+  "build": [
+    {
+      "fill": [
+        "<-13,-1,-13>",
+        "<13,-1,13>"
+      ],
+      "block": "sand"
+    },
+    {
+      "fill": [
+        "<-14,0,-14>",
+        "<-14,4,14>"
+      ],
+      "block": "stone_bricks"
+    },
+    {
+      "fill": [
+        "<14,0,-14>",
+        "<14,4,14>"
+      ],
+      "block": "stone_bricks"
+    },
+    {
+      "fill": [
+        "<-13,0,-14>",
+        "<13,4,-14>"
+      ],
+      "block": "stone_bricks"
+    },
+    {
+      "fill": [
+        "<-13,0,14>",
+        "<13,4,14>"
+      ],
+      "block": "stone_bricks"
+    },
+    {
+      "fill": [
+        "<-14,5,-14>",
+        "<14,5,14>"
+      ],
+      "block": "stone_bricks"
+    }
+  ],
+  "entities": [],
+  "player": {
+    "at": "<0,0,0>",
+    "spawn": "<0,0,-10>",
+    "yaw": 0,
+    "pitch": 0,
+    "health": 20,
+    "food": 20,
+    "saturation": 5,
+    "inventory": [
+      {
+        "item": "iron_sword",
+        "slot": 0
+      }
+    ],
+    "armor": {
+      "chest": {
+        "item": "iron_chestplate"
+      }
+    },
+    "held": 0
+  },
+  "order": {
+    "from": "Noan",
+    "text": "Élimine le husk sur le sable, fais attention à sa faim.",
+    "at_tick": 0
+  },
+  "timeline": [
+    {
+      "at_tick": 0,
+      "summon": {
+        "type": "husk",
+        "at": "<${dx},0,${dz}>",
+        "tag": "combat_husk_desert_foe",
+        "nbt": "{PersistenceRequired:1b,CanPickUpLoot:0b,IsBaby:0b}"
+      }
+    }
+  ],
+  "fail": {
+    "died": true
+  },
+  "milestones": [
+    {
+      "name": "closed_on_husk",
+      "check": {
+        "all": [
+          {
+            "at": "<${dx},0,${dz}>",
+            "radius": 4
+          },
+          {
+            "entity": "husk",
+            "tag": "combat_husk_desert_foe",
+            "min": 1,
+            "near": "<0,0,0>",
+            "radius": 25
+          }
+        ]
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 900,
+    "decisions": 20
+  },
+  "solution": [
+    "wait 1s",
+    "equip iron_sword",
+    "fight #husk"
+  ],
+  "solution_ticks": 320,
+  "success": {
+    "entity": "husk",
+    "tag": "combat_husk_desert_foe",
+    "max": 0,
+    "near": "<0,0,0>",
+    "radius": 25
+  }
+}

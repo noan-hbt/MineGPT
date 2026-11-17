@@ -1,0 +1,107 @@
+{
+  "card": 1,
+  "id": "craft.charcoal_torches",
+  "title": "From logs only, reserve fuel, smelt charcoal and craft torches",
+  "tags": [
+    "craft",
+    "smelt",
+    "planning",
+    "fuel"
+  ],
+  "difficulty": 3,
+  "split": "heldout",
+  "seeds": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "params": {
+    "wood": {
+      "choice": [
+        "oak",
+        "birch",
+        "spruce",
+        "acacia"
+      ]
+    },
+    "n": {
+      "int": [
+        1,
+        3
+      ]
+    },
+    "fx": {
+      "int": [
+        -2,
+        2
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "easy",
+    "gamerules": {
+      "advance_time": false,
+      "advance_weather": false
+    }
+  },
+  "build": [
+    {
+      "set": "<${fx},0,2>",
+      "block": "furnace[facing=north]"
+    }
+  ],
+  "player": {
+    "at": "<0,0,0>",
+    "spawn": "<0,0,0>",
+    "inventory": [
+      {
+        "item": "${wood}_log",
+        "count": "${n + 1}"
+      }
+    ]
+  },
+  "order": {
+    "from": "Noan",
+    "text": "Avec seulement tes bûches et le four déjà posé, fabrique ${4 * n} torches. Fais du charbon de bois et prévois les bâtons et le combustible.",
+    "at_tick": 0
+  },
+  "success": {
+    "have": "torch",
+    "min": "${4 * n}"
+  },
+  "fail": {
+    "died": true
+  },
+  "milestones": [
+    {
+      "name": "sticks",
+      "check": {
+        "have": "stick",
+        "min": 4
+      }
+    },
+    {
+      "name": "charcoal",
+      "check": {
+        "have": "charcoal",
+        "min": "${n}"
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 4200,
+    "decisions": 12
+  },
+  "solution": [
+    "craft ${wood}_planks n=4",
+    "craft stick n=4",
+    "smelt ${wood}_log n=${n} fuel=${wood}_planks",
+    "craft torch n=${4 * n}"
+  ],
+  "solution_ticks": "${200 * n + 800}"
+}

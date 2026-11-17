@@ -1,0 +1,118 @@
+{
+  "card": 1,
+  "id": "farm.tame_wolf",
+  "title": "Use bones until a wild wolf has an owner",
+  "tags": [
+    "farm"
+  ],
+  "difficulty": 2,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "x": {
+      "int": [
+        3,
+        6
+      ]
+    },
+    "z": {
+      "int": [
+        -3,
+        3
+      ]
+    },
+    "n": {
+      "int": [
+        48,
+        64
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "easy",
+    "gamerules": {
+      "advance_time": false,
+      "advance_weather": false,
+      "keep_inventory": false,
+      "mob_griefing": false
+    }
+  },
+  "player": {
+    "at": "<0,0,0>",
+    "spawn": "<0,0,0>",
+    "inventory": [
+      {
+        "item": "bone",
+        "count": "${n}",
+        "slot": 0
+      }
+    ]
+  },
+  "order": {
+    "from": "Noan",
+    "text": "Apprivoise le loup avec tes os."
+  },
+  "success": {
+    "entity": "wolf",
+    "tag": "card_tamed",
+    "near": "<${x},0,${z}>",
+    "radius": 4,
+    "min": 1
+  },
+  "fail": {
+    "died": true
+  },
+  "milestones": [
+    {
+      "name": "approached_wolf",
+      "check": {
+        "at": "<${x},0,${z}>",
+        "radius": 3
+      }
+    },
+    {
+      "name": "used_a_bone",
+      "check": {
+        "have": "bone",
+        "min": 0,
+        "max": "${n - 1}"
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 2000,
+    "decisions": 20
+  },
+  "solution": [
+    "tame #wolf",
+    "tame #wolf",
+    "tame #wolf",
+    "tame #wolf"
+  ],
+  "solution_ticks": 650,
+  "entities": [
+    {
+      "type": "wolf",
+      "at": "<${x},0,${z}>",
+      "tag": "taming_target",
+      "no_ai": true,
+      "nbt": "{Age:0,PersistenceRequired:1b}"
+    }
+  ],
+  "timeline": [
+    {
+      "at_tick": 0,
+      "once": false,
+      "rcon": "execute as @e[type=minecraft:wolf,tag=taming_target] if data entity @s Owner run tag @s add card_tamed"
+    }
+  ],
+  "notes": "Wolf starts without Owner. Repeated server-only observation tags it only after ownership exists. NoAI prevents wandering without pre-taming. Four calls allow up to 40 randomized bone attempts; judge ends immediately on taming."
+}

@@ -1,0 +1,8 @@
+=== NVIDIA-Nemotron3-Nano-4B-Q4_K_M[c_fa] (load 2.5s)
+  arith0  ok         OK  got=131 want=131 tok=295 3.8s
+  arith1  ok         OK  got=103 want=103 tok=292 3.7s
+  arith2  ok         OK  got=99 want=99 tok=292 3.8s
+  arith3  ok         OK  got=30 want=30 tok=321 4.1s
+  arith4  ok         OK  got=80 want=80 tok=298 3.8s
+  arith5  ok         OK  got=69 want=69 tok=391 5.0s
+  grid0   truncated  --  got=None want=15 tok=1536 19.2s

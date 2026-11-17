@@ -109,9 +109,9 @@ def tasks(n):
 
 
 # ---------------------------------------------------------------- server
-def start_server(model, reasoning, log):
+def start_server(model, reasoning, log, extra=()):
     args = [SERVER, '-m', model, '-ngl', '99', '-c', '8192', '-np', '1', '--port', str(PORT), '--jinja',
-            '--reasoning', reasoning, '--reasoning-format', 'deepseek', '--no-webui']
+            '--reasoning', reasoning, '--reasoning-format', 'deepseek', '--no-webui', *extra]
     p = subprocess.Popen(args, stdout=log, stderr=subprocess.STDOUT)
     t0 = time.time()
     while time.time() - t0 < 180:
@@ -168,19 +168,21 @@ def main():
     ap.add_argument('--reasoning', default='auto')
     ap.add_argument('--max-tokens', type=int, default=3072)
     ap.add_argument('--timeout', type=int, default=180)
+    ap.add_argument('--server-args', default='', help='extra llama-server flags, e.g. "-fa on --spec-type ngram-mod"')
+    ap.add_argument('--tag', default='', help='label of this config, appended to model names and the log file name')
     a = ap.parse_args()
     models = a.models.split(',') if a.models else sorted(glob.glob(os.path.join(ROOT, 'models', 'compare', '*.gguf')))
     T = tasks(a.n)
     os.makedirs(os.path.join(ROOT, 'eval', 'results'), exist_ok=True)
     stamp = time.strftime('%Y-%m-%d-%H-%M')
-    out_path = os.path.join(ROOT, 'eval', 'results', f'model_bench_{stamp}.jsonl')
+    out_path = os.path.join(ROOT, 'eval', 'results', f'model_bench_{stamp}{"_" + a.tag if a.tag else ""}.jsonl')
     out = open(out_path, 'w', encoding='utf8')
     summary = []
     for m in models:
-        name = os.path.basename(m).replace('.gguf', '')
-        log = open(os.path.join(ROOT, 'eval', 'results', f'server_{name}.log'), 'w')
+        name = os.path.basename(m).replace('.gguf', '') + (f'[{a.tag}]' if a.tag else '')
+        log = open(os.path.join(ROOT, 'eval', 'results', f"server_{re.sub(r'[^A-Za-z0-9_.-]', '_', name)}.log"), 'w')
         t_load = time.time()
-        p, err = start_server(m, a.reasoning, log)
+        p, err = start_server(m, a.reasoning, log, a.server_args.split())
         load_s = time.time() - t_load
         rows = []
         print(f'=== {name} (load {load_s:.1f}s{", " + err if err else ""})', flush=True)

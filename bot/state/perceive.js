@@ -276,7 +276,7 @@ function flags(bot) {
   const e = bot.entity
   if (e.isInWater) f.push('in_water')
   if (e.isInLava) f.push('in_lava')
-  if (e.metadata && typeof e.metadata[0] === 'number' && (e.metadata[0] & 1)) f.push('on_fire')
+  if (require('../skills/common').burning(bot)) f.push('on_fire')
   if (e.onGround) f.push('on_ground')
   if (bot.getControlState('sneak')) f.push('sneaking')
   if (bot.getControlState('sprint')) f.push('sprinting')

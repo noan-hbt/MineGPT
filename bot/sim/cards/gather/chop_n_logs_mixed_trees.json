@@ -1,0 +1,27 @@
+{
+  "card": 1, "id": "gather.chop_n_logs_mixed_trees",
+  "title": "Collect a requested log count from a mixed grove", "tags": ["gather", "chop", "species"],
+  "difficulty": 2, "split": "heldout", "seeds": [1, 2, 3, 4, 6],
+  "params": {"wood": {"choice": ["oak", "birch", "spruce"]}, "n": {"int": [5, 8]}, "dz": {"int": [3, 5]}},
+  "world": {"template": "arena", "gamerules": {"advance_time": false, "random_tick_speed": 0, "block_drops": true}},
+  "build": [
+    {"fill": ["<-8,4,${dz - 1}>", "<-6,4,${dz + 1}>"], "block": "oak_leaves[persistent=true]"},
+    {"fill": ["<-7,0,${dz}>", "<-7,3,${dz}>"], "block": "oak_log"},
+    {"fill": ["<-8,4,${dz + 5}>", "<-6,4,${dz + 7}>"], "block": "oak_leaves[persistent=true]"},
+    {"fill": ["<-7,0,${dz + 6}>", "<-7,3,${dz + 6}>"], "block": "oak_log"},
+    {"fill": ["<-1,4,${dz - 1}>", "<1,4,${dz + 1}>"], "block": "birch_leaves[persistent=true]"},
+    {"fill": ["<0,0,${dz}>", "<0,3,${dz}>"], "block": "birch_log"},
+    {"fill": ["<-1,4,${dz + 5}>", "<1,4,${dz + 7}>"], "block": "birch_leaves[persistent=true]"},
+    {"fill": ["<0,0,${dz + 6}>", "<0,3,${dz + 6}>"], "block": "birch_log"},
+    {"fill": ["<6,4,${dz - 1}>", "<8,4,${dz + 1}>"], "block": "spruce_leaves[persistent=true]"},
+    {"fill": ["<7,0,${dz}>", "<7,3,${dz}>"], "block": "spruce_log"},
+    {"fill": ["<6,4,${dz + 5}>", "<8,4,${dz + 7}>"], "block": "spruce_leaves[persistent=true]"},
+    {"fill": ["<7,0,${dz + 6}>", "<7,3,${dz + 6}>"], "block": "spruce_log"}
+  ],
+  "player": {"inventory": [{"item": "iron_axe"}]},
+  "order": {"from": "Noan", "text": "ramène-moi au moins ${n} bûches de ${wood} dans ce bosquet"},
+  "success": {"have": "${wood}_log", "min": "${n}"}, "fail": {"died": true},
+  "milestones": [{"name": "first_requested_log", "check": {"have": "${wood}_log", "min": 1}}, {"name": "first_trunk", "check": {"have": "${wood}_log", "min": 4}}],
+  "limits": {"ticks": 3600, "decisions": 10}, "solution": ["chop species=${wood}_log n=2"], "solution_ticks": 1200,
+  "notes": "Six deterministic four-log trees, two per species. chop.n counts trees, so two requested trunks supply eight logs. Persistent canopies avoid random leaf drops."
+}

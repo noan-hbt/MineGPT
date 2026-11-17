@@ -1,0 +1,120 @@
+{
+  "card": 1,
+  "id": "survive.poison_cure",
+  "title": "Drink milk to stop a tick-zero poison effect",
+  "tags": [
+    "survive",
+    "poison",
+    "milk"
+  ],
+  "difficulty": 2,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "x": {
+      "int": [
+        -3,
+        3
+      ]
+    },
+    "z": {
+      "int": [
+        -3,
+        3
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "radius": 15,
+    "height": 12,
+    "depth": 15,
+    "floor": "stone",
+    "dimension": "overworld",
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "normal",
+    "gamerules": {
+      "spawn_monsters": false,
+      "advance_time": false,
+      "advance_weather": false,
+      "natural_health_regeneration": false
+    }
+  },
+  "player": {
+    "at": "<${x},0,${z}>",
+    "spawn": "<10,0,10>",
+    "food": 20,
+    "inventory": [
+      {
+        "item": "milk_bucket",
+        "slot": 0
+      }
+    ],
+    "held": 0
+  },
+  "timeline": [
+    {
+      "at_tick": 0,
+      "rcon": "execute positioned <${x},0,${z}> run effect give @a[distance=..2,limit=1] minecraft:poison 60 0 true"
+    }
+  ],
+  "notes": "The judge has no effect predicate: require an empty bucket, no milk left and sustained health with regeneration disabled. Untreated poison lasts longer than the entire episode and fails the health threshold.",
+  "success_when": "end",
+  "success": {
+    "all": [
+      {
+        "not": {
+          "died": true
+        }
+      },
+      {
+        "have": "bucket",
+        "min": 1
+      },
+      {
+        "have": "milk_bucket",
+        "max": 0
+      },
+      {
+        "health": {
+          "min": 16
+        }
+      }
+    ]
+  },
+  "fail": {
+    "died": true
+  },
+  "milestones": [
+    {
+      "name": "drank_milk",
+      "check": {
+        "all": [
+          {
+            "have": "bucket",
+            "min": 1
+          },
+          {
+            "have": "milk_bucket",
+            "max": 0
+          }
+        ]
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 400,
+    "decisions": 20
+  },
+  "solution": [
+    "wait 1s",
+    "eat milk_bucket"
+  ],
+  "solution_ticks": 100
+}

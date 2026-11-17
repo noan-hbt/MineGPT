@@ -1,0 +1,110 @@
+{
+  "card": 1,
+  "id": "craft.boat",
+  "title": "From logs, craft a matching wood boat and deliver it to a dock barrel",
+  "tags": [
+    "craft",
+    "place",
+    "planning",
+    "store"
+  ],
+  "difficulty": 3,
+  "split": "heldout",
+  "seeds": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "params": {
+    "wood": {
+      "choice": [
+        "oak",
+        "birch",
+        "spruce",
+        "acacia"
+      ]
+    },
+    "tx": {
+      "int": [
+        -2,
+        2
+      ]
+    },
+    "bx": {
+      "int": [
+        4,
+        7
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "easy",
+    "gamerules": {
+      "advance_time": false,
+      "advance_weather": false
+    }
+  },
+  "build": [
+    {
+      "container": "<${bx},0,0>",
+      "block": "barrel[facing=up]",
+      "items": []
+    }
+  ],
+  "player": {
+    "at": "<0,0,0>",
+    "spawn": "<0,0,0>",
+    "inventory": [
+      {
+        "item": "${wood}_log",
+        "count": 3
+      }
+    ]
+  },
+  "order": {
+    "from": "Noan",
+    "text": "Avec tes bûches de ${wood}, fabrique un établi puis un bateau du même bois. Range le bateau dans le tonneau en <${bx},0,0>.",
+    "at_tick": 0
+  },
+  "success": {
+    "container": "<${bx},0,0>",
+    "item": "${wood}_boat",
+    "min": 1
+  },
+  "fail": {
+    "died": true
+  },
+  "milestones": [
+    {
+      "name": "table_placed",
+      "check": {
+        "block": "<${tx},0,2>",
+        "is": "crafting_table"
+      }
+    },
+    {
+      "name": "boat_crafted",
+      "check": {
+        "have": "${wood}_boat",
+        "min": 1
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 3600,
+    "decisions": 14
+  },
+  "solution": [
+    "craft ${wood}_planks n=12",
+    "craft crafting_table",
+    "place crafting_table at=<${tx},0,2>",
+    "craft ${wood}_boat",
+    "store chest=<${bx},0,0> filter=${wood}_boat"
+  ],
+  "solution_ticks": 1200
+}

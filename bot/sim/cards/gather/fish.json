@@ -1,0 +1,21 @@
+{
+  "card": 1, "id": "gather.fish", "title": "Catch a fish from an open pool", "tags": ["gather", "fish", "water", "random_loot"],
+  "difficulty": 2, "split": "train", "seeds": [1, 2, 3, 4],
+  "params": {"shift": {"int": [-2, 2]}, "width": {"int": [8, 10]}},
+  "world": {"template": "arena", "gamerules": {"advance_time": false}},
+  "build": [{"fill": ["<2,-3,${shift - 4}>", "<${width + 1},-1,${shift + 4}>"], "block": "water"}],
+  "player": {"at": "<-1,0,${shift}>", "spawn": "<-3,0,${shift}>", "inventory": [{"item": "fishing_rod", "enchant": {"lure": 3}}]},
+  "order": {"from": "Noan", "text": "pêche un poisson dans le bassin avec ta canne"},
+  "success": {"any": [{"have": "cod", "min": 1}, {"have": "salmon", "min": 1}, {"have": "pufferfish", "min": 1}, {"have": "tropical_fish", "min": 1}]},
+  "fail": {"died": true}, "milestones": [
+    {"name": "caught_junk_before_fish", "check": {"any": [
+      {"have": "bowl", "min": 1}, {"have": "leather", "min": 1}, {"have": "leather_boots", "min": 1},
+      {"have": "rotten_flesh", "min": 1}, {"have": "stick", "min": 1}, {"have": "string", "min": 1},
+      {"have": "bone", "min": 1}, {"have": "ink_sac", "min": 1}, {"have": "tripwire_hook", "min": 1},
+      {"have": "lily_pad", "min": 1}, {"have": "potion", "min": 1}, {"have": "fishing_rod", "min": 2}
+    ]}},
+    {"name": "fish_in_inventory", "check": {"have": "#minecraft:fishes", "min": 1}}
+  ],
+  "limits": {"ticks": 7200, "decisions": 12}, "solution": ["fish n=8 until(have(tag:fishes)>=1)"], "solution_ticks": 2400,
+  "notes": "Start on a dry bank beside a sky-exposed three-block-deep source-water pool with a solid stone bottom. Lure III shortens waits. Up to eight casts tolerate junk or treasure before a fish; loot and bite timing remain stochastic."
+}

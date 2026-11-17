@@ -1,0 +1,43 @@
+=== LFM3-1.7B-QAD-Q4_0[ngram] (load 1.5s)
+  arith0  ok         OK  got=131 want=131 tok=751 4.5s
+  arith1  ok         OK  got=103 want=103 tok=813 4.7s
+  grid0   truncated  --  got=None want=15 tok=1536 8.7s
+  grid1   truncated  --  got=None want=18 tok=1536 8.6s
+  plan0   ok         OK  got=12 want=12 tok=1536 9.2s
+  plan1   ok         OK  got=20 want=20 tok=1295 7.8s
+  state0  ok         OK  got=44 want=44 tok=906 5.4s
+  state1  truncated  --  got=None want=4 tok=1536 9.1s
+=== NVIDIA-Nemotron3-Nano-4B-Q4_K_M[ngram] (load 2.6s)
+  arith0  ok         OK  got=131 want=131 tok=295 3.9s
+  arith1  ok         OK  got=103 want=103 tok=304 3.9s
+  grid0   truncated  --  got=None want=15 tok=1536 18.8s
+  grid1   truncated  --  got=None want=18 tok=1536 19.4s
+  plan0   ok         OK  got=12 want=12 tok=246 3.2s
+  plan1   ok         OK  got=20 want=20 tok=179 2.4s
+  state0  ok         OK  got=44 want=44 tok=199 2.6s
+  state1  ok         OK  got=4 want=4 tok=310 4.0s
+=== Spark-X2.6-4B-Q4_K_M[ngram] (load 2.5s)
+  arith0  ok         OK  got=131 want=131 tok=522 8.0s
+  arith1  ok         OK  got=103 want=103 tok=379 5.7s
+  grid0   truncated  --  got=None want=15 tok=1536 23.4s
+  grid1   truncated  --  got=None want=18 tok=1536 22.7s
+  plan0   ok         OK  got=12 want=12 tok=373 5.7s
+  plan1   ok         OK  got=20 want=20 tok=377 5.8s
+  state0  ok         OK  got=44 want=44 tok=150 2.3s
+  state1  ok         OK  got=4 want=4 tok=287 4.4s
+=== Sharp-Spark-X2.6-4B-Q4_K_XL[ngram] (load 2.5s)
+  arith0  ok         OK  got=131 want=131 tok=432 5.9s
+  arith1  ok         OK  got=103 want=103 tok=555 7.3s
+  grid0   truncated  --  got=None want=15 tok=1536 20.6s
+  grid1   truncated  --  got=None want=18 tok=1536 19.7s
+  plan0   ok         OK  got=12 want=12 tok=567 7.7s
+  plan1   ok         OK  got=20 want=20 tok=522 7.1s
+  state0  ok         OK  got=44 want=44 tok=686 9.4s
+  state1  ok         OK  got=4 want=4 tok=325 4.5s
+
+8 tasks/model (2 per family: arith, grid, plan, state), reasoning=auto; log C:\Users\noanh\Desktop\Dev\localai\eval\results\model_bench_2026-11-17-18-50_ngram.jsonl
+model                                        acc        by family ans/trunc/none/err  med s  ttft    tok  tok/s ok/min think
+LFM3-1.7B-QAD-Q4_0[ngram]                    62%          2/0/2/1    5/3/0/0           8.6  0.05   1239    171    5.2     8
+NVIDIA-Nemotron3-Nano-4B-Q4_K_M[ngram]       75%          2/0/2/2    6/2/0/0           3.9  0.15    576     80    6.2     8
+Spark-X2.6-4B-Q4_K_M[ngram]                  75%          2/0/2/2    6/2/0/0           5.8  0.12    645     67    4.6     8
+Sharp-Spark-X2.6-4B-Q4_K_XL[ngram]           75%          2/0/2/2    6/2/0/0           7.7  0.15    770     76    4.4     8

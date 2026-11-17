@@ -1,0 +1,158 @@
+{
+  "card": 1,
+  "id": "nav.bridge_gap",
+  "title": "Build a bridge across a void gap and reach the far bank",
+  "tags": [
+    "nav",
+    "bridge",
+    "place",
+    "void"
+  ],
+  "difficulty": 3,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "n": {
+      "int": [
+        4,
+        6
+      ]
+    },
+    "z": {
+      "int": [
+        -2,
+        2
+      ]
+    },
+    "material": {
+      "choice": [
+        "cobblestone",
+        "oak_planks",
+        "birch_planks"
+      ]
+    }
+  },
+  "world": {
+    "template": "void",
+    "radius": 15,
+    "height": 14,
+    "depth": 40,
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "peaceful",
+    "gamerules": {
+      "advance_time": false,
+      "advance_weather": false
+    }
+  },
+  "player": {
+    "at": "<0,0,${z}>",
+    "spawn": "<-2,0,${z}>",
+    "inventory": [
+      {
+        "item": "${material}",
+        "count": "${n}"
+      }
+    ]
+  },
+  "fail": {
+    "any": [
+      {
+        "died": true
+      },
+      {
+        "y": {
+          "max": -4
+        }
+      }
+    ]
+  },
+  "build": [
+    {
+      "fill": [
+        "<-4,-3,${z-2}>",
+        "<0,-1,${z+2}>"
+      ],
+      "block": "stone"
+    },
+    {
+      "fill": [
+        "<${n+1},-3,${z-2}>",
+        "<${n+5},-1,${z+2}>"
+      ],
+      "block": "stone"
+    }
+  ],
+  "mind": {
+    "places": {
+      "rive": "<${n+2},0,${z}>"
+    }
+  },
+  "order": {
+    "from": "Noan",
+    "text": "fais un pont avec tes blocs vers l'est pour traverser le vide, puis rejoins la rive en face, à @rive"
+  },
+  "success": {
+    "all": [
+      {
+        "at": "<${n+2},0,${z}>",
+        "radius": 1.2
+      },
+      {
+        "block": "<${min(1,n)},-1,${z}>",
+        "is": "${material}"
+      },
+      {
+        "block": "<${min(2,n)},-1,${z}>",
+        "is": "${material}"
+      },
+      {
+        "block": "<${min(3,n)},-1,${z}>",
+        "is": "${material}"
+      },
+      {
+        "block": "<${min(4,n)},-1,${z}>",
+        "is": "${material}"
+      },
+      {
+        "block": "<${min(5,n)},-1,${z}>",
+        "is": "${material}"
+      },
+      {
+        "block": "<${min(6,n)},-1,${z}>",
+        "is": "${material}"
+      }
+    ]
+  },
+  "milestones": [
+    {
+      "name": "first_span",
+      "check": {
+        "block": "<1,-1,${z}>",
+        "is": "${material}"
+      }
+    },
+    {
+      "name": "span_complete",
+      "check": {
+        "block": "<${n},-1,${z}>",
+        "is": "${material}"
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 1800,
+    "decisions": 10
+  },
+  "solution": [
+    "bridge east ${n} block=${material}",
+    "goto @rive dist=0"
+  ],
+  "solution_ticks": 600,
+  "notes": "Both banks are built explicitly in the cleared void region. Falling below the banks fails before reaching terrain outside the cleared depth."
+}

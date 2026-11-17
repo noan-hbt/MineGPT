@@ -1,0 +1,137 @@
+{
+  "card": 1,
+  "id": "nav.ladder_tower",
+  "title": "Climb a ladder on a stone tower and step onto its top deck",
+  "tags": [
+    "nav",
+    "ladder",
+    "height"
+  ],
+  "difficulty": 2,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "x": {
+      "int": [
+        3,
+        6
+      ]
+    },
+    "z": {
+      "int": [
+        -3,
+        3
+      ]
+    },
+    "h": {
+      "int": [
+        6,
+        9
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "radius": 15,
+    "height": 14,
+    "depth": 15,
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "peaceful",
+    "gamerules": {
+      "advance_time": false,
+      "advance_weather": false
+    }
+  },
+  "player": {
+    "at": "<0,0,0>",
+    "spawn": "<0,0,0>",
+    "inventory": []
+  },
+  "fail": {
+    "died": true
+  },
+  "build": [
+    {
+      "fill": [
+        "<${x},0,${z}>",
+        "<${x},${h-1},${z}>"
+      ],
+      "block": "stone_bricks"
+    },
+    {
+      "fill": [
+        "<${x},${h-1},${z-1}>",
+        "<${x+3},${h-1},${z+1}>"
+      ],
+      "block": "stone_bricks"
+    },
+    {
+      "fill": [
+        "<${x-1},0,${z}>",
+        "<${x-1},${h-1},${z}>"
+      ],
+      "block": "ladder[facing=west]"
+    }
+  ],
+  "mind": {
+    "places": {
+      "sommet": "<${x+1},${h},${z}>"
+    }
+  },
+  "order": {
+    "from": "Noan",
+    "text": "monte au @sommet de la tour par l'échelle, sans casser la tour"
+  },
+  "success": {
+    "all": [
+      {
+        "at": "<${x+1},${h},${z}>",
+        "radius": 1.2
+      },
+      {
+        "block": "<${x-1},0,${z}>",
+        "is": "ladder[facing=west]"
+      },
+      {
+        "block": "<${x-1},${h-1},${z}>",
+        "is": "ladder[facing=west]"
+      },
+      {
+        "block": "<${x},${h-1},${z}>",
+        "is": "stone_bricks"
+      }
+    ]
+  },
+  "milestones": [
+    {
+      "name": "ladder_base",
+      "check": {
+        "at": "<${x-1},0,${z}>",
+        "radius": 1
+      }
+    },
+    {
+      "name": "halfway_up",
+      "check": {
+        "y": {
+          "min": "${floor(h/2)}"
+        }
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 1500,
+    "decisions": 6
+  },
+  "solution": [
+    "goto <${x-1},0,${z}> dist=0",
+    "goto @sommet dist=0"
+  ],
+  "solution_ticks": 500
+}

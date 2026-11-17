@@ -1,0 +1,131 @@
+{
+  "card": 1,
+  "id": "survive.suffocation_gravel",
+  "title": "Break free when gravel falls onto the bot at tick zero",
+  "tags": [
+    "survive",
+    "suffocation",
+    "dig",
+    "falling_blocks"
+  ],
+  "difficulty": 3,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "z": {
+      "int": [
+        -3,
+        3
+      ]
+    },
+    "n": {
+      "int": [
+        3,
+        4
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "radius": 15,
+    "height": 12,
+    "depth": 15,
+    "floor": "stone",
+    "dimension": "overworld",
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "normal",
+    "gamerules": {
+      "spawn_monsters": false,
+      "advance_time": false,
+      "advance_weather": false,
+      "natural_health_regeneration": false
+    }
+  },
+  "player": {
+    "at": "<0,0,${z}>",
+    "spawn": "<-6,0,0>",
+    "inventory": [
+      {
+        "item": "iron_shovel",
+        "slot": 0
+      }
+    ],
+    "held": 0
+  },
+  "mind": {
+    "places": {
+      "sortie": "<4,0,${z}>"
+    },
+    "notes": [
+      "Du gravier tombe sur toi. Libère ta tête puis sors vers @sortie."
+    ]
+  },
+  "timeline": [
+    {
+      "at_tick": 0,
+      "rcon": "fill <0,3,${z}> <0,${n + 2},${z}> gravel"
+    }
+  ],
+  "success_when": "end",
+  "success": {
+    "all": [
+      {
+        "not": {
+          "died": true
+        }
+      },
+      {
+        "at": "<4,0,${z}>",
+        "radius": 1.5
+      },
+      {
+        "health": {
+          "min": 12
+        }
+      }
+    ]
+  },
+  "fail": {
+    "died": true
+  },
+  "milestones": [
+    {
+      "name": "head_clear",
+      "check": {
+        "all": [
+          {
+            "block": "<0,1,${z}>",
+            "is": "air"
+          },
+          {
+            "block": "<0,0,${z}>",
+            "is": "gravel"
+          }
+        ]
+      }
+    },
+    {
+      "name": "escaped_column",
+      "check": {
+        "at": "<4,0,${z}>",
+        "radius": 1.5
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 600,
+    "decisions": 20
+  },
+  "solution": [
+    "wait 1s",
+    "repeat(4) break [<0,1,${z}>,<0,0,${z}>,<0,2,${z}>]",
+    "goto @sortie dist=0"
+  ],
+  "solution_ticks": 200
+}

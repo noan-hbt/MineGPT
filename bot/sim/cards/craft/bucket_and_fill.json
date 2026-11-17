@@ -1,0 +1,102 @@
+{
+  "card": 1,
+  "id": "craft.bucket_and_fill",
+  "title": "Craft a bucket and collect the single contained water source",
+  "tags": [
+    "craft",
+    "use",
+    "water"
+  ],
+  "difficulty": 2,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "params": {
+    "tx": {
+      "int": [
+        -2,
+        2
+      ]
+    },
+    "wx": {
+      "int": [
+        2,
+        3
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "easy",
+    "gamerules": {
+      "advance_time": false,
+      "advance_weather": false
+    }
+  },
+  "build": [
+    {
+      "set": "<${tx},0,2>",
+      "block": "crafting_table"
+    },
+    {
+      "set": "<${wx},-1,0>",
+      "block": "water[level=0]"
+    }
+  ],
+  "player": {
+    "at": "<0,0,0>",
+    "spawn": "<0,0,0>",
+    "inventory": [
+      {
+        "item": "iron_ingot",
+        "count": 3
+      }
+    ]
+  },
+  "order": {
+    "from": "Noan",
+    "text": "Fabrique un seau puis remplis-le à la source en <${wx},-1,0>. Garde le seau d’eau.",
+    "at_tick": 0
+  },
+  "success": {
+    "all": [
+      {
+        "have": "water_bucket",
+        "min": 1
+      },
+      {
+        "block": "<${wx},-1,0>",
+        "is": "air"
+      }
+    ]
+  },
+  "fail": {
+    "died": true
+  },
+  "milestones": [
+    {
+      "name": "bucket",
+      "check": {
+        "have": "bucket",
+        "min": 1
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 1800,
+    "decisions": 6
+  },
+  "solution": [
+    "craft bucket",
+    "goto <${wx - 1},0,0> dist=0",
+    "use bucket on=<${wx},-1,0>"
+  ],
+  "solution_ticks": 600
+}

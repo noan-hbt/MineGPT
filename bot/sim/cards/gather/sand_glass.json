@@ -1,0 +1,13 @@
+{
+  "card": 1, "id": "gather.sand_glass", "title": "Dig sand and smelt glass", "tags": ["gather", "dig", "smelt", "multi_stage"],
+  "difficulty": 3, "split": "train", "seeds": [1, 2, 3, 4],
+  "params": {"n": {"int": [2, 4]}, "dx": {"int": [3, 6]}, "dz": {"int": [2, 4]}, "fuel": {"choice": ["coal", "charcoal"]}},
+  "world": {"template": "arena", "gamerules": {"advance_time": false, "block_drops": true}},
+  "build": [{"fill": ["<${dx},0,${dz}>", "<${dx + n - 1},0,${dz}>"], "block": "sand"}, {"set": "<-2,0,2>", "block": "furnace[facing=north]"}],
+  "player": {"inventory": [{"item": "stone_shovel"}, {"item": "${fuel}", "count": 1}]},
+  "order": {"from": "Noan", "text": "creuse ${n} blocs de sable puis fais-les fondre au four pour me faire ${n} blocs de verre"},
+  "success": {"have": "glass", "min": "${n}"}, "fail": {"died": true},
+  "milestones": [{"name": "sand_dug", "check": {"have": "sand", "min": "${n}"}}, {"name": "first_glass", "check": {"have": "glass", "min": 1}}],
+  "limits": {"ticks": "${3 * (200 * n + 180)}", "decisions": 10},
+  "solution": ["dig (<${dx},0,${dz}>,<${dx + n - 1},0,${dz}>)", "smelt sand n=${n} fuel=${fuel}"], "solution_ticks": "${200 * n + 180}"
+}

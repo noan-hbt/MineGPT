@@ -44,6 +44,9 @@ function validate(c) {
   }
   const en = (v, e, where) => { if (v != null && !ENUM[e].includes(v)) errs.push(`${where}: "${v}" not in ${ENUM[e].join('|')}`) }
   const item = (it, where) => { if (keys(it, KEYS.item, where) && !it.item) errs.push(`${where}: missing item`) }
+  for (const r of Object.keys((c.world && c.world.gamerules) || {})) {
+    if (!(r in DEFAULT_RULES)) errs.push(`world.gamerules.${r}: no default in cards.js DEFAULT_RULES (it would leak into later cards): add its vanilla value there`)
+  }
   const check = (k, where) => {
     if (!k || typeof k !== 'object') return errs.push(`${where}: expected a check object`)
     const kind = Object.keys(k).find(x => CHECKS[x])
@@ -145,8 +148,13 @@ function subst(v, vars) {
 const DEFAULT_WORLD = { template: 'arena', radius: 15, height: 12, floor: 'stone', depth: 15, dimension: 'overworld', time: 1000,
   weather: 'clear', difficulty: 'easy', gamerules: {} }
 // gamerules every card gets unless it overrides them (reproducibility: no random spawns, no fire spread...)
+// Every rule a card may set must be listed here: the reset re-applies these each episode, so a rule missing here
+// would leak into the next cards (advance_time false froze the clock for every later card: sleep_night failed).
 const DEFAULT_RULES = { spawn_monsters: false, spawn_phantoms: false, spawn_patrols: false, spawn_wandering_traders: false,
-  advance_weather: false, fire_spread_radius_around_player: 0 }
+  advance_weather: false, fire_spread_radius_around_player: 0,
+  // vanilla values
+  advance_time: true, block_drops: true, mob_drops: true, random_tick_speed: 3, natural_health_regeneration: true,
+  keep_inventory: false, mob_griefing: true }
 const DEFAULT_PLAYER = { at: '<0,0,0>', yaw: 0, pitch: 0, gamemode: 'survival', health: 20, food: 20, saturation: 5, xp_levels: 0,
   effects: [], inventory: [], armor: {}, offhand: null, held: 0 }
 

@@ -1,0 +1,114 @@
+{
+  "card": 1,
+  "id": "survive.regen_eat",
+  "title": "Eat to regenerate low health and remain healthy at the end",
+  "tags": [
+    "survive",
+    "food",
+    "regeneration"
+  ],
+  "difficulty": 2,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "hp": {
+      "int": [
+        6,
+        9
+      ]
+    },
+    "food": {
+      "int": [
+        10,
+        13
+      ]
+    },
+    "n": {
+      "int": [
+        6,
+        8
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "radius": 15,
+    "height": 12,
+    "depth": 15,
+    "floor": "stone",
+    "dimension": "overworld",
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "normal",
+    "gamerules": {
+      "spawn_monsters": false,
+      "advance_time": false,
+      "advance_weather": false,
+      "natural_health_regeneration": true
+    }
+  },
+  "player": {
+    "health": "${hp}",
+    "food": "${food}",
+    "inventory": [
+      {
+        "item": "cooked_beef",
+        "count": "${n}"
+      }
+    ]
+  },
+  "success_when": "end",
+  "success": {
+    "all": [
+      {
+        "not": {
+          "died": true
+        }
+      },
+      {
+        "health": {
+          "min": 18
+        }
+      },
+      {
+        "food": {
+          "min": 14
+        }
+      }
+    ]
+  },
+  "fail": {
+    "died": true
+  },
+  "milestones": [
+    {
+      "name": "fed_for_regen",
+      "check": {
+        "food": {
+          "min": 18
+        }
+      }
+    },
+    {
+      "name": "healing",
+      "check": {
+        "health": {
+          "min": "${hp + 3}"
+        }
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 1100,
+    "decisions": 20
+  },
+  "solution": [
+    "repeat(5) seq[if(food<20) eat cooked_beef; wait 5s]"
+  ],
+  "solution_ticks": 550
+}

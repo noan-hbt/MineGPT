@@ -1,0 +1,210 @@
+{
+  "card": 1,
+  "id": "combat.bow_zombie_far",
+  "title": "Shoot a zombie across an uncrossable deep moat",
+  "tags": [
+    "combat",
+    "bow_zombie_far"
+  ],
+  "difficulty": 3,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "dx": {
+      "int": [
+        -1,
+        1
+      ]
+    },
+    "dz": {
+      "int": [
+        8,
+        10
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "radius": 15,
+    "height": 8,
+    "depth": 8,
+    "floor": "stone",
+    "dimension": "overworld",
+    "time": 18000,
+    "weather": "clear",
+    "difficulty": "easy",
+    "gamerules": {
+      "advance_time": false,
+      "advance_weather": false,
+      "spawn_monsters": false,
+      "natural_health_regeneration": false,
+      "mob_griefing": false
+    }
+  },
+  "build": [
+    {
+      "fill": [
+        "<-14,0,-14>",
+        "<-14,4,14>"
+      ],
+      "block": "stone_bricks"
+    },
+    {
+      "fill": [
+        "<14,0,-14>",
+        "<14,4,14>"
+      ],
+      "block": "stone_bricks"
+    },
+    {
+      "fill": [
+        "<-13,0,-14>",
+        "<13,4,-14>"
+      ],
+      "block": "stone_bricks"
+    },
+    {
+      "fill": [
+        "<-13,0,14>",
+        "<13,4,14>"
+      ],
+      "block": "stone_bricks"
+    },
+    {
+      "fill": [
+        "<-14,5,-14>",
+        "<14,5,14>"
+      ],
+      "block": "stone_bricks"
+    },
+    {
+      "fill": [
+        "<-5,-4,4>",
+        "<5,-1,13>"
+      ],
+      "block": "air"
+    },
+    {
+      "fill": [
+        "<-5,-4,4>",
+        "<5,-3,13>"
+      ],
+      "block": "water"
+    },
+    {
+      "fill": [
+        "<-2,-4,7>",
+        "<2,-1,11>"
+      ],
+      "block": "stone"
+    },
+    {
+      "fill": [
+        "<-3,0,-5>",
+        "<3,2,-3>"
+      ],
+      "block": "stone_bricks"
+    }
+  ],
+  "entities": [],
+  "player": {
+    "at": "<0,3,-3>",
+    "spawn": "<0,3,-3>",
+    "yaw": 0,
+    "pitch": 0,
+    "health": 20,
+    "food": 20,
+    "saturation": 5,
+    "inventory": [
+      {
+        "item": "bow",
+        "slot": 0
+      },
+      {
+        "item": "arrow",
+        "count": 32,
+        "slot": 1
+      }
+    ],
+    "armor": {
+      "head": {
+        "item": "iron_helmet"
+      },
+      "chest": {
+        "item": "iron_chestplate"
+      },
+      "legs": {
+        "item": "iron_leggings"
+      },
+      "feet": {
+        "item": "iron_boots"
+      }
+    },
+    "held": 0
+  },
+  "order": {
+    "from": "Noan",
+    "text": "Abats le zombie à l'arc depuis la plateforme : il ne peut pas traverser les douves.",
+    "at_tick": 0
+  },
+  "timeline": [
+    {
+      "at_tick": 0,
+      "summon": {
+        "type": "zombie",
+        "at": "<${dx},0,${dz}>",
+        "tag": "combat_bow_zombie_far_foe",
+        "nbt": "{PersistenceRequired:1b,CanPickUpLoot:0b,IsBaby:0b}"
+      }
+    }
+  ],
+  "fail": {
+    "died": true
+  },
+  "milestones": [
+    {
+      "name": "arrow_fired",
+      "check": {
+        "have": "arrow",
+        "max": 31
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 1400,
+    "decisions": 20
+  },
+  "solution": [
+    "wait 1s",
+    "shoot #zombie n=12",
+    "wait 2s"
+  ],
+  "solution_ticks": 500,
+  "success": {
+    "all": [
+      {
+        "entity": "zombie",
+        "tag": "combat_bow_zombie_far_foe",
+        "max": 0,
+        "near": "<0,0,0>",
+        "radius": 25
+      },
+      {
+        "at": "<0,3,-3>",
+        "radius": 2
+      },
+      {
+        "have": "arrow",
+        "max": 31
+      }
+    ]
+  },
+  "notes": [
+    "The shooter starts at the forward edge of the raised platform, so downward shots into the moat clear the platform. The moat water surface is three blocks below the banks; mobs cannot climb out."
+  ]
+}

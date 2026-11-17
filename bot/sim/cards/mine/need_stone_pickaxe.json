@@ -1,0 +1,13 @@
+{
+  "card": 1, "id": "mine.need_stone_pickaxe", "title": "Upgrade a wooden pickaxe before mining iron", "tags": ["mine", "craft", "tool_tier", "multi_stage"],
+  "difficulty": 3, "split": "train", "seeds": [1, 2, 3, 4, 8],
+  "params": {"dx": {"int": [4, 7]}, "dz": {"int": [-3, 3]}, "n": {"int": [2, 4]}, "wood": {"choice": ["oak", "birch", "spruce"]}},
+  "world": {"template": "arena", "gamerules": {"advance_time": false, "block_drops": true}},
+  "build": [{"set": "<-2,0,2>", "block": "crafting_table"}, {"fill": ["<${dx},0,${dz}>", "<${dx},0,${dz + n - 1}>"], "block": "iron_ore"}],
+  "player": {"inventory": [{"item": "wooden_pickaxe"}, {"item": "cobblestone", "count": 3}, {"item": "${wood}_planks", "count": 2}]},
+  "order": {"from": "Noan", "text": "ramène-moi ${n} fers bruts ; ta pioche en bois est trop faible, fabrique une pioche en pierre avec tes pavés"},
+  "success": {"all": [{"have": "stone_pickaxe", "min": 1}, {"have": "raw_iron", "min": "${n}"}]},
+  "fail": {"any": [{"died": true}, {"all": [{"not": {"have": "stone_pickaxe", "min": 1}}, {"not": {"block": "<${dx},0,${dz}>", "is": "iron_ore"}}]}]},
+  "milestones": [{"name": "sticks", "check": {"have": "stick", "min": 2}}, {"name": "upgraded_pickaxe", "check": {"have": "stone_pickaxe", "min": 1}}, {"name": "first_raw_iron", "check": {"have": "raw_iron", "min": 1}}],
+  "limits": {"ticks": 2400, "decisions": 12}, "solution": ["craft stick n=4", "craft stone_pickaxe", "mine iron_ore n=${n} tool=stone_pickaxe"], "solution_ticks": 800
+}

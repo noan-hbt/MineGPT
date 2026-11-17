@@ -1,0 +1,125 @@
+{
+  "card": 1,
+  "id": "nav.pillar_to_ledge",
+  "title": "Pillar up beside a high ledge, then step onto it",
+  "tags": [
+    "nav",
+    "pillar",
+    "place",
+    "height"
+  ],
+  "difficulty": 3,
+  "split": "heldout",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "h": {
+      "int": [
+        4,
+        6
+      ]
+    },
+    "z": {
+      "int": [
+        -3,
+        3
+      ]
+    },
+    "material": {
+      "choice": [
+        "dirt",
+        "cobblestone"
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "radius": 15,
+    "height": 14,
+    "depth": 15,
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "peaceful",
+    "gamerules": {
+      "advance_time": false,
+      "advance_weather": false
+    }
+  },
+  "player": {
+    "at": "<0,0,${z}>",
+    "spawn": "<-3,0,${z}>",
+    "inventory": [
+      {
+        "item": "${material}",
+        "count": "${h}"
+      }
+    ]
+  },
+  "fail": {
+    "died": true
+  },
+  "build": [
+    {
+      "fill": [
+        "<1,0,${z-1}>",
+        "<4,${h-1},${z+1}>"
+      ],
+      "block": "stone_bricks"
+    }
+  ],
+  "mind": {
+    "places": {
+      "terrasse": "<2,${h},${z}>"
+    }
+  },
+  "order": {
+    "from": "Noan",
+    "text": "monte sur la terrasse @terrasse avec une colonne de tes blocs à côté du rebord"
+  },
+  "success": {
+    "all": [
+      {
+        "at": "<2,${h},${z}>",
+        "radius": 1.2
+      },
+      {
+        "block": "<0,0,${z}>",
+        "is": "${material}"
+      },
+      {
+        "block": "<0,${h-1},${z}>",
+        "is": "${material}"
+      }
+    ]
+  },
+  "milestones": [
+    {
+      "name": "pillar_started",
+      "check": {
+        "block": "<0,0,${z}>",
+        "is": "${material}"
+      }
+    },
+    {
+      "name": "ledge_height",
+      "check": {
+        "y": {
+          "min": "${h}"
+        }
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 1500,
+    "decisions": 8
+  },
+  "solution": [
+    "pillar ${h} block=${material}",
+    "goto @terrasse dist=0"
+  ],
+  "solution_ticks": 500
+}

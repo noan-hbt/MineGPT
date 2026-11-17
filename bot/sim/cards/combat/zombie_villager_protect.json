@@ -1,0 +1,222 @@
+{
+  "card": 1,
+  "id": "combat.zombie_villager_protect",
+  "title": "Intercept two zombies while keeping a vulnerable villager alive",
+  "tags": [
+    "combat",
+    "zombie_villager_protect"
+  ],
+  "difficulty": 4,
+  "split": "heldout",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "lane": {
+      "int": [
+        -1,
+        1
+      ]
+    },
+    "distance": {
+      "int": [
+        7,
+        9
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "radius": 15,
+    "height": 8,
+    "depth": 8,
+    "floor": "stone",
+    "dimension": "overworld",
+    "time": 18000,
+    "weather": "clear",
+    "difficulty": "easy",
+    "gamerules": {
+      "advance_time": false,
+      "advance_weather": false,
+      "spawn_monsters": false,
+      "natural_health_regeneration": false,
+      "mob_griefing": false
+    }
+  },
+  "build": [
+    {
+      "fill": [
+        "<-14,0,-14>",
+        "<-14,4,14>"
+      ],
+      "block": "stone_bricks"
+    },
+    {
+      "fill": [
+        "<14,0,-14>",
+        "<14,4,14>"
+      ],
+      "block": "stone_bricks"
+    },
+    {
+      "fill": [
+        "<-13,0,-14>",
+        "<13,4,-14>"
+      ],
+      "block": "stone_bricks"
+    },
+    {
+      "fill": [
+        "<-13,0,14>",
+        "<13,4,14>"
+      ],
+      "block": "stone_bricks"
+    },
+    {
+      "fill": [
+        "<-14,5,-14>",
+        "<14,5,14>"
+      ],
+      "block": "stone_bricks"
+    }
+  ],
+  "entities": [
+    {
+      "type": "villager",
+      "at": "<${lane},0,7>",
+      "tag": "combat_protect_friend",
+      "no_ai": true,
+      "nbt": "{PersistenceRequired:1b,Health:20f,VillagerData:{type:\"minecraft:plains\",profession:\"minecraft:none\",level:1}}"
+    }
+  ],
+  "player": {
+    "at": "<0,0,0>",
+    "spawn": "<0,0,-10>",
+    "yaw": 0,
+    "pitch": 0,
+    "health": 20,
+    "food": 20,
+    "saturation": 5,
+    "inventory": [
+      {
+        "item": "diamond_sword",
+        "slot": 0
+      }
+    ],
+    "armor": {
+      "head": {
+        "item": "iron_helmet"
+      },
+      "chest": {
+        "item": "iron_chestplate"
+      },
+      "legs": {
+        "item": "iron_leggings"
+      },
+      "feet": {
+        "item": "iron_boots"
+      }
+    },
+    "held": 0
+  },
+  "order": {
+    "from": "Noan",
+    "text": "Protège le villageois : élimine les deux zombies et garde-le en vie.",
+    "at_tick": 0
+  },
+  "timeline": [
+    {
+      "at_tick": 0,
+      "summon": {
+        "type": "zombie",
+        "at": "<${lane-1},0,${-distance}>",
+        "tag": "combat_zombie_villager_protect_foe",
+        "nbt": "{PersistenceRequired:1b,CanPickUpLoot:0b,IsBaby:0b}"
+      }
+    },
+    {
+      "at_tick": 0,
+      "summon": {
+        "type": "zombie",
+        "at": "<${lane+1},0,${-distance}>",
+        "tag": "combat_zombie_villager_protect_foe",
+        "nbt": "{PersistenceRequired:1b,CanPickUpLoot:0b,IsBaby:0b}"
+      }
+    }
+  ],
+  "fail": {
+    "any": [
+      {
+        "died": true
+      },
+      {
+        "not": {
+          "entity": "villager",
+          "tag": "combat_protect_friend",
+          "min": 1,
+          "max": 1,
+          "near": "<0,0,0>",
+          "radius": 25
+        }
+      }
+    ]
+  },
+  "milestones": [
+    {
+      "name": "first_zombie_intercepted",
+      "check": {
+        "all": [
+          {
+            "entity": "villager",
+            "tag": "combat_protect_friend",
+            "min": 1,
+            "max": 1,
+            "near": "<0,0,0>",
+            "radius": 25
+          },
+          {
+            "entity": "zombie",
+            "tag": "combat_zombie_villager_protect_foe",
+            "min": 1,
+            "max": 1,
+            "near": "<0,0,0>",
+            "radius": 25
+          }
+        ]
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 1600,
+    "decisions": 20
+  },
+  "solution": [
+    "wait 1s",
+    "equip diamond_sword",
+    "fight #zombie",
+    "fight #zombie"
+  ],
+  "solution_ticks": 600,
+  "success": {
+    "all": [
+      {
+        "entity": "villager",
+        "tag": "combat_protect_friend",
+        "min": 1,
+        "max": 1,
+        "near": "<0,0,0>",
+        "radius": 25
+      },
+      {
+        "entity": "zombie",
+        "tag": "combat_zombie_villager_protect_foe",
+        "max": 0,
+        "near": "<0,0,0>",
+        "radius": 25
+      }
+    ]
+  }
+}

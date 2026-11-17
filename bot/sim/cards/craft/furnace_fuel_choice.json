@@ -1,0 +1,110 @@
+{
+  "card": 1,
+  "id": "craft.furnace_fuel_choice",
+  "title": "Smelt raw iron using only planks or sticks as fuel",
+  "tags": [
+    "craft",
+    "smelt",
+    "fuel"
+  ],
+  "difficulty": 2,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "params": {
+    "n": {
+      "int": [
+        2,
+        4
+      ]
+    },
+    "wood": {
+      "choice": [
+        "oak",
+        "birch",
+        "spruce",
+        "acacia"
+      ]
+    },
+    "fuel": {
+      "choice": [
+        "stick",
+        "tag:planks"
+      ]
+    },
+    "fx": {
+      "int": [
+        -2,
+        2
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "easy",
+    "gamerules": {
+      "advance_time": false,
+      "advance_weather": false
+    }
+  },
+  "build": [
+    {
+      "set": "<${fx},0,2>",
+      "block": "furnace[facing=north]"
+    }
+  ],
+  "player": {
+    "at": "<0,0,0>",
+    "spawn": "<0,0,0>",
+    "inventory": [
+      {
+        "item": "raw_iron",
+        "count": "${n}"
+      },
+      {
+        "item": "${wood}_planks",
+        "count": "${ceil(n / 1.5)}"
+      },
+      {
+        "item": "stick",
+        "count": "${2 * n}"
+      }
+    ]
+  },
+  "order": {
+    "from": "Noan",
+    "text": "Fais fondre tout ton fer brut dans le four. Tu as seulement des planches et des bâtons pour le combustible, choisis ce qui convient.",
+    "at_tick": 0
+  },
+  "success": {
+    "have": "iron_ingot",
+    "min": "${n}"
+  },
+  "fail": {
+    "died": true
+  },
+  "milestones": [
+    {
+      "name": "first_ingot",
+      "check": {
+        "have": "iron_ingot",
+        "min": 1
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 3000,
+    "decisions": 6
+  },
+  "solution": [
+    "smelt raw_iron n=${n} fuel=${fuel}"
+  ],
+  "solution_ticks": "${200 * n + 200}"
+}

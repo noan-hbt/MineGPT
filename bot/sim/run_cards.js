@@ -67,6 +67,9 @@ async function main() {
 
   // server death messages ("LFM was slain by Zombie"), kept per episode for the record
   let deathMsgs = []
+  // what the bot says in chat this episode, for `said` checks (the server echoes the bot's own messages)
+  let said = []
+  bot.on('chat', (user, msg) => { if (user === NAME) said.push(msg) })
   bot.on('messagestr', (msg, pos) => { if (pos !== 'chat' && msg.startsWith(NAME + ' ') && !msg.includes('<')) deathMsgs.push(msg) })
   const senses = new Senses(bot, { session, dataDir: path.join(dir, session + '_mem') })
   const interp = new Interpreter(bot, senses, { log: write })
@@ -104,6 +107,7 @@ async function main() {
       for (const c of plan.scores) await cmd(c)
       // ---- episode
       deathMsgs = []
+      said = judge.chat = []
       const t0 = await gametime(), realStart = real()
       const tick = async () => (await gametime()) - t0
       const fired = new Set(), reached = {}

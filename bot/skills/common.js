@@ -386,6 +386,30 @@ function halt(bot) {
   try { if (bot.currentWindow) bot.closeWindow(bot.currentWindow) } catch {}
 }
 
-module.exports = { makeMovements, fmtValueSafe, Fail, Abort, sleep, k3, r1, fmtPos, idsOf, label, count, findItem, equip, facingVec, DIRV, posOf,
+// Is the bot burning? The server never sends the shared "on fire" metadata flag for the bot itself (1.21.11,
+// measured: metadata[0] never set), so track contact instead: fire / lava at the feet or head keeps the bot burning
+// 8 s (fire) / 15 s (lava) of game time after the last contact, water ends it. The flag is still honoured if sent.
+function burning(bot) {
+  const e = bot.entity
+  if (!e) return false
+  if (e.metadata && typeof e.metadata[0] === 'number' && (e.metadata[0] & 1)) return true
+  if (!bot._fireTrack) {
+    bot._fireTrack = { until: -1 }
+    const hot = { fire: 160, soul_fire: 160, lava: 300 }
+    bot.on('physicsTick', () => {
+      if (!bot.entity) return
+      const now = bot.time && bot.time.age != null ? Number(bot.time.age) : 0
+      if (bot.entity.isInWater) { bot._fireTrack.until = -1; return }
+      for (const dy of [0, 1]) {
+        const b = bot.blockAt(bot.entity.position.offset(0, dy, 0).floored(), false)
+        if (b && hot[b.name]) bot._fireTrack.until = Math.max(bot._fireTrack.until, now + hot[b.name])
+      }
+    })
+  }
+  const now = bot.time && bot.time.age != null ? Number(bot.time.age) : 0
+  return now < bot._fireTrack.until
+}
+
+module.exports = { burning, makeMovements, fmtValueSafe, Fail, Abort, sleep, k3, r1, fmtPos, idsOf, label, count, findItem, equip, facingVec, DIRV, posOf,
   positions, canSee, knownBlocks, findEntity, nearest, entRef, place, resolve, tryResolve, go, near, reach, pathFail,
   harvestCheck, digDanger, digAt, pickup, placeAt, replaceable, halt, G, Vec3, tier }

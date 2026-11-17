@@ -1,0 +1,115 @@
+MineSim 0 port 25600; 21 card(s), policy script
+PASS combat.zombie#1                    success    60 ticks 3s {"dx":6,"dz":1}
+PASS combat.zombie#2                    success    61 ticks 3s {"dx":6,"dz":-1}
+PASS combat.zombie#3                    success    61 ticks 3s {"dx":7,"dz":3}
+PASS combat.zombie#4                    success    81 ticks 4s {"dx":10,"dz":4}
+PASS combat.zombie#5                    success    80 ticks 4s {"dx":8,"dz":5}
+PASS combat.zombie_group#1              success   221 ticks 11.1s {"dx":8,"dz":-4}
+PASS combat.zombie_group#2              success   202 ticks 10.1s {"dx":7,"dz":-5}
+PASS combat.zombie_group#3              success   181 ticks 9.1s {"dx":8,"dz":1}
+PASS combat.zombie_group#4              success   202 ticks 10.1s {"dx":9,"dz":3}
+PASS combat.zombie_group#5              success   203 ticks 10.1s {"dx":9,"dz":5}
+  desync after "smelt beef n=2": {"cooked_beef":{"bot":2,"server":1}}
+PASS craft.cook_beef#1                  success   491 ticks 24.6s {"n":2,"wood":"oak"}
+  desync after "smelt beef n=3": {"cooked_beef":{"bot":3,"server":2}}
+PASS craft.cook_beef#2                  success   700 ticks 35s {"n":3,"wood":"oak"}
+  desync after "smelt beef n=4": {"cooked_beef":{"bot":4,"server":3}}
+PASS craft.cook_beef#3                  success   889 ticks 44.4s {"n":4,"wood":"birch"}
+  desync after "smelt beef n=2": {"cooked_beef":{"bot":2,"server":1}}
+PASS craft.cook_beef#4                  success   491 ticks 24.5s {"n":2,"wood":"birch"}
+  desync after "smelt beef n=4": {"cooked_beef":{"bot":4,"server":3}}
+PASS craft.cook_beef#5                  success   881 ticks 44s {"n":4,"wood":"birch"}
+PASS craft.planks#1                     success    20 ticks 1s {"wood":"acacia","n":9,"logs":3}
+PASS craft.planks#2                     success    20 ticks 1s {"wood":"birch","n":13,"logs":4}
+PASS craft.planks#3                     success    21 ticks 1s {"wood":"oak","n":4,"logs":1}
+FAIL craft.planks#4                     fail       60 ticks 3s {"wood":"acacia","n":13,"logs":4} judge {"{\"have\":\"acacia_planks\",\"min\":13}":7}
+PASS craft.planks#5                     success    20 ticks 1s {"wood":"oak","n":14,"logs":4}
+  desync after "smelt raw_iron n=4": {"iron_ingot":{"bot":4,"server":3}}
+PASS craft.smelt_iron#1                 success   851 ticks 42.5s {"n":4,"fuel":"coal"}
+  desync after "smelt raw_iron n=1": {"iron_ingot":{"bot":1,"server":0}}
+PASS craft.smelt_iron#2                 success   248 ticks 12.4s {"n":1,"fuel":"charcoal"}
+  desync after "smelt raw_iron n=1": {"iron_ingot":{"bot":1,"server":0}}
+PASS craft.smelt_iron#3                 success   248 ticks 12.4s {"n":1,"fuel":"coal"}
+  desync after "smelt raw_iron n=2": {"iron_ingot":{"bot":2,"server":1}}
+PASS craft.smelt_iron#4                 success   449 ticks 22.4s {"n":2,"fuel":"charcoal"}
+  desync after "smelt raw_iron n=1": {"iron_ingot":{"bot":1,"server":0}}
+PASS craft.smelt_iron#5                 success   247 ticks 12.3s {"n":1,"fuel":"charcoal"}
+PASS craft.stone_pickaxe#1              success   162 ticks 8.1s {"wood":"spruce"}
+FAIL craft.stone_pickaxe#2              fail       81 ticks 4s {"wood":"oak"} judge {"{\"have\":\"stone_pickaxe\",\"min\":1}":0}
+PASS craft.stone_pickaxe#3              success   162 ticks 8.1s {"wood":"spruce"}
+PASS craft.stone_pickaxe#4              success   162 ticks 8.1s {"wood":"oak"}
+PASS craft.stone_pickaxe#5              success   161 ticks 8.1s {"wood":"oak"}
+FAIL craft.torches#1                    fail       61 ticks 3s {"coal":2,"fuel":"coal"} judge {"{\"have\":\"torch\",\"min\":8}":4}
+PASS craft.torches#2                    success    21 ticks 1s {"coal":3,"fuel":"coal"}
+PASS craft.torches#3                    success    20 ticks 1s {"coal":1,"fuel":"charcoal"}
+FAIL craft.torches#4                    fail       61 ticks 3s {"coal":2,"fuel":"charcoal"} judge {"{\"have\":\"torch\",\"min\":8}":4}
+PASS craft.torches#5                    success    20 ticks 1s {"coal":2,"fuel":"coal"}
+PASS craft.wooden_pickaxe#1             success    40 ticks 2s {"extra":0,"logs":3}
+PASS craft.wooden_pickaxe#2             success    41 ticks 2s {"extra":1,"logs":4}
+FAIL craft.wooden_pickaxe#3             fail       60 ticks 3s {"extra":0,"logs":3} judge {"{\"have\":\"wooden_pickaxe\",\"min\":1}":0}
+PASS craft.wooden_pickaxe#4             success    40 ticks 2s {"extra":1,"logs":4}
+FAIL craft.wooden_pickaxe#5             fail       61 ticks 3s {"extra":0,"logs":3} judge {"{\"have\":\"wooden_pickaxe\",\"min\":1}":0}
+PASS gather.chop_tree#1                 success   289 ticks 14.5s {"wood":"birch","dx":6,"dz":5}
+PASS gather.chop_tree#2                 success   349 ticks 17.4s {"wood":"birch","dx":-5,"dz":5}
+PASS gather.chop_tree#3                 success   348 ticks 17.4s {"wood":"oak","dx":-6,"dz":7}
+PASS gather.chop_tree#4                 success   349 ticks 17.5s {"wood":"birch","dx":2,"dz":9}
+PASS gather.chop_tree#5                 success   268 ticks 13.4s {"wood":"birch","dx":-2,"dz":6}
+PASS logistics.fetch_from_chest#1       success    40 ticks 2s {"cx":0,"cz":-8,"n":2}
+PASS logistics.fetch_from_chest#2       success    40 ticks 2s {"cx":1,"cz":-8,"n":5}
+  desync after "take iron_ingot n=5 chest=(2994,200,2992)": {"iron_ingot":{"bot":5,"server":0}}
+PASS logistics.fetch_from_chest#3       success    71 ticks 3.5s {"cx":-6,"cz":-8,"n":5}
+  desync after "take iron_ingot n=2 chest=(2991,200,2990)": {"iron_ingot":{"bot":2,"server":0}}
+PASS logistics.fetch_from_chest#4       success    81 ticks 4s {"cx":-9,"cz":-10,"n":2}
+  desync after "take iron_ingot n=3 chest=(3008,200,2993)": {"iron_ingot":{"bot":3,"server":0}}
+PASS logistics.fetch_from_chest#5       success    72 ticks 3.6s {"cx":8,"cz":-7,"n":3}
+PASS mine.iron_ore#1                    success   227 ticks 11.3s {"dx":4,"dz":-5,"n":2}
+PASS mine.iron_ore#2                    success   146 ticks 7.3s {"dx":9,"dz":-6,"n":1}
+PASS mine.iron_ore#3                    success   367 ticks 18.3s {"dx":7,"dz":-1,"n":3}
+PASS mine.iron_ore#4                    success   125 ticks 6.3s {"dx":5,"dz":-5,"n":1}
+PASS mine.iron_ore#5                    success   246 ticks 12.3s {"dx":4,"dz":6,"n":2}
+PASS nav.goto_place#1                   success    61 ticks 3s {"px":-1,"pz":8}
+PASS nav.goto_place#2                   success    61 ticks 3s {"px":-11,"pz":10}
+PASS nav.goto_place#3                   success    81 ticks 4s {"px":-11,"pz":12}
+PASS nav.goto_place#4                   success    61 ticks 3s {"px":7,"pz":8}
+PASS nav.goto_place#5                   success    81 ticks 4s {"px":-2,"pz":11}
+PASS nav.order_change#1                 success    40 ticks 2s {"ax":-11,"bx":6,"z":6}
+PASS nav.order_change#2                 success    41 ticks 2s {"ax":-6,"bx":9,"z":8}
+PASS nav.order_change#3                 success    60 ticks 3s {"ax":-6,"bx":10,"z":9}
+PASS nav.order_change#4                 success    61 ticks 3s {"ax":-8,"bx":12,"z":9}
+PASS nav.order_change#5                 success    40 ticks 2s {"ax":-9,"bx":7,"z":7}
+PASS survive.creeper#1                  success   613 ticks 30.6s {"dx":5,"dz":3}
+PASS survive.creeper#2                  success   611 ticks 30.6s {"dx":6,"dz":0}
+PASS survive.creeper#3                  success   609 ticks 30.5s {"dx":5,"dz":1}
+PASS survive.creeper#4                  success   612 ticks 30.6s {"dx":8,"dz":-3}
+PASS survive.creeper#5                  success   612 ticks 30.6s {"dx":6,"dz":1}
+PASS survive.descend_cliff#1            success   141 ticks 7.1s {"h":8,"tx":9}
+PASS survive.descend_cliff#2            success   121 ticks 6s {"h":7,"tx":6}
+PASS survive.descend_cliff#3            success   141 ticks 7.1s {"h":7,"tx":10}
+PASS survive.descend_cliff#4            success   161 ticks 8s {"h":9,"tx":9}
+PASS survive.descend_cliff#5            success   122 ticks 6.1s {"h":7,"tx":9}
+PASS survive.descend_pillar#1           success    60 ticks 3s {"h":8}
+PASS survive.descend_pillar#2           success    80 ticks 4s {"h":10}
+PASS survive.descend_pillar#3           success    60 ticks 3s {"h":8}
+PASS survive.descend_pillar#4           success    81 ticks 4s {"h":9}
+PASS survive.descend_pillar#5           success    60 ticks 3s {"h":8}
+PASS survive.drowning#1                 success   161 ticks 8.1s {"d":9,"ex":4}
+PASS survive.drowning#2                 success   141 ticks 7.1s {"d":9,"ex":6}
+PASS survive.drowning#3                 success   121 ticks 6.1s {"d":8,"ex":4}
+PASS survive.drowning#4                 success   121 ticks 6s {"d":8,"ex":3}
+PASS survive.drowning#5                 success   101 ticks 5s {"d":5,"ex":5}
+PASS survive.eat_hungry#1               success    41 ticks 2s {"food":12,"meal":"baked_potato"}
+PASS survive.eat_hungry#2               success    81 ticks 4s {"food":9,"meal":"bread"}
+PASS survive.eat_hungry#3               success    81 ticks 4s {"food":8,"meal":"baked_potato"}
+PASS survive.eat_hungry#4               success    40 ticks 2s {"food":9,"meal":"cooked_beef"}
+PASS survive.eat_hungry#5               success    81 ticks 4s {"food":8,"meal":"cooked_beef"}
+PASS survive.hunger_hunt#1              success   100 ticks 5s {"food":10,"cx":1,"cz":6}
+PASS survive.hunger_hunt#2              success   101 ticks 5s {"food":7,"cx":-3,"cz":6}
+PASS survive.hunger_hunt#3              success   101 ticks 5s {"food":8,"cx":2,"cz":7}
+PASS survive.hunger_hunt#4              success   121 ticks 6s {"food":7,"cx":0,"cz":5}
+PASS survive.hunger_hunt#5              success   101 ticks 5s {"food":9,"cx":5,"cz":5}
+PASS survive.lava_moat#1                success    60 ticks 3s {"bx":-3,"tx":4}
+PASS survive.lava_moat#2                success   121 ticks 6s {"bx":-9,"tx":6}
+PASS survive.lava_moat#3                success    61 ticks 3s {"bx":-6,"tx":-1}
+PASS survive.lava_moat#4                success    61 ticks 3s {"bx":5,"tx":8}
+PASS survive.lava_moat#5                success    81 ticks 4s {"bx":9,"tx":3}
+PASS survive.sleep_night#1              success   122 ticks 6.1s {"t":15053,"color":"blue","bx":3}

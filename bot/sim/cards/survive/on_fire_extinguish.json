@@ -1,0 +1,131 @@
+{
+  "card": 1,
+  "id": "survive.on_fire_extinguish",
+  "title": "React to fire by entering nearby water",
+  "tags": [
+    "survive",
+    "fire",
+    "water"
+  ],
+  "difficulty": 2,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "wx": {
+      "int": [
+        2,
+        4
+      ]
+    },
+    "z": {
+      "int": [
+        -2,
+        2
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "radius": 15,
+    "height": 12,
+    "depth": 15,
+    "floor": "stone",
+    "dimension": "overworld",
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "normal",
+    "gamerules": {
+      "spawn_monsters": false,
+      "advance_time": false,
+      "advance_weather": false,
+      "natural_health_regeneration": false
+    }
+  },
+  "build": [
+    {
+      "set": "<0,-1,${z}>",
+      "block": "netherrack"
+    },
+    {
+      "fill": [
+        "<${wx},-1,${z - 1}>",
+        "<${wx + 1},-1,${z + 1}>"
+      ],
+      "block": "water"
+    }
+  ],
+  "player": {
+    "at": "<0,0,${z}>",
+    "spawn": "<-6,0,0>",
+    "inventory": []
+  },
+  "mind": {
+    "places": {
+      "eau": "<${wx},-1,${z}>"
+    },
+    "notes": [
+      "De l'eau est visible à @eau."
+    ]
+  },
+  "timeline": [
+    {
+      "at_tick": 0,
+      "rcon": "setblock <0,0,${z}> fire"
+    },
+    {
+      "at_tick": 20,
+      "rcon": "setblock <0,0,${z}> air"
+    }
+  ],
+  "notes": "Fire is placed at the feet at tick 0 and removed at tick 20; the burn persists unless extinguished. No food or natural regeneration can mask fire damage.",
+  "success_when": "end",
+  "success": {
+    "all": [
+      {
+        "not": {
+          "died": true
+        }
+      },
+      {
+        "at": "<${wx},-1,${z}>",
+        "radius": 2
+      },
+      {
+        "health": {
+          "min": 14
+        }
+      },
+      {
+        "damage_taken": {
+          "max": 60
+        }
+      }
+    ]
+  },
+  "fail": {
+    "died": true
+  },
+  "milestones": [
+    {
+      "name": "reached_water",
+      "check": {
+        "at": "<${wx},-1,${z}>",
+        "radius": 1.5
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 240,
+    "decisions": 20
+  },
+  "solution": [
+    "wait 1s",
+    "extinguish"
+  ],
+  "solution_ticks": 90
+}

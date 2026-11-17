@@ -71,7 +71,9 @@ async function craft(ctx, a) {
       if (!table) table = await stationNear(ctx, ['crafting_table'], 'crafting_table (needed for this 3x3 recipe)')
       rec = bot.recipesFor(it.id, null, 1, table)[0] || big
     }
-    const times = Math.max(1, Math.ceil((want - made()) / rec.result.count))
+    // one craft per call, resynced in between: several crafts in one bot.craft() click on a predicted grid that
+    // drifts from the server's (x1 measured: 2nd torch batch lost, sticks stranded, a button crafted from planks)
+    const times = 1
     const before = made()
     let err = null
     try { await ctx.wait(bot.craft(rec, times, rec.requiresTable ? table : null)) } catch (e) {
@@ -93,6 +95,9 @@ async function settle(ctx) {
   const bot = ctx.bot
   if (typeof bot._syncWindow !== 'function' || bot.currentWindow) return
   const inv = bot.inventory
+  // twice: a resync answers with the first window update that arrives, which can be the answer to an earlier
+  // pending resync (patchClickWindow's timer) sent before the last clicks; the second answer is ours
+  await ctx.wait(bot._syncWindow(inv))
   await ctx.wait(bot._syncWindow(inv))
   // a click can be ignored by the server (stale model, concurrent resync): retry until grid + cursor are empty
   for (let tries = 0; tries < 4; tries++) {
@@ -145,7 +150,10 @@ function cooker(kind) {
     const outName = rec.out
     let got = 0
     try {
-      const take = async () => { const o = f.outputItem(); if (o) { const c = o.count; await ctx.wait(f.takeOutput()); if (o.name === outName) got += c } }
+      // resync the furnace window before reading the output: taking from a predicted output slot counted an ingot
+      // the server had not produced yet (x1: bot 4 ingots, server 3)
+      const sync = () => typeof bot._syncWindow === 'function' && bot.currentWindow === f ? ctx.wait(bot._syncWindow(f)) : null
+      const take = async () => { await sync(); const o = f.outputItem(); if (o) { const c = o.count; await ctx.wait(f.takeOutput()); if (o.name === outName) got += c } }
       await take()
       got = 0
       if (f.inputItem() && f.inputItem().name !== inName) await ctx.wait(f.takeInput())
@@ -175,6 +183,7 @@ function cooker(kind) {
       try { if (f.inputItem() && got < n) await f.takeInput() } catch {}
       try { f.close() } catch {}
     }
+    await settle(ctx) // inventory back to the server's truth after the window closed
     return { detail: `${outName} x${got}` }
   }
 }

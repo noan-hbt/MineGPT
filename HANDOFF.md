@@ -120,7 +120,71 @@ Strip a leading empty `<think></think>` from the content if present. Full workin
 - Bot does not talk (no LLM chat replies). Ideas: LLM chat replies, commands like "mine iron" / "build shelter",
   use RCON for scripted tests.
 
-## State 2026-11-17 session #16 (RESUME HERE) — lockstep player freeze (Fabric mod)
+## State 2026-11-17 session #17 (RESUME HERE) — 70 Codex cards, fidelity x1 vs lockstep, bot sync fixes, LLM speed
+Branch `v2`. Nothing committed this session yet (all changes below are in the working tree). Don't commit `eval/results/`.
+
+### First thing to do
+A full validation was running when the session ended: all cards except nav.swim_across, lockstep, default seeds
+(`--name VALF`), then nav.swim_across seed 1 alone (`--name SWIM`). Results: `eval/results/val_final.txt`,
+`eval/results/val_swim.txt` (+ `data/own/2026-11-17/*_VALF_cards.jsonl`). It finished: **344/347** (264 s,
+293 tps, 0 desync). FAIL: combat.bow_zombie_far #2 #3, combat.shield_skeleton #2 (flaky, not triaged);
+nav.swim_across #1 timeout (no disconnect this time). Then commit (cards + fixes).
+If the sim server was left frozen: rcon `tick unfreeze` + `tick rate 20` (or `node sim/instance.js stop 0`).
+
+### Cards: 21 -> 91
+- 70 new cards written by 6 parallel Codex runs (`codex exec -s workspace-write`, gpt-6.1-sol medium, brief
+  `notes/cards-codex-brief.md`, one area batch each, offline-validated only, no server). Skipped by Codex (judge
+  can't express them): survive.set_spawn_bed (respawn point), social.order_cancel ("stopped" check + script policy).
+- Validation before the fixes: only 5 of ~60 cards had failures; after the fixes below all of them pass except
+  combat.bow_zombie_far (1/4: `shoot` misses at ~12 blocks down into a pit, no target lead) and nav.swim_across
+  (goto across water times out 120 s; seed 2 ended with the bot disconnected from the server -> every later
+  episode "No player was found"; the runner should detect a lost bot and stop/reconnect).
+
+### Fidelity guard x1 vs lockstep (Next #1 of #16): done
+`node sim/compare_runs.js --latest LOCK X1` (new: per card pass/ticks mean+sd/damage/deaths, flags gaps).
+21 cards x 5 seeds: identical outcomes/ticks/damage on 15 cards; lockstep 108 s vs x1 890 s (x8). Gaps:
+- craft.* failed more at x1 (7 vs 1): bot bug (fixed below), not fidelity.
+- **survive.drowning: 223 ticks lockstep vs 129 x1 — the one real fidelity gap left, not investigated.**
+- (x1 run was cut at 101/105 by a low-RAM kill: sleep_night only 1 seed at x1.)
+
+### Bot / harness fixes (all validated on the server)
+- craft: one craft per `bot.craft()` call + resync between (several crafts in one call clicked on a drifting
+  predicted grid: lost batches, a button crafted from planks). x1 craft cards 18/25 -> 25/25.
+- `settle()` resyncs twice (a resync can be answered by an earlier pending one); smelt: furnace window resynced
+  before reading the output + inventory settled after close (bot counted 1 ingot too many).
+- Interpreter: inventory resynced with the server after every statement (`resyncInventory` in dsl/run.js):
+  the last ladder/seed/bread/arrow used was still counted. All `desync` lines gone.
+- Gamerules leaked between cards (reset only re-applied DEFAULT_RULES: advance_time false froze the clock for
+  every later card). DEFAULT_RULES now lists the vanilla value of every rule cards use; the validator rejects a
+  card rule without a default.
+- Judge `said` never worked (Judge.chat was never filled): runner records the bot's own chat per episode.
+- water_bucket_save fired on "air blocks below <= 3" = feet 3.9 above ground, out of the 4.5 reach from the eyes:
+  now fires on the real distance (<= 2.8). 4/4.
+- On fire: the server never sends the shared "on fire" metadata flag for the bot (measured), so `extinguish`
+  did nothing and the `on_fire` flag/perception were always false. New `C.burning(bot)` (skills/common.js):
+  fire/lava contact at feet/head -> burning 160/300 game ticks, water ends it; used by extinguish, DSL flag,
+  perceive. 4/4.
+- compare_runs damage flag threshold: 20 (damage_taken is in tenths of HP: 20 = 1 heart).
+
+### LLM speed (eval/model_bench.py: new `--server-args`, `--tag`)
+- llama-bench: decode is memory-bound, ~80% of the 4070 Laptop bandwidth on 4B Q4_K_M: flags won't buy more.
+  `-fa on` always >= off (+2..20% prompt, +1..4% decode). No model has MTP heads; no small model shares a tokenizer
+  with the 4B ones -> no draft-model speculation. `ngram-mod` speculation: no gain on free reasoning text (to
+  retest on real DSL prompts).
+- **Reasoning budget is the lever**: Nemotron 4B `--reasoning-budget 256`: same 6/8, tokens 574 -> 251, no
+  truncation, 6.2 -> 13.6 correct/min. LFM3 ignores it (re-reasons in the answer, ~1000+ tokens, 4/8 truncated
+  at 1536). Only 8 tasks: the 24-task confirmation (Nemotron fa / b256 / b128) was killed by low RAM -> rerun
+  with the sim server stopped: `model_bench.py --models <nemotron> --n 6 --max-tokens 1536 --tag c_b256
+  --server-args "-fa on --reasoning-budget 256"`.
+- RAM: 16 GB is tight (commit was 18.5 GB). Docker/WSL + the Minecraft launcher were closed (-3.5 GB). Never run
+  llama-server benches + a card run + Codex batches at the same time.
+
+### Next
+1. Finish triage of VALF, commit. 2. drowning fidelity gap. 3. shoot lead/vertical aim, swim pathing, runner
+detects a disconnected bot. 4. Confirm reasoning budget (24 tasks), then choose the mind model + budget.
+5. More cards (Codex batches work well: give them a list of ids + the brief). 6. Mind loop = policy `mind`.
+
+## State 2026-11-17 session #16 — lockstep player freeze (Fabric mod)
 Branch `v2`. Don't commit `eval/results/`.
 
 ### Done

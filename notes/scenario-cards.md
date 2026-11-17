@@ -159,9 +159,8 @@ All numeric fields accept `${...}` templates.
   fire, effects) run off the game clock while the runner sets up. Start safe and make it dangerous with a
   `timeline` event at tick 0 (survive.drowning floods a dry pit).
 - Set `player.spawn` somewhere safe when `player.at` is not: a death there respawns into the same trap forever.
-- **Lockstep (`--lock`) does not freeze the player**: vanilla `tick freeze` leaves players ticking every server
-  loop (`tick rate 10000`), so air, natural regen, hunger, effect durations and the sleep timer run many times
-  faster than game time. Cards that depend on them (drowning, "keep N hp", sleep) are only valid at x1 for now.
+- Lockstep (`--lock`) freezes the player too since session #16 (Fabric mod `bot/sim/mod/`): air, regen, hunger,
+  effects and the sleep timer follow game ticks, so cards behave the same at x1 and in lockstep.
 
 ## Diagnostics
 - `card_step` records carry `desync`: for every item a `have` check counts, the bot's inventory model vs the

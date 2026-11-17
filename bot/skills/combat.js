@@ -262,8 +262,13 @@ async function water_bucket_save(ctx) {
     if (bot.entity.onGround && i > 0) break
     const p = bot.entity.position
     let gap = 0
-    while (gap < 6) { const b = bot.blockAt(p.offset(0, -gap - 1, 0).floored(), false); if (b && b.boundingBox === 'block') break; gap++ }
-    if (bot.entity.velocity.y < -0.5 && gap <= 3) { bot.activateItem(); break }
+    while (gap < 8) { const b = bot.blockAt(p.offset(0, -gap - 1, 0).floored(), false); if (b && b.boundingBox === 'block') break; gap++ }
+    // the server raycasts the bucket from the eyes with the block reach (4.5): the ground's top face must be within
+    // ~2.8 of the feet when the click arrives. Counting air blocks fired too early (feet 3.9 above: nothing placed,
+    // died). Fire on the real distance; if the next tick would land first, try anyway (bounded at 3.3).
+    const vy = -bot.entity.velocity.y
+    const dist = p.y - (Math.floor(p.y) - gap)
+    if (vy > 0.5 && gap < 8 && (dist <= 2.8 || (dist - vy <= 0.2 && dist <= 3.3))) { bot.activateItem(); break }
     await ctx.sleep(25)
   }
   for (let i = 0; i < 40 && !bot.entity.onGround && !bot.entity.isInWater; i++) await ctx.sleep(50)
@@ -276,7 +281,7 @@ async function water_bucket_save(ctx) {
 
 async function extinguish(ctx) {
   const bot = ctx.bot
-  const burning = () => !!(bot.entity.metadata && typeof bot.entity.metadata[0] === 'number' && (bot.entity.metadata[0] & 1))
+  const burning = () => C.burning(bot)
   if (!burning()) return { detail: 'not burning' }
   if (C.findItem(bot, 'water_bucket')) {
     await C.equip(ctx, 'water_bucket')

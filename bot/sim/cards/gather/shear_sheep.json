@@ -1,0 +1,12 @@
+{
+  "card": 1, "id": "gather.shear_sheep", "title": "Shear an adult sheep and collect wool", "tags": ["gather", "shear", "mob_interaction"],
+  "difficulty": 1, "split": "train", "seeds": [1, 2, 3, 4, 11],
+  "params": {"dx": {"int": [3, 7]}, "dz": {"int": [-4, 4]}, "color": {"choice": [0, 8, 15]}},
+  "world": {"template": "arena", "gamerules": {"advance_time": false, "mob_drops": true}},
+  "entities": [{"type": "sheep", "at": "<${dx},0,${dz}>", "tag": "wool_source", "no_ai": true, "nbt": "{Age:0,Color:${color}b,Sheared:0b,PersistenceRequired:1b}"}],
+  "player": {"inventory": [{"item": "shears"}]}, "order": {"from": "Noan", "text": "tonds le mouton et récupère sa laine"},
+  "success": {"all": [{"any": [{"have": "white_wool", "min": 1}, {"have": "light_gray_wool", "min": 1}, {"have": "black_wool", "min": 1}]}, {"entity": "sheep", "tag": "wool_source", "min": 1}]},
+  "fail": {"died": true}, "milestones": [{"name": "reached_sheep", "check": {"at": "<${dx},0,${dz}>", "radius": 3}}],
+  "limits": {"ticks": 1200, "decisions": 6}, "solution": ["shear #sheep"], "solution_ticks": 400,
+  "notes": "An adult stationary sheep on stone cannot regrow wool by eating grass; shearing yields one to three wool items."
+}

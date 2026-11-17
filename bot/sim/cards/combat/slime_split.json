@@ -1,0 +1,202 @@
+{
+  "card": 1,
+  "id": "combat.slime_split",
+  "title": "Kill a medium slime and every child produced by its split",
+  "tags": [
+    "combat",
+    "slime_split"
+  ],
+  "difficulty": 3,
+  "split": "heldout",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "dx": {
+      "int": [
+        -2,
+        2
+      ]
+    },
+    "dz": {
+      "int": [
+        6,
+        9
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "radius": 15,
+    "height": 8,
+    "depth": 8,
+    "floor": "stone",
+    "dimension": "overworld",
+    "time": 18000,
+    "weather": "clear",
+    "difficulty": "easy",
+    "gamerules": {
+      "advance_time": false,
+      "advance_weather": false,
+      "spawn_monsters": false,
+      "natural_health_regeneration": false,
+      "mob_griefing": false
+    }
+  },
+  "build": [
+    {
+      "fill": [
+        "<-14,0,-14>",
+        "<-14,4,14>"
+      ],
+      "block": "stone_bricks"
+    },
+    {
+      "fill": [
+        "<14,0,-14>",
+        "<14,4,14>"
+      ],
+      "block": "stone_bricks"
+    },
+    {
+      "fill": [
+        "<-13,0,-14>",
+        "<13,4,-14>"
+      ],
+      "block": "stone_bricks"
+    },
+    {
+      "fill": [
+        "<-13,0,14>",
+        "<13,4,14>"
+      ],
+      "block": "stone_bricks"
+    },
+    {
+      "fill": [
+        "<-14,5,-14>",
+        "<14,5,14>"
+      ],
+      "block": "stone_bricks"
+    },
+    {
+      "set": "<12,-2,12>",
+      "block": "obsidian"
+    }
+  ],
+  "entities": [],
+  "player": {
+    "at": "<0,0,0>",
+    "spawn": "<0,0,-10>",
+    "yaw": 0,
+    "pitch": 0,
+    "health": 20,
+    "food": 20,
+    "saturation": 5,
+    "inventory": [
+      {
+        "item": "iron_sword",
+        "slot": 0
+      }
+    ],
+    "armor": {
+      "head": {
+        "item": "iron_helmet"
+      },
+      "chest": {
+        "item": "iron_chestplate"
+      },
+      "legs": {
+        "item": "iron_leggings"
+      },
+      "feet": {
+        "item": "iron_boots"
+      }
+    },
+    "held": 0
+  },
+  "order": {
+    "from": "Noan",
+    "text": "Tue le slime, puis élimine tous les petits qui apparaissent quand il se divise.",
+    "at_tick": 0
+  },
+  "timeline": [
+    {
+      "at_tick": 0,
+      "summon": {
+        "type": "slime",
+        "at": "<${dx},0,${dz}>",
+        "tag": "combat_slime_split_foe",
+        "nbt": "{PersistenceRequired:1b,CanPickUpLoot:0b,Size:1}"
+      }
+    },
+    {
+      "when": {
+        "entity": "slime",
+        "near": "<0,0,0>",
+        "radius": 25,
+        "min": 2
+      },
+      "once": true,
+      "rcon": "setblock <12,-2,12> minecraft:gold_block"
+    }
+  ],
+  "fail": {
+    "died": true
+  },
+  "milestones": [
+    {
+      "name": "split_observed",
+      "check": {
+        "block": "<12,-2,12>",
+        "is": "gold_block"
+      }
+    },
+    {
+      "name": "children_reduced",
+      "check": {
+        "all": [
+          {
+            "block": "<12,-2,12>",
+            "is": "gold_block"
+          },
+          {
+            "entity": "slime",
+            "near": "<0,0,0>",
+            "radius": 25,
+            "max": 1
+          }
+        ]
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 1600,
+    "decisions": 20
+  },
+  "solution": [
+    "wait 1s",
+    "equip iron_sword",
+    "fight #slime",
+    "wait 2s",
+    "repeat(4) if(dist(#slime)<30) fight #slime"
+  ],
+  "solution_ticks": 550,
+  "success": {
+    "all": [
+      {
+        "block": "<12,-2,12>",
+        "is": "gold_block"
+      },
+      {
+        "entity": "slime",
+        "near": "<0,0,0>",
+        "radius": 25,
+        "max": 0
+      }
+    ]
+  }
+}

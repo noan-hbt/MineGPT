@@ -1,0 +1,139 @@
+{
+  "card": 1,
+  "id": "survive.ascend_from_pit",
+  "title": "Pillar out of a deep dry pit using inventory blocks",
+  "tags": [
+    "survive",
+    "pit",
+    "pillar",
+    "build"
+  ],
+  "difficulty": 2,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "d": {
+      "int": [
+        7,
+        10
+      ]
+    },
+    "material": {
+      "choice": [
+        "dirt",
+        "cobblestone",
+        "andesite"
+      ]
+    },
+    "exit": {
+      "int": [
+        4,
+        7
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "radius": 15,
+    "height": 12,
+    "depth": 15,
+    "floor": "stone",
+    "dimension": "overworld",
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "normal",
+    "gamerules": {
+      "spawn_monsters": false,
+      "advance_time": false,
+      "advance_weather": false,
+      "natural_health_regeneration": false
+    }
+  },
+  "build": [
+    {
+      "fill": [
+        "<-1,-${d},-1>",
+        "<1,-1,1>"
+      ],
+      "block": "air"
+    }
+  ],
+  "player": {
+    "at": "<0,-${d},0>",
+    "spawn": "<${exit},0,0>",
+    "inventory": [
+      {
+        "item": "${material}",
+        "count": "${d + 4}"
+      }
+    ]
+  },
+  "mind": {
+    "places": {
+      "surface": "<${exit},0,0>"
+    }
+  },
+  "order": {
+    "from": "Noan",
+    "text": "remonte du trou et rejoins @surface avec tes blocs",
+    "at_tick": 0
+  },
+  "success": {
+    "all": [
+      {
+        "not": {
+          "died": true
+        }
+      },
+      {
+        "y": {
+          "min": 0
+        }
+      },
+      {
+        "at": "<${exit},0,0>",
+        "radius": 1.5
+      },
+      {
+        "damage_taken": {
+          "max": 0
+        }
+      }
+    ]
+  },
+  "fail": {
+    "died": true
+  },
+  "milestones": [
+    {
+      "name": "halfway_up",
+      "check": {
+        "y": {
+          "min": "${-floor(d/2)}"
+        }
+      }
+    },
+    {
+      "name": "at_rim",
+      "check": {
+        "y": {
+          "min": 0
+        }
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 1000,
+    "decisions": 8
+  },
+  "solution": [
+    "pillar ${d} block=${material}",
+    "goto @surface dist=0"
+  ],
+  "solution_ticks": 350
+}

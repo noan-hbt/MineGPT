@@ -1,0 +1,43 @@
+=== LFM3-1.7B-QAD-Q4_0[b512] (load 2.1s)
+  arith0  ok         OK  got=131 want=131 tok=790 4.9s
+  arith1  ok         OK  got=103 want=103 tok=671 4.1s
+  grid0   truncated  --  got=None want=15 tok=1536 9.4s
+  grid1   truncated  --  got=None want=18 tok=1536 9.4s
+  plan0   ok         OK  got=12 want=12 tok=750 4.6s
+  plan1   truncated  --  got=None want=20 tok=1536 9.5s
+  state0  ok         OK  got=44 want=44 tok=747 4.6s
+  state1  ok         OK  got=4 want=4 tok=950 5.9s
+=== NVIDIA-Nemotron3-Nano-4B-Q4_K_M[b512] (load 2.6s)
+  arith0  ok         OK  got=131 want=131 tok=295 3.9s
+  arith1  ok         OK  got=103 want=103 tok=292 3.8s
+  grid0   ok         --  got=12 want=15 tok=522 6.7s
+  grid1   ok         --  got=12 want=18 tok=522 6.7s
+  plan0   ok         OK  got=12 want=12 tok=246 3.2s
+  plan1   ok         OK  got=20 want=20 tok=179 2.4s
+  state0  ok         OK  got=44 want=44 tok=199 2.6s
+  state1  ok         OK  got=4 want=4 tok=310 4.0s
+=== Spark-X2.6-4B-Q4_K_M[b512] (load 3.1s)
+  arith0  ok         OK  got=131 want=131 tok=507 8.0s
+  arith1  ok         OK  got=103 want=103 tok=444 6.9s
+  grid0   no_answer  --  got=None want=15 tok=517 8.0s
+  grid1   ok         --  got=14 want=18 tok=611 9.5s
+  plan0   ok         OK  got=12 want=12 tok=373 5.8s
+  plan1   ok         OK  got=20 want=20 tok=377 5.9s
+  state0  ok         OK  got=44 want=44 tok=150 2.4s
+  state1  ok         OK  got=4 want=4 tok=287 4.5s
+=== Sharp-Spark-X2.6-4B-Q4_K_XL[b512] (load 2.6s)
+  arith0  ok         OK  got=131 want=131 tok=432 5.9s
+  arith1  ok         OK  got=103 want=103 tok=451 6.1s
+  grid0   ok         --  got=14 want=15 tok=521 7.0s
+  grid1   truncated  --  got=None want=18 tok=1536 20.7s
+  plan0   ok         OK  got=12 want=12 tok=572 7.7s
+  plan1   ok         OK  got=20 want=20 tok=411 5.5s
+  state0  ok         OK  got=44 want=44 tok=521 7.0s
+  state1  ok         OK  got=4 want=4 tok=462 6.3s
+
+8 tasks/model (2 per family: arith, grid, plan, state), reasoning=auto; log C:\Users\noanh\Desktop\Dev\localai\eval\results\model_bench_2026-11-17-18-58_b512.jsonl
+model                                        acc        by family ans/trunc/none/err  med s  ttft    tok  tok/s ok/min think
+LFM3-1.7B-QAD-Q4_0[b512]                     62%          2/0/1/2    5/3/0/0           5.9  0.05   1064    163    5.7     8
+NVIDIA-Nemotron3-Nano-4B-Q4_K_M[b512]        75%          2/0/2/2    8/0/0/0           3.9  0.16    321     80   10.8     8
+Spark-X2.6-4B-Q4_K_M[b512]                   75%          2/0/2/2    7/0/1/0           6.9  0.12    408     66    7.1     8
+Sharp-Spark-X2.6-4B-Q4_K_XL[b512]            75%          2/0/2/2    7/1/0/0           7.0  0.14    613     75    5.4     8

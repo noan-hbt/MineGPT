@@ -9,3 +9,6 @@
 - [Short benches](short-benches.md) — model benches few minutes, generic tasks, background; not MC knowledge/DSL
 - [Complete scenario cards](scenario-cards-complete.md) — cards fully specify episodes; judge server-side; solution required
 - [Lockstep why](lockstep-why.md) — keep lockstep (x8, world pauses while LLM thinks); player-tick bug fixed by Fabric mod bot/sim/mod (session #16)
+- [LLM speed levers](llm-speed-levers.md) — reasoning budget = the lever (Nemotron x2.2 correct/min); flags/spec ~0
+- [RAM budget](ram-budget.md) — 16 GB tight: don't stack llama-server + card runs + Codex; jobs got killed
+- [Codex helper](codex-helper.md) — use Codex gpt-6.1-sol medium in parallel for bulk work (cards), brief + id lists

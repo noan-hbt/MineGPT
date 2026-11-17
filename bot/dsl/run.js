@@ -43,6 +43,7 @@ class Scope {
 
 class Interpreter {
   constructor(bot, senses, { skills = require('../skills'), log = () => {} } = {}) {
+    C.burning(bot) // installs the fire-contact tracker now (it must see the contact, not only later checks)
     this.bot = bot; this.senses = senses; this.skills = skills; this.log = log
     this.task = null; this.seq = 0; this.keep = null; this.lastOrder = null; this.avoid = new Map()
     this.env = makeEnv(this)
@@ -142,6 +143,10 @@ class Interpreter {
       else { r = { status: 'failed', cause: 'unreachable', detail: 'internal error: ' + String(e.message).slice(0, 120) }; this.log({ type: 'error', where: 'interp', error: String(e.stack) }) }
     }
     scope.dispose()
+    // mineflayer's inventory model drifts from the server's (validation: the last ladder placed, seed planted, bread
+    // dropped or arrow shot still counted): resync after every statement so the result, the sheet and the next
+    // statement see the server's truth
+    await resyncInventory(bot)
     if (this.task === task) this.task = null
     this.lastTask = task
     const after = P.allCounts(bot)
@@ -281,6 +286,12 @@ class Interpreter {
   }
 }
 
+// ask the server for the whole inventory (no window open only); bounded so a dead connection cannot hang a result
+async function resyncInventory(bot) {
+  if (typeof bot._syncWindow !== 'function' || bot.currentWindow || !bot.entity) return
+  try { await Promise.race([bot._syncWindow(bot.inventory), new Promise(r => setTimeout(r, 2000))]) } catch {}
+}
+
 function abortResult(reason, task, ctx) {
   const part = ctx && ctx.done > 0
   switch (reason.kind) {
@@ -331,7 +342,7 @@ function makeEnv(it) {
         case 'idle': return !it.task
         case 'in_water': return !!e.isInWater
         case 'in_lava': return !!e.isInLava
-        case 'on_fire': return !!(e.metadata && typeof e.metadata[0] === 'number' && (e.metadata[0] & 1))
+        case 'on_fire': return C.burning(bot)
         case 'sky': return P.seesSky(bot)
       }
       return false

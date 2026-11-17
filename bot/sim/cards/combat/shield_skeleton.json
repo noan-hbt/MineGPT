@@ -1,0 +1,200 @@
+{
+  "card": 1,
+  "id": "combat.shield_skeleton",
+  "title": "Face and block skeleton arrows before switching to a sword",
+  "tags": [
+    "combat",
+    "shield_skeleton"
+  ],
+  "difficulty": 3,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "dx": {
+      "int": [
+        -1,
+        1
+      ]
+    },
+    "dz": {
+      "int": [
+        8,
+        10
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "radius": 15,
+    "height": 8,
+    "depth": 8,
+    "floor": "stone",
+    "dimension": "overworld",
+    "time": 18000,
+    "weather": "clear",
+    "difficulty": "easy",
+    "gamerules": {
+      "advance_time": false,
+      "advance_weather": false,
+      "spawn_monsters": false,
+      "natural_health_regeneration": false,
+      "mob_griefing": false
+    }
+  },
+  "build": [
+    {
+      "fill": [
+        "<-14,0,-14>",
+        "<-14,4,14>"
+      ],
+      "block": "stone_bricks"
+    },
+    {
+      "fill": [
+        "<14,0,-14>",
+        "<14,4,14>"
+      ],
+      "block": "stone_bricks"
+    },
+    {
+      "fill": [
+        "<-13,0,-14>",
+        "<13,4,-14>"
+      ],
+      "block": "stone_bricks"
+    },
+    {
+      "fill": [
+        "<-13,0,14>",
+        "<13,4,14>"
+      ],
+      "block": "stone_bricks"
+    },
+    {
+      "fill": [
+        "<-14,5,-14>",
+        "<14,5,14>"
+      ],
+      "block": "stone_bricks"
+    },
+    {
+      "rcon": "scoreboard objectives add cs_arrow_block minecraft.custom:minecraft.damage_blocked_by_shield"
+    },
+    {
+      "set": "<12,-2,12>",
+      "block": "obsidian"
+    }
+  ],
+  "entities": [],
+  "player": {
+    "at": "<0,0,0>",
+    "spawn": "<0,0,-10>",
+    "yaw": 0,
+    "pitch": 0,
+    "health": 20,
+    "food": 20,
+    "saturation": 5,
+    "inventory": [
+      {
+        "item": "iron_sword",
+        "slot": 0
+      },
+      {
+        "item": "shield",
+        "slot": 1
+      }
+    ],
+    "armor": {
+      "head": {
+        "item": "iron_helmet"
+      },
+      "chest": {
+        "item": "iron_chestplate"
+      },
+      "legs": {
+        "item": "iron_leggings"
+      },
+      "feet": {
+        "item": "iron_boots"
+      }
+    },
+    "held": 0
+  },
+  "order": {
+    "from": "Noan",
+    "text": "Regarde le squelette, bloque ses flèches au bouclier, puis tue-le à l'épée.",
+    "at_tick": 0
+  },
+  "timeline": [
+    {
+      "at_tick": 0,
+      "rcon": "execute positioned <0,0,0> run scoreboard players set @a[distance=..2,sort=nearest,limit=1] cs_arrow_block 0"
+    },
+    {
+      "at_tick": 0,
+      "summon": {
+        "type": "skeleton",
+        "at": "<${dx},0,${dz}>",
+        "tag": "combat_shield_skeleton_foe",
+        "nbt": "{PersistenceRequired:1b,CanPickUpLoot:0b}"
+      }
+    },
+    {
+      "at_tick": 0,
+      "rcon": "execute positioned <0,0,0> run item replace entity @e[distance=..25,type=minecraft:skeleton,tag=combat_shield_skeleton_foe,limit=1] weapon.mainhand with minecraft:bow"
+    },
+    {
+      "when": {
+        "block": "<12,-2,12>",
+        "is": "obsidian"
+      },
+      "once": false,
+      "rcon": "execute positioned <0,0,0> as @a[distance=..24,sort=nearest,limit=1] if score @s cs_arrow_block matches 1.. if entity @e[distance=..25,type=minecraft:skeleton,tag=combat_shield_skeleton_foe] run setblock <12,-2,12> minecraft:gold_block"
+    }
+  ],
+  "fail": {
+    "died": true
+  },
+  "milestones": [
+    {
+      "name": "arrow_blocked_before_kill",
+      "check": {
+        "block": "<12,-2,12>",
+        "is": "gold_block"
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 1200,
+    "decisions": 20
+  },
+  "solution": [
+    "wait 1s",
+    "equip shield",
+    "look #skeleton",
+    "shield dur=10s",
+    "equip iron_sword",
+    "fight #skeleton"
+  ],
+  "solution_ticks": 450,
+  "success": {
+    "all": [
+      {
+        "block": "<12,-2,12>",
+        "is": "gold_block"
+      },
+      {
+        "entity": "skeleton",
+        "tag": "combat_shield_skeleton_foe",
+        "max": 0,
+        "near": "<0,0,0>",
+        "radius": 25
+      }
+    ]
+  }
+}

@@ -1,0 +1,130 @@
+{
+  "card": 1,
+  "id": "nav.door_house",
+  "title": "Open a closed wooden door and enter a small house",
+  "tags": [
+    "nav",
+    "door",
+    "use"
+  ],
+  "difficulty": 2,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "z": {
+      "int": [
+        3,
+        5
+      ]
+    },
+    "wood": {
+      "choice": [
+        "oak",
+        "birch",
+        "spruce"
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "radius": 15,
+    "height": 14,
+    "depth": 15,
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "peaceful",
+    "gamerules": {
+      "advance_time": false,
+      "advance_weather": false
+    }
+  },
+  "player": {
+    "at": "<0,0,0>",
+    "spawn": "<0,0,0>",
+    "inventory": []
+  },
+  "fail": {
+    "died": true
+  },
+  "build": [
+    {
+      "fill": [
+        "<-3,-1,${z}>",
+        "<3,3,${z+6}>"
+      ],
+      "block": "${wood}_planks",
+      "mode": "hollow"
+    },
+    {
+      "fill": [
+        "<0,0,${z}>",
+        "<0,1,${z}>"
+      ],
+      "block": "air"
+    },
+    {
+      "set": "<0,0,${z}>",
+      "block": "${wood}_door[facing=north,half=lower,hinge=left,open=false,powered=false]"
+    },
+    {
+      "set": "<0,1,${z}>",
+      "block": "${wood}_door[facing=north,half=upper,hinge=left,open=false,powered=false]"
+    }
+  ],
+  "mind": {
+    "places": {
+      "interieur": "<0,0,${z+3}>"
+    }
+  },
+  "order": {
+    "from": "Noan",
+    "text": "ouvre la porte et entre dans la maison à @interieur, laisse la porte ouverte et ne la casse pas"
+  },
+  "success": {
+    "all": [
+      {
+        "at": "<0,0,${z+3}>",
+        "radius": 1.2
+      },
+      {
+        "block": "<0,0,${z}>",
+        "is": "${wood}_door[half=lower,open=true]"
+      },
+      {
+        "block": "<0,1,${z}>",
+        "is": "${wood}_door[half=upper,open=true]"
+      }
+    ]
+  },
+  "milestones": [
+    {
+      "name": "at_door",
+      "check": {
+        "at": "<0,0,${z-1}>",
+        "radius": 1.5
+      }
+    },
+    {
+      "name": "door_open",
+      "check": {
+        "block": "<0,0,${z}>",
+        "is": "${wood}_door[open=true]"
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 900,
+    "decisions": 6
+  },
+  "solution": [
+    "goto <0,0,${z-1}> dist=0",
+    "use on=<0,0,${z}>",
+    "goto @interieur dist=0"
+  ],
+  "solution_ticks": 300
+}
