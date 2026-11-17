@@ -193,8 +193,10 @@ async function eat(ctx, a) {
   if (!names.length) throw new Fail('missing_items', a.food ? `no ${C.label(a.food)}` : 'no food in inventory')
   if (bot.food >= 20 && !ANYTIME.has(names[0])) throw new Fail('server_refused', 'not hungry (food 20/20)')
   await C.equip(ctx, names[0])
-  const f0 = bot.food
+  const f0 = bot.food, n0 = C.count(bot, [names[0]])
   try { await ctx.wait(bot.consume()) } catch (e) { if (e instanceof C.Abort) throw e; throw new Fail('server_refused', 'eat: ' + e.message) }
+  // consume() resolves on the "finished eating" status, before the slot update: wait for it (inventory stays true)
+  for (let i = 0; i < 20 && C.count(bot, [names[0]]) >= n0 && names[0] !== 'milk_bucket'; i++) await ctx.sleep(50)
   return { detail: `ate ${names[0]}, food ${f0} -> ${bot.food}` }
 }
 
@@ -210,7 +212,10 @@ async function sleep(ctx, a) {
     const m = e.message || ''
     throw new Fail(/monster/i.test(m) ? 'danger' : 'server_refused', 'sleep: ' + m)
   }
-  return { detail: 'in bed (the next action wakes the bot up)' }
+  // the night is skipped after 100 ticks in bed (alone on the server): wait for the morning, up to 10 s
+  for (let i = 0; i < 100 && bot.isSleeping; i++) await ctx.sleep(100)
+  if (!bot.isSleeping) return { detail: 'slept through the night, awake' }
+  return { detail: 'in bed, the night was not skipped (the next action wakes the bot up)' }
 }
 
 const TIER = ['leather', 'golden', 'chainmail', 'copper', 'iron', 'diamond', 'netherite']

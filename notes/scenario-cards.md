@@ -110,6 +110,8 @@ Runner: `node sim/run_cards.js [--sim N] [--lock] [--only id,...] [--seeds 1,2] 
 
   // judge (server side). success ends the episode; fail ends it as failed; else timeout
   "success": { "all": [ { "have": "oak_planks", "min": "${n}" } ] },
+  "success_when": "any",                       // any: success ends the episode as soon as it holds | end: judged only at
+                                                 // the time limit (survival cards: "still alive after 30 s")
   "fail":    { "any": [ { "died": true } ] },
   "milestones": [ { "name": "got_planks", "check": { "have": "oak_planks", "min": 1 } } ],   // partial credit, logged with tick
 
@@ -143,13 +145,23 @@ All numeric fields accept `${...}` templates.
 ## Episode lifecycle (runner)
 1. Expand: draw params for (card, seed), substitute templates, validate (unknown keys = error).
 2. Reset: clear inventory/effects/xp, kill non-player entities in the region, wipe the region, apply world
-   (template, dimension, time, weather, difficulty, gamerules), reset the death/damage scoreboards.
+   (template, dimension, time, weather, difficulty, gamerules).
 3. Build, entities, player (tp, gamemode, attributes via effects/`data`, items via `item replace`), spawnpoint.
-4. Mind: fresh throwaway memory, then `mind.places` / `notes` / `dsl`.
+4. Mind: fresh throwaway memory, then `mind.places` / `notes` / `dsl`. Then the death/damage scoreboards are
+   reset (setup can hurt: falling into a pit dug under the bot, `damage` for `player.health`).
 5. Run the policy (`script` = solution; later `mind` = LLM loop) while the runner fires the order and the timeline
    and evaluates success / fail / milestones every 20 ticks (and after each policy step).
 6. Log one `episode` record: card id, seed, params, policy, outcome (success|fail|timeout|error), ticks, real
    seconds, milestones reached (tick), deaths, damage, decisions, and the session log path.
+
+## Writing cards: pitfalls
+- Never leave the bot in a deadly spot during setup (underwater, in lava, mid-air): the bot's own timers (air,
+  fire, effects) run off the game clock while the runner sets up. Start safe and make it dangerous with a
+  `timeline` event at tick 0 (survive.drowning floods a dry pit).
+- Set `player.spawn` somewhere safe when `player.at` is not: a death there respawns into the same trap forever.
+- **Lockstep (`--lock`) does not freeze the player**: vanilla `tick freeze` leaves players ticking every server
+  loop (`tick rate 10000`), so air, natural regen, hunger, effect durations and the sleep timer run many times
+  faster than game time. Cards that depend on them (drowning, "keep N hp", sleep) are only valid at x1 for now.
 
 ## Diagnostics
 - `card_step` records carry `desync`: for every item a `have` check counts, the bot's inventory model vs the

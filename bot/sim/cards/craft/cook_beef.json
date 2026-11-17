@@ -1,0 +1,31 @@
+{
+  "card": 1,
+  "id": "craft.cook_beef",
+  "title": "From logs, cobblestone and raw beef: table, furnace, cook the beef (held out: never trained on)",
+  "tags": ["craft", "smelt", "food", "planning", "multi_stage"],
+  "difficulty": 4,
+  "split": "heldout",
+  "seeds": [1, 2],
+  "params": { "n": { "int": [2, 4] }, "wood": { "choice": ["oak", "birch"] } },
+  "world": { "template": "arena" },
+  "player": { "inventory": [
+    { "item": "${wood}_log", "count": 4 }, { "item": "cobblestone", "count": 8 }, { "item": "beef", "count": "${n}" }
+  ] },
+  "order": { "from": "Noan", "text": "cuis la viande" },
+  "success": { "have": "cooked_beef", "min": "${n}" },
+  "fail": { "died": true },
+  "milestones": [
+    { "name": "table", "check": { "have": "crafting_table", "min": 1 } },
+    { "name": "furnace", "check": { "have": "furnace", "min": 1 } },
+    { "name": "first_cooked", "check": { "have": "cooked_beef", "min": 1 } }
+  ],
+  "limits": { "ticks": 4800, "decisions": 12 },
+  "solution": [
+    "craft ${wood}_planks n=16",
+    "craft crafting_table",
+    "place crafting_table at=<2,0,2>",
+    "craft furnace",
+    "place furnace at=<-2,0,2>",
+    "smelt beef n=${n}"
+  ]
+}

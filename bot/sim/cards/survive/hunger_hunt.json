@@ -1,0 +1,19 @@
+{
+  "card": 1,
+  "id": "survive.hunger_hunt",
+  "title": "Hungry with no food: kill a cow and eat the raw beef",
+  "tags": ["survive", "food", "combat", "multi_stage"],
+  "difficulty": 3,
+  "split": "train",
+  "seeds": [1, 2, 3],
+  "params": { "food": { "int": [4, 10] }, "cx": { "int": [-8, 8] }, "cz": { "int": [5, 9] } },
+  "world": { "template": "arena", "gamerules": { "natural_health_regeneration": false } },
+  "entities": [ { "type": "cow", "at": "<${cx},0,${cz}>", "count": 2, "tag": "food", "no_ai": true } ],
+  "player": { "food": "${food}", "inventory": [ { "item": "iron_sword", "slot": 0 } ] },
+  "order": { "from": "Noan", "text": "t'as faim, trouve à manger" },
+  "success": { "food": { "min": "${food + 3}" } },
+  "fail": { "died": true },
+  "milestones": [ { "name": "beef", "check": { "have": "beef", "min": 1 } } ],
+  "limits": { "ticks": 1500, "decisions": 8 },
+  "solution": ["equip iron_sword", "fight #cow", "eat beef"]
+}

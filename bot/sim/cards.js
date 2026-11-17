@@ -217,8 +217,10 @@ function compile(ep, bot) {
     `effect give ${bot} minecraft:instant_health 1 28 true`, // health persists across episodes and runs: back to 20
     `kill @e[type=!player,x=${o.x},y=${o.y},z=${o.z},distance=..${region.r}]`,
     `scoreboard objectives add card_deaths deathCount`, `scoreboard objectives add card_damage minecraft.custom:minecraft.damage_taken`,
-    `scoreboard players set ${bot} card_deaths 0`, `scoreboard players set ${bot} card_damage 0`,
   ]
+  // run by the runner right before tick 0: setup itself can hurt (the bot falls into a pit dug under it, `damage` for
+  // player.health) and none of that belongs to the episode
+  const scores = [`scoreboard players set ${bot} card_deaths 0`, `scoreboard players set ${bot} card_damage 0`]
   const world = [
     `time set ${w.time}`, `weather ${w.weather}`, `difficulty ${w.difficulty}`,
     ...Object.entries(w.gamerules).map(([k, v]) => `gamerule ${k} ${v}`),
@@ -268,7 +270,7 @@ function compile(ep, bot) {
   const mind = { dsl: [], notes: ep.mind.notes.map(ep.text) }
   for (const [k, v] of Object.entries(ep.mind.places)) mind.dsl.push(`name_place ${k} at=${ep.text(v)}`)
   for (const s of ep.mind.dsl) mind.dsl.push(ep.text(s))
-  return { dim, reset, world, build, player, held: p.held, food, mind, region }
+  return { dim, reset, world, build, player, held: p.held, food, mind, scores, region }
 }
 
 const tpPos = ([x, y, z]) => `${x + 0.5} ${y} ${z + 0.5}`

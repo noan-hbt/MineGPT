@@ -101,6 +101,7 @@ async function main() {
       for (const st of plan.mind.dsl) await interp.start(st)
       if (plan.mind.notes.length) await turns.apply(plan.mind.notes.map(n => `note: ${n}`).join('\n'), 'decision')
       senses.build({ call: 'decision' }) // drain setup events
+      for (const c of plan.scores) await cmd(c)
       // ---- episode
       deathMsgs = []
       const t0 = await gametime(), realStart = real()

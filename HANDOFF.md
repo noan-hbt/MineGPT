@@ -120,18 +120,49 @@ Strip a leading empty `<think></think>` from the content if present. Full workin
 - Bot does not talk (no LLM chat replies). Ideas: LLM chat replies, commands like "mine iron" / "build shelter",
   use RCON for scripted tests.
 
-## State 2026-11-17 session #14 (RESUME HERE) — 15 cards, lava/health/RNG fixes
-Branch `v2`. Session #14 work committed (`success_when`, 6 new cards, lava parkour guard, reset heals, sha256 RNG).
-Don't commit `eval/results/`.
+## State 2026-11-17 session #15 (RESUME HERE) — 21 cards, lockstep player-tick finding
+Branch `v2`. Don't commit `eval/results/`.
 
-### Validation (session #15)
-- All 15 cards x seeds 1-5 lockstep: 74/75, then 75/75 after a card fix. Live suite lockstep: 64/64.
-- survive.eat_hungry#3 failed: food 5 + 2 baked potatoes = 15 < 17 (card bug, solution eats twice and `eat`
-  refuses at 20/20). Fix: `food` param 4-12 -> 7-12.
-- To rerun: `node sim/run_cards.js --sim 0 --lock --seeds 1,2,3,4,5` and `node test/live.js --lock --sim 0` from bot/.
-  If the server is left frozen: rcon `tick unfreeze` + `tick rate 20` (or `node sim/instance.js stop 0`).
-- Failures on new params may be card or bot bugs; inspect `card_step` records in `data/own/<day>/*_cards.jsonl`
-  (result detail, desync) and the episode `death_msgs`.
+### Validation
+- 21 cards x seeds 1-5 lockstep: 100/105. survive.drowning 0/5 in lockstep (expected, see below), 5/5 at x1
+  (seeds 1-2 checked after the last fix, 3-5 before). craft.planks#4 1 flaky (below). Live suite lockstep: 64/64.
+- Rerun: `node sim/run_cards.js --sim 0 --lock --seeds 1,2,3,4,5` and `node test/live.js --lock --sim 0` from bot/.
+  x1: drop `--lock`. If the server is left frozen: rcon `tick unfreeze` + `tick rate 20` (or `node sim/instance.js stop 0`).
+
+### Done (session #15)
+- 6 cards: survive.drowning (dry pit flooded at tick 0), survive.sleep_night, survive.hunger_hunt (kill cow, eat raw
+  beef), combat.zombie_group (3 zombies), heldout: survive.descend_cliff, craft.cook_beef (table+furnace+smelt).
+- eat_hungry card bug: food 5 + 2 baked potatoes < 17 -> food param 7-12.
+- Bot bugs fixed: fight/attack picked a mob in its death animation (still in bot.entities ~1 s) -> C.nearest skips
+  entities after entityDead. `go()` from a water surface: pathfinder finds no path -> swimOut (to the nearest dry
+  standing spot, jump+forward re-asserted each 100 ms) then plan again once. `sleep` now waits until woken (night
+  skipped, up to 10 s) instead of returning in bed (any next statement woke it before the night passed). `eat` waits
+  for the slot update (consume() resolves before it: bot model had 1 food item too many).
+- Runner: death/damage scoreboards reset right before tick 0 (plan.scores), not in reset (falling into a pit dug
+  under the bot's previous position counted as episode damage).
+- notes/scenario-cards.md: success_when, setup order, "pitfalls" section.
+
+### KEY FINDING: lockstep does not freeze the player
+`tick freeze` + `tick rate 10000` (sim/lockstep.js): vanilla never freezes players, so the bot's ServerPlayer ticks
+every server loop, many times per game tick. Measured: Air 259 -> 0 in 10 game ticks during setup; drowning in ~43
+ticks; sleep skipped the night in 58 ticks (x1 needs 100+). Also affects natural regen, hunger/saturation, effect
+durations, fire, item use timers -> lockstep is optimistic for every "keep N hp" card (creeper, zombie...).
+Options: (a) `tick rate` near the achieved step rate (approximate), (b) server mod/plugin freezing players
+(Fabric/Paper), (c) mark such cards x1-only. Not decided: ask the user. This is what the fidelity guard must measure.
+
+### Open
+- craft.planks#4 (acacia n=13) once in lockstep: bot model 16 planks, server 4 (3 of 4 crafts lost server-side,
+  clicks too fast?). Not reproduced in 9 reruns.
+- Ledger noise: a `sleep` step logged gained/lost bed from the previous seed.
+- Lockstep episodes sometimes ~10 s real for ~350 ticks: something waits on real time.
+- Reserved, not implemented: actors (owner NPC), seed-world templates, mind.chests/map, snapshot/restore.
+
+### Next
+1. Decide the lockstep player-tick fix (above). 2. Fidelity guard (all cards x1 vs lockstep, outcome + ticks +
+   damage distributions). 3. More cards (shelter, fall, mob mixes, longer chains). 4. Mind loop = policy `mind`.
+
+## State 2026-11-17 session #14 — 15 cards, lava/health/RNG fixes
+Branch `v2`. Commit `8f7158f`.
 
 ### Done
 - `success_when: "end"` (card key): success judged only at the time limit (survival cards); runner waits for it.
@@ -144,15 +175,6 @@ Don't commit `eval/results/`.
   reset gives instant_health. The earlier "zombie#2 died after 2 HP" was probably this too.
 - RNG: weak string hash gave correlated draws across seeds 1,2,3 (creeper dz always < 0) -> sha256 seed + mulberry32.
 - Sword-fight / flee+bow creeper solutions failed, but under the health bug: retest if a card needs them.
-
-### Open
-- Lockstep episodes sometimes ~10 s real for ~350 ticks: something waits on real time.
-- Reserved, not implemented: actors (owner NPC), seed-world templates, mind.chests/map, snapshot/restore.
-- notes/scenario-cards.md: document `success_when` (not done yet).
-
-### Next
-1. More cards (night shelter, drowning, fall, hunger with no food, mob groups, longer chains) + a held-out
-   set. 2. Fidelity guard (same cards x1 vs lockstep). 3. Mind loop = policy `mind`.
 
 ## State 2026-11-17 session #13 — scenario cards v1, craft/see/pickup fixes
 Branch `v2`. **NOT committed** (everything since `8cd9b21`, incl. session #12 files + `bot/sim/cards.js`,

@@ -1,0 +1,18 @@
+{
+  "card": 1,
+  "id": "survive.sleep_night",
+  "title": "Night falls with a bed in the inventory: place it and sleep through the night",
+  "tags": ["survive", "night", "build"],
+  "difficulty": 2,
+  "split": "train",
+  "seeds": [1, 2, 3],
+  "params": { "t": { "int": [13000, 20000] }, "color": { "choice": ["white", "red", "blue"] }, "bx": { "int": [2, 4] } },
+  "world": { "template": "arena", "time": "${t}" },
+  "player": { "inventory": [ { "item": "${color}_bed", "count": 1 } ] },
+  "order": { "from": "Noan", "text": "il fait nuit, va dormir" },
+  "success": { "time": { "max": 1000 } },
+  "fail": { "died": true },
+  "milestones": [ { "name": "bed_placed", "check": { "block": "<${bx},0,0>", "is": "#beds" } } ],
+  "limits": { "ticks": 1200, "decisions": 6 },
+  "solution": ["place ${color}_bed at=<${bx},0,0>", "sleep"]
+}

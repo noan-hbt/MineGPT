@@ -21,6 +21,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms))
 // pathfinder plans a sprint-jump across a 3-wide lava moat as a normal move and the bot misses it.
 function makeMovements(bot) {
   const { Movements } = require('mineflayer-pathfinder')
+  dying(bot) // start tracking deaths now (every bot setup goes through here)
   const mv = new Movements(bot)
   mv.canDig = true; mv.allow1by1towers = true
   const lava = bot.registry.blocksByName.lava.id
@@ -156,14 +157,20 @@ function findEntity(ctx, v) {
   const kind = v.entity || v.name
   if (v.ref !== undefined) {
     const e = bot.entities[+v.ref]
-    return e && e.isValid !== false && (!kind || e.name === kind) ? e : null
+    return e && e.isValid !== false && !dying(bot).has(e) && (!kind || e.name === kind) ? e : null
   }
   return nearest(bot, e => e.name === kind && e !== bot.entity)
 }
+// mobs stay in bot.entities for ~1 s of death animation after entityDead: never pick them as targets
+function dying(bot) {
+  if (!bot._dying) { bot._dying = new WeakSet(); bot.on('entityDead', e => { if (e) bot._dying.add(e) }) }
+  return bot._dying
+}
 function nearest(bot, pred, maxDist = 48) {
   let best = null, bd = maxDist
+  const dead = dying(bot)
   for (const e of Object.values(bot.entities)) {
-    if (!e.position || !pred(e)) continue
+    if (!e.position || dead.has(e) || !pred(e)) continue
     const d = e.position.distanceTo(bot.entity.position)
     if (d < bd) { bd = d; best = e }
   }
@@ -210,10 +217,39 @@ function pathFail(e) {
   return new Fail('unreachable', String(e && e.message || e).slice(0, 160))
 }
 // pathfinder.goto resolves silently when it finds no move at all: check the goal really is reached
-async function go(ctx, goal) {
-  try { await ctx.wait(ctx.bot.pathfinder.goto(goal)) } catch (e) { throw pathFail(e) }
+async function go(ctx, goal, retried = false) {
+  try { await ctx.wait(ctx.bot.pathfinder.goto(goal)) } catch (e) {
+    const f = pathFail(e)
+    // mineflayer-pathfinder finds no path from a water surface: swim ashore, then plan again (once)
+    if (!retried && f instanceof Fail && f.cause === 'no_path' && ctx.bot.entity.isInWater && await swimOut(ctx)) return go(ctx, goal, true)
+    throw f
+  }
   const p = ctx.bot.entity.position.floored()
   if (!goal.isEnd(p)) throw new Fail('no_path', `no way to get closer, stopped at ${fmtPos(p)}`)
+}
+// swim to the nearest dry spot to stand on (solid below, 2 air above) within 6 blocks; true once out of the water
+async function swimOut(ctx) {
+  const bot = ctx.bot
+  const me = bot.entity.position, f = me.floored()
+  const dry = b => b && b.boundingBox === 'empty' && b.name !== 'water' && b.name !== 'lava' && b.name !== 'bubble_column'
+  let best = null, bd = Infinity
+  for (let dx = -6; dx <= 6; dx++) for (let dz = -6; dz <= 6; dz++) for (let dy = -1; dy <= 2; dy++) {
+    const p = f.offset(dx, dy, dz)
+    const below = bot.blockAt(p.offset(0, -1, 0), false)
+    if (!below || below.boundingBox !== 'block' || !dry(bot.blockAt(p, false)) || !dry(bot.blockAt(p.offset(0, 1, 0), false))) continue
+    const d = p.offset(0.5, 0, 0.5).distanceTo(me)
+    if (d < bd) { bd = d; best = p }
+  }
+  if (!best) return false
+  bot.pathfinder.setGoal(null)
+  try {
+    for (let i = 0; i < 80 && (bot.entity.isInWater || !bot.entity.onGround); i++) {
+      await ctx.wait(bot.lookAt(best.offset(0.5, 1, 0.5), true))
+      bot.setControlState('jump', true); bot.setControlState('forward', true) // re-asserted: the pathfinder may clear them
+      await ctx.sleep(100)
+    }
+  } finally { bot.setControlState('jump', false); bot.setControlState('forward', false) }
+  return !bot.entity.isInWater
 }
 // walk until within `dist` of pos (or reach for blocks)
 async function near(ctx, pos, dist = 3) {
