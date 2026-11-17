@@ -19,6 +19,7 @@ const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ?
 const LLM = arg('llm', 'http://127.0.0.1:8080')
 const { createMemory } = require('./memory')
 const { createController, planCost } = require('./control')
+const { createChat, slotCount } = require('./chat')
 // B5: task persistence + bans + progress watchdog (control.js)
 const C = createController()
 // B4: long-term memory (memory/<name>.json). Episode summaries come from the LLM (code fallback inside memory.js)
@@ -76,6 +77,9 @@ let home = M.home && new Vec3(...M.home)
 const setHome = p => { M.setHome(p); home = new Vec3(...M.home) }
 let target = null, targetDone = false, exploreCount = 0
 const history = [] // [{a, r}] last actions + results
+let doing = null // action running right now (B7 chat context)
+let SLOTS = 1 // llama-server slots; >= 2: decider on slot 0, chat + episode summaries on slot 1 (keeps the decider's prompt cache)
+slotCount(LLM).then(n => { SLOTS = n; console.log(`[llm] ${n} slot(s)`) })
 const stats = { n: 0, lat: [] }
 
 bot.once('spawn', () => {
@@ -109,24 +113,60 @@ bot.once('spawn', () => {
   loop()
 })
 
-bot.on('chat', (user, msg) => {
-  if (user === bot.username) return
-  const cmd = msg.split(' ')[0]
-  if (['goal', 'stop', 'go', 'follow', 'where', 'help', 'come', 'sethome', 'tasks', 'memory'].includes(cmd)) L.event('chat_cmd', { user, msg })
-  else L.event('chat', { user, msg })
-  if (msg.startsWith('goal ')) { C.drop(); setGoal(msg.slice(5)); bot.chat('New goal: ' + goal + (target ? ` (target ${target.n} ${target.item})` : '')) }
-  else if (msg === 'stop') { C.drop(); paused = true; following = null; bot.pathfinder.setGoal(null); bot.chat('paused') }
-  else if (msg === 'go') { paused = false; following = null; bot.pathfinder.setGoal(null); bot.chat('autonomous mode, goal: ' + goal) }
-  else if (msg === 'follow') { following = user; bot.chat(`following ${user} (say go to let me work alone)`) }
+const COMMANDS = ['goal', 'stop', 'go', 'follow', 'where', 'help', 'come', 'sethome', 'tasks', 'memory']
+// exact chat commands (fast path, no LLM). quiet = no confirmation in chat (B7: the LLM already answered)
+function command(user, msg, quiet = false) {
+  const tell = t => { if (!quiet) bot.chat(t) }
+  if (msg.startsWith('goal ')) { C.drop(); setGoal(msg.slice(5)); tell('New goal: ' + goal + (target ? ` (target ${target.n} ${target.item})` : '')) }
+  else if (msg === 'stop') { C.drop(); paused = true; following = null; bot.pathfinder.setGoal(null); tell('paused') }
+  else if (msg === 'go') { paused = false; following = null; bot.pathfinder.setGoal(null); tell('autonomous mode, goal: ' + goal) }
+  else if (msg === 'follow') { following = user; tell(`following ${user} (say go to let me work alone)`) }
   else if (msg === 'where') { const p = bot.entity.position.floored(); bot.chat(`I'm at ${p.x} ${p.y} ${p.z}`) }
   else if (msg === 'sethome') {
     setHome(bot.entity.position)
-    bot.chat(`home set at ${home.x} ${home.y} ${home.z}`)
+    tell(`home set at ${home.x} ${home.y} ${home.z}`)
   }
   else if (msg === 'tasks') bot.chat('tasks: ' + (M.data.tasks.map(t => t.goal).join(' > ') || 'none'))
   else if (msg === 'memory') M.prompt(snap().pos, []).split('\n').filter(Boolean).forEach(l => bot.chat(l.slice(0, 250)))
-  else if (msg === 'help') bot.chat('goal <text> | go | stop | follow | come | where | sethome | tasks | memory')
+  else if (msg === 'help') bot.chat('goal <text> | go | stop | follow | come | where | sethome | tasks | memory | or just talk to me')
   else if (msg === 'come') act('come player', 'user').then(r => console.log('[come] ' + r))
+  else return false
+  return true
+}
+
+// B7: any other message -> LLM chat (async, own llama-server slot when there are 2+). Disable with --no-chat.
+const chat = process.argv.includes('--no-chat') ? null : createChat({
+  llm: LLM, name: arg('name', 'LFM'), slot: () => SLOTS > 1 ? 1 : null,
+  context: () => {
+    const s = snap(), tod = bot.time?.timeOfDay ?? 0
+    return { ...s, night: tod >= 12500 && tod < 23500, paused, following, goal, tasks: M.data.tasks.map(t => t.goal),
+      doing: doing || (C.task ? `${C.task.action} (task, run ${C.task.runs})` : history.at(-1) ? `last: ${history.at(-1).a} -> ${history.at(-1).r}` : null),
+      memory: s.pos ? M.prompt(s.pos, []) : '' }
+  },
+  say: t => { for (let i = 0; i < t.length; i += 250) bot.chat(t.slice(i, i + 250)) },
+  log: rec => L.event('chat_reply', rec),
+  onIntent: (intent, a, user) => {
+    if (intent === 'get') {
+      const t = parseTarget(a)
+      if (!t) { bot.chat(`(je ne connais pas l'objet "${a}")`); return }
+      command(user, `goal ${t.n} ${t.item}`, true)
+    }
+    else if (intent === 'stop') command(user, 'stop', true)
+    else if (intent === 'resume') command(user, 'go', true)
+    else if (intent === 'follow') command(user, 'follow', true)
+    else if (intent === 'come') command(user, 'come', true)
+    else if (intent === 'set_home') command(user, 'sethome', true)
+    else if (intent === 'go_home') { paused = false; following = null; act('home base', 'user').then(r => console.log('[home] ' + r)) }
+  },
+})
+
+bot.on('chat', (user, msg) => {
+  if (user === bot.username) return
+  const cmd = msg.split(' ')[0]
+  const isCmd = COMMANDS.includes(cmd) && (cmd === 'goal' ? msg.length > 5 : msg === cmd)
+  L.event(isCmd ? 'chat_cmd' : 'chat', { user, msg })
+  if (isCmd) command(user, msg)
+  else if (chat) chat.handle(user, msg)
 })
 bot.on('kicked', r => { console.log('[bot] kicked', r); L.event('kicked', { reason: String(r).slice(0, 200) }) })
 bot.on('error', e => { console.log('[bot] error', e.message); L.event('error', { msg: e.message.slice(0, 200) }) })
@@ -383,6 +423,7 @@ async function decide(obs) {
     chat_template_kwargs: { enable_thinking: false }, reasoning_format: 'none',
     grammar: obs.grammar, cache_prompt: true,
   }
+  if (SLOTS > 1) body.id_slot = 0
   const t0 = performance.now()
   const r = await fetch(LLM + '/v1/chat/completions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
   if (!r.ok) throw new Error(`LLM HTTP ${r.status}: ${(await r.text()).slice(0, 200)}`)
@@ -399,6 +440,7 @@ async function summarizeEpisode(w, g) {
       { role: 'user', content: `Goal: ${g}\nActions:\n${lines}` }],
     max_tokens: 60, temperature: 0, chat_template_kwargs: { enable_thinking: false }, reasoning_format: 'none', cache_prompt: false,
   }
+  if (SLOTS > 1) body.id_slot = 1
   const r = await fetch(LLM + '/v1/chat/completions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: AbortSignal.timeout(8000) })
   if (!r.ok) return null
   return (await r.json()).choices[0].message.content.replace(/<think>[\s\S]*?<\/think>/, '').trim()
@@ -474,7 +516,8 @@ async function act(text, source, extra = {}) {
   if (verb === 'explore') exploreCount++
   const before = snap()
   const t0 = performance.now()
-  const result = await run(verb, a)
+  doing = text
+  const result = await run(verb, a).finally(() => { doing = null })
   const dur_ms = Math.round(performance.now() - t0)
   history.push({ a: text, r: result })
   if (history.length > 20) history.shift()
