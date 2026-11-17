@@ -1,0 +1,24 @@
+{
+  "card": 1,
+  "id": "gather.chop_tree",
+  "title": "Chop one tree and keep at least 3 logs",
+  "tags": ["gather", "wood"],
+  "difficulty": 1,
+  "split": "train",
+  "seeds": [1, 2, 3],
+  "params": {
+    "wood": { "choice": ["oak", "birch"] },
+    "dx": { "int": [-8, 8] },
+    "dz": { "int": [5, 9] }
+  },
+  "world": { "template": "arena" },
+  "build": [ { "feature": "minecraft:${wood}", "at": "<${dx},0,${dz}>", "soil": "grass_block" } ],
+  "player": { "inventory": [] },
+  "order": { "from": "Noan", "text": "coupe un arbre" },
+  "success": { "have": "#minecraft:logs", "min": 3 },
+  "fail": { "died": true },
+  "milestones": [ { "name": "first_log", "check": { "have": "#minecraft:logs", "min": 1 } } ],
+  "limits": { "ticks": 2400, "decisions": 8 },
+  "solution": ["chop n=1"],
+  "solution_ticks": 600
+}

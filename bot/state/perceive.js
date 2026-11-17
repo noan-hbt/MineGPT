@@ -303,7 +303,7 @@ function surroundings(bot, mcData, ctx) {
 }
 
 function safeSee(bot, p) {
-  try { return bot.canSeeBlock(bot.blockAt(p, false)) } catch { return false }
+  return require('../skills/common').canSee(bot, p) // not bot.canSeeBlock (ray too short, see common.canSee)
 }
 
 function stations(clusters) {

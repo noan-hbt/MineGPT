@@ -63,8 +63,11 @@ function connect({ host = '127.0.0.1', port, password } = {}) {
     sock.once('connect', async () => {
       try {
         await request(3, password)
+        // one request in flight: the vanilla RCON thread parses one packet per socket read, so pipelined
+        // packets (lockstep driver + test commands on one connection) get split/merged and it drops the client
+        let chain = Promise.resolve()
         resolve({
-          cmd: c => request(2, c.replace(/^\//, '')),
+          cmd: c => { const p = chain.then(() => request(2, c.replace(/^\//, ''))); chain = p.catch(() => {}); return p },
           close: () => sock.end(),
         })
       } catch (e) { reject(e) }

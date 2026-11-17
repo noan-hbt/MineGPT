@@ -179,6 +179,10 @@ fluids...) is out of reach. Instead, MineSim = the vanilla server (fidelity by c
 - **Reproducibility**: fixed seeds and gamerules. Residual mob-AI randomness is handled by running several
   seeds per card.
 
+**Measured 2026-11-17 (H4 spike): lockstep chosen.** Speeding up by `tick rate` alone drifts in game time (bot
+latency is real time); a frozen server stepped by the bot (`tick freeze` + `tick step 1` per bot physics tick,
+bot on a virtual clock) keeps x1 action durations at ~450 tps. See `bot/sim/` and HANDOFF session #11.
+
 Only if the throughput measured at H4 is far too low for RL: an abstract fast sim for pre-training only.
 It would be calibrated on real-engine logs (durations, failure rates) and never used for evaluation.
 

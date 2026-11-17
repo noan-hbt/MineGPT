@@ -1,0 +1,22 @@
+{
+  "card": 1,
+  "id": "combat.zombie",
+  "title": "A zombie walks at you at night: kill it without dying",
+  "tags": ["combat", "danger"],
+  "difficulty": 2,
+  "split": "train",
+  "seeds": [1, 2, 3],
+  "params": { "dx": { "int": [6, 10] }, "dz": { "int": [-5, 5] } },
+  "world": { "template": "arena", "time": 18000, "difficulty": "easy" },
+  "entities": [ { "type": "zombie", "at": "<${dx},0,${dz}>", "tag": "foe", "nbt": "{PersistenceRequired:1b,CanPickUpLoot:0b}" } ],
+  "player": {
+    "inventory": [ { "item": "iron_sword", "slot": 0 } ],
+    "armor": { "chest": { "item": "iron_chestplate" } }
+  },
+  "success": { "entity": "zombie", "tag": "foe", "max": 0 },
+  "fail": { "died": true },
+  "milestones": [ { "name": "untouched", "check": { "damage_taken": { "max": 0 } } } ],
+  "limits": { "ticks": 1200, "decisions": 6 },
+  "solution": ["equip iron_sword", "fight #zombie"],
+  "solution_ticks": 200
+}

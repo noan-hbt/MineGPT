@@ -1,0 +1,20 @@
+{
+  "card": 1,
+  "id": "nav.goto_place",
+  "title": "Walk to a remembered place behind a wall",
+  "tags": ["nav", "memory"],
+  "difficulty": 1,
+  "split": "train",
+  "seeds": [1, 2, 3],
+  "params": { "px": { "int": [-12, 12] }, "pz": { "int": [8, 12] } },
+  "world": { "template": "arena" },
+  "build": [ { "fill": ["<-6,0,4>", "<6,2,4>"], "block": "stone_bricks" } ],
+  "player": { "inventory": [] },
+  "mind": { "places": { "camp": "<${px},0,${pz}>" } },
+  "order": { "from": "Noan", "text": "va au @camp" },
+  "success": { "at": "<${px},0,${pz}>", "radius": 2 },
+  "fail": { "died": true },
+  "limits": { "ticks": 900, "decisions": 4 },
+  "solution": ["goto @camp"],
+  "solution_ticks": 200
+}

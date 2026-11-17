@@ -2,9 +2,12 @@
 // (stone floor y=99 over a stone block down to y=85, cleared above). Each case = RCON setup + one statement (or a
 // turn) + checks on its result event. Logs data/own/<date>/<session>_live.jsonl (states + events, checked by
 // spec/tools/validate.py).
-//   node test/live.js [--only name1,name2] [--name LFM]
+//   node test/live.js [--only name1,name2] [--name LFM] [--lock] [--sim N]
+// --lock: H4 MineSim lockstep, the frozen server is stepped by the bot (bot/sim/lockstep.js), as fast as possible.
 // Needs the local server (start-mc.ps1) with RCON. Restores the gamerules it changes.
 'use strict'
+const LOCK = process.argv.includes('--lock')
+const clock = LOCK ? require('../sim/clock').installManual() : null // before mineflayer
 const fs = require('fs')
 const path = require('path')
 const mineflayer = require('mineflayer')
@@ -19,6 +22,10 @@ const C = require('../skills/common')
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? process.argv[i + 1] : d }
 const NAME = arg('name', 'LFM')
 const ONLY = arg('only', null) ? new Set(arg('only').split(',')) : null
+// --sim N: run on MineSim instance N (bot/sim/instance.js, started if down) instead of the main server
+const SIM = arg('sim', null)
+let SRV = { host: '127.0.0.1', port: 25565, rcon: {} }
+const rconConnect = () => rcon.connect(SRV.rcon)
 const X = 3000, Y = 200, Z = 3000
 const at = (dx, dy, dz) => `${X + dx} ${Y + dy} ${Z + dz}`
 const P = (dx, dy, dz) => `(${X + dx},${Y + dy},${Z + dz})`
@@ -103,7 +110,14 @@ const CASES = [
 
 // ---------------------------------------------------------------- runner
 async function main() {
-  const r = await rcon.connect()
+  if (SIM != null) {
+    const s = await require('../sim/instance').start(+SIM)
+    SRV = { host: s.host, port: s.port, rcon: { port: s.rconPort, password: s.password } }
+    console.log(`MineSim instance ${SIM}: port ${s.port}`)
+  }
+  const r = await rconConnect()
+  const lock = LOCK ? new (require('../sim/lockstep').Lockstep)(clock, r) : null
+  const real0 = LOCK ? clock.realNow() : Date.now()
   const cmd = async c => { const out = await r.cmd(c); if (/Unknown|Incorrect|Invalid|Expected|No entity|No player|Could not/i.test(out)) console.log(`  rcon "${c}": ${out}`); return out }
   const restore = [`gamerule spawn_monsters ${(await r.cmd('gamerule spawn_monsters')).match(/(true|false)/)[1]}`]
   await cmd('gamerule spawn_monsters false')
@@ -117,7 +131,7 @@ async function main() {
   const log = fs.createWriteStream(logFile)
   const write = o => log.write(JSON.stringify(o) + '\n')
 
-  const bot = mineflayer.createBot({ host: '127.0.0.1', port: 25565, username: NAME, version: '1.21.11' })
+  const bot = mineflayer.createBot({ host: SRV.host, port: SRV.port, username: NAME, version: '1.21.11', ...(LOCK ? { checkTimeoutInterval: 30000 * 1000 } : {}) })
   bot.loadPlugin(pathfinder)
   await new Promise((res, rej) => { bot.once('spawn', res); bot.once('kicked', rej); bot.once('error', rej) })
   const mv = new Movements(bot); mv.canDig = true; mv.allow1by1towers = true
@@ -125,6 +139,8 @@ async function main() {
   await cmd(`gamemode survival ${NAME}`)
   await cmd(`tp ${NAME} ${at(0, 0, 0)}`)
   await C.sleep(3000)
+  await bot.waitForChunksToLoad() // a fresh sim world still generates the arena chunks after the tp
+  if (LOCK) await lock.start()
   // arena
   await cmd(`fill ${X - 15} ${Y - 15} ${Z - 15} ${X + 15} ${Y - 1} ${Z + 15} stone`)
   await cmd(`fill ${X - 15} ${Y} ${Z - 15} ${X + 15} ${Y + 12} ${Z + 15} air`)
@@ -186,9 +202,15 @@ async function main() {
   await reset()
   const npass = results.filter(x => x.pass).length
   write({ type: 'end', pass: npass, total: results.length })
-  console.log(`\n${npass}/${results.length} passed; log ${logFile}`)
+  const realS = ((LOCK ? clock.realNow() : Date.now()) - real0) / 1000
+  console.log(`\n${npass}/${results.length} passed; log ${logFile}; real ${realS.toFixed(1)} s${LOCK ? `, ${lock.ticks} ticks stepped (${(lock.ticks / realS).toFixed(0)} tps)` : ''}`)
+  if (LOCK) await lock.stop()
   interp.close(); r.close()
-  log.end(() => { bot.quit(); setTimeout(() => process.exit(npass === results.length ? 0 : 1), 500) })
+  log.end(() => { bot.quit(); (LOCK ? clock.realSetTimeout : setTimeout)(() => process.exit(npass === results.length ? 0 : 1), 500) })
 }
 
-main().catch(e => { console.error(e); process.exit(2) })
+main().catch(e => {
+  console.error(e)
+  if (!LOCK) process.exit(2)
+  rconConnect().then(async r => { await r.cmd('tick rate 20'); await r.cmd('tick unfreeze') }).finally(() => process.exit(2))
+})

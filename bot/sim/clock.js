@@ -9,20 +9,34 @@
 // wakes ~every 1-16 ms, so physics runs in bursts (pass maxCatchupTicks to createBot).
 'use strict'
 const perf = require('perf_hooks').performance
+const RealDate = Date
+
+// `new Date()` does not go through Date.now: replace the constructor too (mineflayer clickWindow compares
+// `new Date() - bot.lastDigTime`; mixing real and virtual time there blocked crafts for ~20 s in lockstep)
+function patchDate(nowMs) {
+  function VDate(...a) {
+    if (!new.target) return new RealDate(nowMs()).toString()
+    return a.length ? new RealDate(...a) : new RealDate(nowMs())
+  }
+  VDate.prototype = RealDate.prototype
+  Object.setPrototypeOf(VDate, RealDate)
+  VDate.now = () => Math.floor(nowMs())
+  global.Date = VDate
+}
 
 let installed = null
 
 function install({ speed = 1 } = {}) {
   if (installed) return installed
   const realNow = perf.now.bind(perf)
-  const realDateNow = Date.now
+  const realDateNow = RealDate.now
   const realST = global.setTimeout, realSI = global.setInterval
   let k = speed, baseReal = realNow(), baseVirt = baseReal
   const dateOffset = realDateNow() - baseReal // virtual Date.now = virtual perf time + this offset
   const vnow = () => baseVirt + (realNow() - baseReal) * k
 
   perf.now = vnow
-  Date.now = () => Math.floor(vnow() + dateOffset)
+  patchDate(() => vnow() + dateOffset)
   const scaled = (real) => function (fn, ms, ...args) { return real(fn, Math.max(0, (+ms || 0) / k), ...args) }
   global.setTimeout = scaled(realST)
   global.setInterval = scaled(realSI)
@@ -65,7 +79,7 @@ function installManual() {
   if (installed) return installed
   const realNow = perf.now.bind(perf)
   const realST = global.setTimeout, realCT = global.clearTimeout, realCI = global.clearInterval
-  const dateOffset = Date.now() - realNow()
+  const dateOffset = RealDate.now() - realNow()
   let vt = realNow(), seq = 0
   const queue = [] // VTimer, unsorted (small)
 
@@ -78,7 +92,7 @@ function installManual() {
     [Symbol.toPrimitive]() { return this.seq }
   }
   perf.now = () => vt
-  Date.now = () => Math.floor(vt + dateOffset)
+  patchDate(() => vt + dateOffset)
   global.setTimeout = (fn, ms, ...args) => new VTimer(fn, ms, args, false)
   global.setInterval = (fn, ms, ...args) => new VTimer(fn, ms, args, true)
   const clear = real => t => { if (t instanceof VTimer) t.cancel(); else if (t != null) real(t) }

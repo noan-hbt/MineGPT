@@ -46,12 +46,17 @@ async function craft(ctx, a) {
   if (!it) throw new Fail('invalid', `unknown item ${name}`)
   const want = ctx.args.n ?? 1
   ctx.total = want
-  const start = C.count(bot, [name])
-  const made = () => C.count(bot, [name]) - start
   const recipes = R.crafting.filter(r => r.out === name)
   if (!recipes.length) throw new Fail('invalid', `${name} has no crafting recipe${R.smelting.some(r => r.out === name) ? ' (it is smelted)' : ''}`)
   const per = recipes[0].n
   let table = null
+  // mineflayer predicts the inventory locally and can drift from the server (lockstep, x1 too): crafts counted
+  // twice or not at all, ingredients left in the 2x2 grid (the server keeps them there until a window closes).
+  // So count on the server's truth: resync before/after every batch and empty the 2x2 grid.
+  await settle(ctx)
+  const start = C.count(bot, [name])
+  const made = () => C.count(bot, [name]) - start
+  let stuck = 0
   while (made() < want) {
     ctx.check()
     const small = bot.recipesFor(it.id, null, 1, null)[0]
@@ -67,16 +72,41 @@ async function craft(ctx, a) {
       rec = bot.recipesFor(it.id, null, 1, table)[0] || big
     }
     const times = Math.max(1, Math.ceil((want - made()) / rec.result.count))
+    const before = made()
+    let err = null
     try { await ctx.wait(bot.craft(rec, times, rec.requiresTable ? table : null)) } catch (e) {
       if (e instanceof C.Abort) throw e
-      try { await ctx.wait(bot.craft(rec, 1, rec.requiresTable ? table : null)) } catch (e2) {
-        if (e2 instanceof C.Abort) throw e2
-        throw new Fail('server_refused', `craft ${name}: ${e2.message}`.slice(0, 160))
-      }
+      err = e
     }
+    await settle(ctx)
+    if (made() <= before) {
+      if (++stuck >= 2) throw new Fail('server_refused', `craft ${name}: ${made() ? `made ${made()}/${want}, then ` : ''}no result${err ? ` (${err.message})` : ''}`.slice(0, 160))
+    } else stuck = 0
     ctx.done = Math.min(want, made()); ctx.progress(`${made()}/${want}`)
   }
   return { detail: `${name} x${made()}` }
+}
+
+// bring the local inventory model back to the server's state, then empty the 2x2 crafting grid (slots 1-4) and the
+// cursor into the inventory; ends with a resync so counts read after it are the server's
+async function settle(ctx) {
+  const bot = ctx.bot
+  if (typeof bot._syncWindow !== 'function' || bot.currentWindow) return
+  const inv = bot.inventory
+  await ctx.wait(bot._syncWindow(inv))
+  // a click can be ignored by the server (stale model, concurrent resync): retry until grid + cursor are empty
+  for (let tries = 0; tries < 4; tries++) {
+    let moved = false
+    for (let s = 1; s <= 4; s++) if (inv.slots[s]) { await ctx.wait(bot.clickWindow(s, 0, 1)); moved = true }
+    if (inv.selectedItem) {
+      const sel = inv.selectedItem
+      const free = inv.findItemRange(inv.inventoryStart, inv.inventoryEnd, sel.type, sel.metadata, true, sel.nbt)?.slot ??
+        inv.firstEmptySlotRange(inv.inventoryStart, inv.inventoryEnd)
+      if (free != null) { await ctx.wait(bot.clickWindow(free, 0, 0)); moved = true }
+    }
+    if (!moved) return
+    await ctx.wait(bot._syncWindow(inv))
+  }
 }
 
 // fuel value in items smelted
@@ -242,4 +272,33 @@ async function trade(ctx, a) {
   return {}
 }
 
-module.exports = { craft, smelt: cooker('smelt'), blast: cooker('blast'), smoke: cooker('smoke'), enchant, repair, smith, trade, missingFor }
+// mineflayer waits for an update of the crafting result slot (updateSlot:0) after every click in the grid or on
+// the result, with a 20 s timeout; 1.17.1+ servers only answer a click when the client model is stale, so a click
+// that leaves the result unchanged can get no answer -> 20 s stall, then grid leftovers. Wrapping bot.clickWindow
+// is not enough: putAway (taking the result) calls mineflayer's internal clickWindow. So hook the outgoing
+// window_click packet: if no updateSlot:0 within 1 s (bot clock), force a real resync (no-op click with a stale
+// stateId -> the server resends the whole window, which also fixes a wrong local model).
+function patchClickWindow(bot) {
+  if (bot._clickPatched || !bot._client) return
+  bot._clickPatched = true
+  const client = bot._client
+  const write = client.write.bind(client)
+  client.write = function (name, params) {
+    const r = write(name, params)
+    if (name !== 'window_click' || params.stateId === -1 || typeof bot._syncWindow !== 'function') return r
+    const w = params.windowId === 0 ? bot.inventory : bot.currentWindow
+    if (!w || w.id !== params.windowId) return r
+    const s = params.slot
+    const crafting = w.type === 'minecraft:inventory' ? s >= 0 && s <= 4 : w.type === 'minecraft:crafting' && s >= 0 && s <= 9
+    if (!crafting) return r
+    const done = () => clearTimeout(t)
+    const t = setTimeout(() => {
+      w.removeListener('updateSlot:0', done)
+      if ((bot.currentWindow || bot.inventory) === w) bot._syncWindow(w).catch(() => {})
+    }, 1000)
+    w.once('updateSlot:0', done)
+    return r
+  }
+}
+
+module.exports = { patchClickWindow, craft, smelt: cooker('smelt'), blast: cooker('blast'), smoke: cooker('smoke'), enchant, repair, smith, trade, missingFor }

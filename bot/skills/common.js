@@ -91,8 +91,19 @@ function positions(ctx, v) {
 }
 
 // ---------------------------------------------------------------- what the bot knows
+// line of sight from the eyes to the block. Not bot.canSeeBlock: its ray length is the distance to the block's
+// min corner, so the ray toward the center can stop before the block (e.g. a tree 8 east 5 south: lowest logs unseen)
 function canSee(bot, p) {
-  try { const b = bot.blockAt(p, false); return !!b && bot.canSeeBlock(b) } catch { return false }
+  try {
+    const b = bot.blockAt(p, false)
+    if (!b) return false
+    const eye = bot.entity.position.offset(0, bot.entity.eyeHeight, 0)
+    const dir = b.position.offset(0.5, 0.5, 0.5).minus(eye)
+    const len = dir.norm() // before normalize(): it mutates dir
+    const hit = bot.world.raycast(eye, dir.normalize(), len + 1,
+      (blk, iter) => !!iter.intersect(blk.shapes, blk.position) || blk.position.equals(b.position))
+    return !!hit && hit.position.equals(b.position)
+  } catch { return false }
 }
 // blocks of the given ids the bot knows about: seen before (senses.seen) or visible now. Nearest first.
 function knownBlocks(ctx, ids, { near = null, radius = 48, max = 32, rays = 64 } = {}) {
@@ -274,7 +285,13 @@ async function pickup(ctx, { at = null, radius = 4, names = null, maxMs = 6000 }
       (!names || (e.getDroppedItem && e.getDroppedItem() && names.includes(e.getDroppedItem().name))), radius + 8)
     if (!it) return
     // one unreachable drop must not stop the others from being collected
-    try { await go(ctx, new G.GoalNear(it.position.x, it.position.y, it.position.z, 1)) } catch (e) { if (e instanceof Abort) throw e; skip.add(it.id) }
+    // stand in the drop's own cell: GoalNear(1) counts as reached from a block above / beside it, out of pickup range
+    const goal = new G.GoalBlock(Math.floor(it.position.x), Math.floor(it.position.y + 0.1), Math.floor(it.position.z))
+    try { await go(ctx, goal) } catch (e) {
+      if (e instanceof Abort) throw e
+      try { await go(ctx, new G.GoalNear(it.position.x, it.position.y, it.position.z, 1)) } catch (e2) { if (e2 instanceof Abort) throw e2 }
+      skip.add(it.id)
+    }
     await ctx.sleep(200)
   }
 }

@@ -120,7 +120,143 @@ Strip a leading empty `<think></think>` from the content if present. Full workin
 - Bot does not talk (no LLM chat replies). Ideas: LLM chat replies, commands like "mine iron" / "build shelter",
   use RCON for scripted tests.
 
-## State 2026-11-17 session #10 (RESUME HERE) — H3 done, committed
+## State 2026-11-17 session #13 (RESUME HERE) — scenario cards v1, craft/see/pickup fixes
+Branch `v2`. **NOT committed** (everything since `8cd9b21`, incl. session #12 files + `bot/sim/cards.js`,
+`bot/sim/run_cards.js`, `bot/sim/cards/**`, `notes/scenario-cards.md`, skills/common.js, state/perceive.js).
+Don't commit `eval/results/`. Validation done: live suite lockstep **64/64**, x1 63/64 (`plant` flake: server
+refused wheat_seeds), cards 22/23 then zombie 6/6.
+
+### Done
+- **Craft**: `settle()` in craft.js retries (resync + empty grid/cursor, up to 4x) instead of one pass; debug removed.
+- **Scenario cards** (spec `notes/scenario-cards.md`): JSON cards in `bot/sim/cards/<area>/`, loader/validator/
+  seeded expansion/RCON compile/server-side judge in `bot/sim/cards.js` (`node sim/cards.js` validates all cards
+  for all seeds incl. DSL parse), runner `node sim/run_cards.js --sim 0 [--lock] [--only id|prefix] [--seeds 1,2]`
+  (policy `script` = reference solution; `mind` = H5). Episode record: outcome, ticks, milestones, died,
+  death_msgs, damage, judge values; `card_step` records carry `desync` (bot inventory vs server count).
+  9 cards: craft.planks / wooden_pickaxe / smelt_iron, mine.iron_ore, gather.chop_tree, survive.eat_hungry,
+  combat.zombie, logistics.fetch_from_chest, nav.goto_place. All pass with script policy (~15 s lockstep).
+- Bot bugs the cards found (fixed):
+  - `C.canSee` reimplemented: mineflayer `canSeeBlock` ray length = distance to the block's min corner -> some
+    blocks never "seen" (birch 8E 5S invisible -> chop no_target_known). perceive.js `safeSee` uses it too.
+  - `C.pickup`: GoalNear(1) counted as reached out of pickup range (3 ore mined, 1 collected) -> GoalBlock on the
+    drop's cell, GoalNear fallback.
+- RCON facts: `execute if items/entity` prints `Test passed. Count: N` (capital C); entities/players need
+  loaded chunks (a query with no player online fails); food has no command -> runner drains it with hunger.
+
+### Open
+- combat.zombie#2 once: bot died after 2 HP damage (cause unknown; not reproduced in 6 seeds; death_msgs now logged).
+- Some lockstep episodes take ~10 s real for ~350 ticks (chop, mine#1): something waits on real time; find it.
+- Format reserved, not implemented: actors (owner NPC), seed-world templates, mind.chests/map, snapshot/restore.
+
+### Next
+1. Commit (ask user). 2. More cards (danger: lava/fall/night/creeper, multi-stage, orders mid-episode, held-out set).
+3. Fidelity guard: same cards x1 vs lockstep outcome distributions. 4. Mind loop (LLM -> turns) = policy `mind`.
+
+## State 2026-11-17 session #12 — craft stall fixed, MineSim instances, bench done
+Branch `v2`. **NOT committed** (everything since `8cd9b21`: rcon, clock, craft, run.js, live.js, sim/instance.js,
+.gitignore, eval/model_bench.py; don't commit `eval/results/`).
+
+### FIRST: finish craft_planks at x1, then commit
+- Lockstep sim 0: 64/64 x2. **x1 sim 0 (`node test/live.js --sim 0`): 63/64**, `craft_planks` FAIL
+  `partial server_refused | 4/8 done, then craft oak_planks: no result` (full suite only).
+- `--only craft_planks` alone at x1: 3/3 PASS. So a state left by an earlier case triggers it.
+- Debug left in `craft()`: `CRAFT_DEBUG=1` prints inventory/grid/cursor at start, after each batch, after settle.
+  REMOVE IT (the `dbg` lines) once fixed.
+- A run was left going in the background at the end of the session: preceding cases + craft (x2), output
+  `C:\Users\noanh\AppData\Local\Temp\claude\115b64199a6beba7\f2c2e44c-f200-4270-a21c-869b33c68c88\tasks\bsmbiohcv.output`
+  (cmd: `CRAFT_DEBUG=1 node test/live.js --sim 0 --only mine_stone,mine_missing_tool,mine_tool_too_weak,mine_ore_ok,mine_unknown,chop,craft_planks,craft_sticks`).
+  If it did not reproduce: run the full suite x1 with `CRAFT_DEBUG=1` and read the `[craft]` lines.
+- Sim instance 0 (java) may still be running: `node sim/instance.js status` / `stop 0`.
+
+### Done
+- **Craft stall fixed** (`bot/skills/craft.js`). Two causes:
+  1. mineflayer waits `once(updateSlot:0)` (20 s) after each crafting-grid/result click; 1.17.1+ servers may not
+     answer. Wrapping `bot.clickWindow` was not enough: `putAway(0)` uses mineflayer's INTERNAL clickWindow.
+     `patchClickWindow(bot)` now hooks the outgoing `window_click` packet: no `updateSlot:0` within 1 s (bot clock)
+     -> real resync `bot._syncWindow(window)` (stale-stateId no-op click, server resends the whole window).
+  2. mineflayer's local inventory model drifts from the server (crafts counted twice / not at all, ingredients left
+     in the 2x2 grid, which the server keeps until a window closes). `craft()` now calls `settle()` before and after
+     every batch: resync, shift-click grid slots 1-4 (+ cursor) back to the inventory, resync; counts on that
+     synced inventory. 2 batches with no result -> `server_refused` (no more fake `ok` with `stick x0`).
+- **MineSim instances** `bot/sim/instance.js`: `node sim/instance.js create|start|stop|status|rm <n>` ->
+  `mcserver-sim/<n>/` (gitignored, copy of mcserver jar/libraries/versions), flat world seed 1, view/sim distance 4,
+  game port 25600+n, RCON 25700+n, random RCON password. Starts in ~9 s.
+  `node test/live.js --lock --sim 0` runs the suite on it (starts it if down). live.js waits `waitForChunksToLoad`
+  after the first tp (fresh world: arena chunks were not loaded -> goto_pos no_path).
+- Lockstep on sim 0 after the fixes: **64/64, 64/64** (34-41 s real, 102-120 tps). x1 on sim 0: 63/64 (above).
+- The suite has NO LLM: scripted DSL statements; "LFM" is only the bot username.
+- **Model bench** done (merged `eval/results/model_bench_2026-11-17-15-52.jsonl` + `-15-57.jsonl`, 8 tasks, 1024 tok):
+  K2-Horizon-4B 6/8 (med 252 tok, 69 tok/s), Nemotron3-Nano-4B 6/8 (294, 77), Sharp-Spark-X2.6 6/8 (514, 74),
+  Spark-X2.6 6/8 (410, 65), LFM3-1.7B-Unc 4/8 (1014, 155), Bonsai-2B Q2 3/8 (1024, 201). `grid` failed for all
+  (truncated at 1024: not discriminating at this budget). Most efficient: K2-Horizon, Nemotron.
+
+### Next
+1. **Scenario cards** (user's choice, next session): format (world template + RCON setup + inventory/pos + goal +
+   success cond + timeout + seeds) + runner reusing live.js infra and `sim/instance.js`.
+2. Then: snapshot/restore (branching), fidelity guard (same cards x1 vs lockstep), mind loop (LLM -> turns).
+- Speed (user asked, 120 tps "low"): pure stepping did 450-550 tps (spike); suite cost = 2 RCON round trips/tick +
+  bot physics + setup commands. Plan: don't optimise the driver yet. Once the mind loop exists, measure LLM time vs
+  world time per episode; LLM (~1-5 s/decision) will likely dominate. If the world is the bottleneck: parallel
+  instances first (~linear with cores, no fidelity risk), then 1 round trip/tick (needs another barrier than
+  `time query`, est. x1.5-2). No batched `tick step N` (physics must run every tick).
+- Still open: macros keep or drop? `brew`, `stonecut`, grindstone repair not implemented.
+
+## State 2026-11-17 session #11 — H4 started: lockstep MineSim works
+Branch `v2`. Commit `8cd9b21` = H4 spike. **Uncommitted** (all tested, see below): `bot/rcon.js`, `bot/sim/clock.js`,
+`bot/skills/craft.js`, `bot/dsl/run.js`, `bot/test/live.js`, `eval/model_bench.py` (+ `eval/results/`, don't commit logs).
+
+### H4 decision: option C, strict lockstep (measured, see `bot/sim/spike.js`)
+- A = `tick rate R` + bot clock scaled (`clock.install()`, k follows server tps from `update_time`): walk OK up to
+  1000 tps but mining drifts in game time (16 ticks/block at x1 -> 36 at 200 tps, 112 at 1000): real latency
+  (Windows timers ~15 ms + round trips). Also a wrong k silently lets the bot move too fast (server accepts it).
+- **C = frozen server stepped by the bot** (`clock.installManual()` virtual timer queue + `sim/lockstep.js`: per
+  step `clock.advance(50)` then RCON `tick step 1` + `time query gametime`): mining 16 ticks/block like x1, walk
+  83 ticks, ~450-550 tps in the spike. One server tick per bot step (checked).
+- `node test/live.js --lock`: full suite in ~32-42 s real (vs ~290 s at x1), ~100-150 tps overall (setup RCON
+  commands count). Last runs: 64/64, 64/64, 63/64 (chop flake).
+- Consequences: the sim needs its own server (a connected player freezes with the world); several bots on one
+  server must step together; keepalive timer runs on the bot clock (pass `checkTimeoutInterval: 30000*1000`).
+
+### Bugs fixed on the way (uncommitted)
+- `rcon.js`: one request in flight (vanilla RCON parses one packet per read; pipelined driver + test commands
+  -> server dropped the connection).
+- `clock.js`: `new Date()` patched too (mineflayer `clickWindow` does `new Date() - bot.lastDigTime`: real vs
+  virtual time blocked crafts ~20 s).
+- `craft.js`: loop counts accepted crafts (not the lagging local inventory -> crafted one batch too many), waits
+  up to 1 s for the inventory; `patchClickWindow(bot)` (called by the Interpreter): mineflayer waits
+  `updateSlot:0` after every grid click (20 s timeout) even when the result does not change -> synthetic release
+  after 1 s. This one also failed at x1 (normal run 59/64 before it).
+  **NOT enough**: after the patch, lockstep runs 63/64, 60/64, 64/64; craft_sticks still stalls 21.1 s with
+  `stick x0`, then planks left in the grid break craft_no_table/craft_table/craft_with_table. Another 20 s
+  mineflayer wait remains (candidates: `putAway` `once(window, updateSlot:<slot>)`, other grid slots): log the
+  pending `once` events to find it. Intermittent, at x1 too.
+- Normal-speed suite NOT re-run after the clickWindow patch (last x1 run 59/64: craft chain + break_one/dig_box
+  pickup counts gained 0/1, unexplained yet).
+
+### Model comparison (user request, generic bench, no MC knowledge / DSL format)
+- All 6 in `models/compare/` load with our llama.cpp (Bonsai Q2_0 too, no prism fork). llama-bench tg128 (tok/s):
+  Bonsai-2B 216, LFM3-1.7B-Unc 163, Nemotron-3-Nano-4B 80, Sharp-Spark-4B 78, Spark-X2.6-4B 73, K2-Horizon-4B 73.
+  pp512: 4.3k-12k. VRAM 7.6 GB free: one model at a time.
+- `eval/model_bench.py`: same seeded tasks for all (arith, grid shortest path via BFS, resource planning,
+  state tracking), answer `ANSWER: n`, temperature 0, reasoning auto; measures acc, truncation, latency, ttft,
+  tokens, tok/s, correct/min. User wants it SHORT: running `--n 2 --max-tokens 1024 --timeout 60` (8 tasks/model)
+  in background, output `eval/results/model_bench_run.txt` + `model_bench_<stamp>.jsonl` (summary table at the end).
+  Smoke test: LFM3 (thinks) truncated 2/4 at 3072 tokens.
+
+### Next
+1. Bench + MC server were KILLED by Claude Code (system low on RAM) mid-run. Partial (8 tasks, 1024 tok max,
+   `eval/results/model_bench_2026-11-17-15-52.jsonl`): K2-Horizon 6/8 (2 truncated, ~410 tok), Nemotron 6/8 (2 trunc,
+   ~450 tok), LFM3-1.7B-Unc 4/8 (4 trunc, ~900 tok), Sharp-Spark 2/4 partial; Spark-X2.6 + Bonsai not run.
+   Rerun only those 2 when asked: `--models models/compare/Spark-X2.6-4B-Q4_K_M.gguf,models/compare/Ternary-Bonsai-2-2B-Q2_0.gguf`.
+   16 GB RAM: don't run MC server + llama-server + bench + live suite together.
+2. Fix the craft stall above (intermittent, x1 and lockstep), rerun `node test/live.js --lock` x3 and x1 once,
+   then commit the uncommitted files.
+3. H4 next: own sim server instance(s) (flat/prepared worlds, view-distance 4), scenario cards (RCON setup
+   scripts), world snapshot/restore for branching, fidelity guard (same cards x1 vs lockstep), speed up the
+   driver (2 RCON round trips per tick). Mind loop (LLM -> turns) still not written: harness has no model.
+- Still open: macros keep or drop? `brew`, `stonecut`, grindstone repair not implemented.
+
+## State 2026-11-17 session #10 — H3 done, committed
 Branch `v2`. H3 = interpreter + skills + tools + turns (see session #9 below for content).
 
 ### Done this session

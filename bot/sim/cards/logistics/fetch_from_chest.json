@@ -1,0 +1,27 @@
+{
+  "card": 1,
+  "id": "logistics.fetch_from_chest",
+  "title": "Fetch items from a known chest at a remembered place",
+  "tags": ["logistics", "memory", "containers"],
+  "difficulty": 2,
+  "split": "train",
+  "seeds": [1, 2],
+  "params": { "cx": { "int": [-10, 10] }, "cz": { "int": [-10, -6] }, "n": { "int": [2, 6] } },
+  "world": { "template": "arena" },
+  "build": [
+    { "container": "<${cx},0,${cz}>", "block": "chest[facing=south]", "items": [
+      { "item": "iron_ingot", "count": 8, "slot": 0 },
+      { "item": "cobblestone", "count": 32, "slot": 1 },
+      { "item": "bread", "count": 4, "slot": 5 }
+    ] }
+  ],
+  "player": { "inventory": [] },
+  "mind": { "places": { "stock": "<${cx},0,${cz + 1}>" }, "notes": ["the chest next to @stock holds my iron"] },
+  "order": { "from": "Noan", "text": "prends ${n} lingots de fer dans le coffre de @stock" },
+  "success": { "all": [ { "have": "iron_ingot", "min": "${n}" }, { "container": "<${cx},0,${cz}>", "item": "cobblestone", "min": 32 } ] },
+  "fail": { "any": [ { "died": true }, { "not": { "block": "<${cx},0,${cz}>", "is": "chest" } } ] },
+  "milestones": [ { "name": "at_stock", "check": { "at": "<${cx},0,${cz + 1}>", "radius": 3 } } ],
+  "limits": { "ticks": 1200, "decisions": 8 },
+  "solution": ["take iron_ingot n=${n} chest=<${cx},0,${cz}>"],
+  "solution_ticks": 200
+}

@@ -46,6 +46,7 @@ class Interpreter {
     this.bot = bot; this.senses = senses; this.skills = skills; this.log = log
     this.task = null; this.seq = 0; this.keep = null; this.lastOrder = null; this.avoid = new Map()
     this.env = makeEnv(this)
+    require('../skills/craft').patchClickWindow(bot)
     bot.on('death', () => { if (this.task) this.task.scope.abort('died') })
     bot.on('chat', (from, text) => { if (from !== bot.username && bot.players[from]) this.lastOrder = { from, text, at: Date.now() } })
     this.alerted = new Map()

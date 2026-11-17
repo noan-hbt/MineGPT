@@ -29,3 +29,6 @@ mcbot/
 
 # private memory (remote access details, repo is public)
 memory/remote-access.md
+
+# MineSim instances (bot/sim/instance.js)
+mcserver-sim/
