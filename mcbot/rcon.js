@@ -6,7 +6,13 @@ const fs = require('fs')
 const path = require('path')
 
 function props() {
-  const f = path.join(__dirname, '..', 'mcserver', 'server.properties')
+  let f = path.join(__dirname, '..', 'mcserver', 'server.properties')
+  if (!fs.existsSync(f)) { // git worktree copy (longrun from ../localai-xxx): use the main checkout's server
+    try {
+      const common = require('child_process').execSync('git rev-parse --git-common-dir', { cwd: __dirname }).toString().trim()
+      f = path.join(path.resolve(__dirname, common), '..', 'mcserver', 'server.properties')
+    } catch {}
+  }
   const p = {}
   for (const line of fs.readFileSync(f, 'utf8').split(/\r?\n/)) {
     const m = line.match(/^([^#=]+)=(.*)$/)
