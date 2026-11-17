@@ -1,0 +1,15 @@
+# big binaries / downloads
+models/
+llama.cpp/
+
+# Minecraft server: world, jar, server.properties (RCON password)
+mcserver/
+
+# node
+node_modules/
+
+# runtime output
+*.log
+mcbot/logs/
+mcbot/last_obs.txt
+__pycache__/
