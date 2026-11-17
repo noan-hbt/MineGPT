@@ -120,7 +120,113 @@ Strip a leading empty `<think></think>` from the content if present. Full workin
 - Bot does not talk (no LLM chat replies). Ideas: LLM chat replies, commands like "mine iron" / "build shelter",
   use RCON for scripted tests.
 
-## State 2026-11-17 session #3 (RESUME HERE)
+## State 2026-11-17 session #5 (RESUME HERE) — B19 executor experiments in `b19/`
+Goal of the session (user): compare ALL executor options on the existing logs (policy net from scratch vs small LLM SFT
+vs LFM3 LoRA), then go heavier with teacher distillation. Teacher LLMs invent **synthetic logs** of all kinds of
+situations (structure from real logs, content invented). Nothing committed yet (all of `b19/` is untracked).
+
+### Cleanup done at ~11:54 (user asked: free RAM/VRAM)
+Killed: llama-server (LFM3, :8080), the Minecraft client (launcher java) + launcher, `mcbot/viewer.js`. No MC server
+was running. NOT killed: Docker/Guacamole + Tailscale (remote access), rbx-studio-plus, an idle interactive Command Code.
+Restart the game stack with `.\start-game.ps1` / `.\start-mc.ps1` when needed.
+
+### Still running at clear (background, OS processes; check results by files, not by task notifications)
+- `b19/sft.py --model models/LFM3-1.7B-hf --mode lora --epochs 2`: training finished 11:46 (8.5 min, adapter in
+  `b19/runs/LFM3-1.7B-lora/`), eval (option scoring of 290 test states) still running, slow (VRAM was saturated).
+  Result -> last line of `b19/runs/results.jsonl`. If the process is gone with no line: rerun eval only (TODO add `--eval-only --adapter`).
+- `b19/synth.py` DeepSeek batch, 10 episodes, seed 1000 -> `b19/data/synth.jsonl` (9/10 done at 11:54: 118 rows).
+- `b19/synth.py --teacher gpt` same 10 cards (seed 1000) -> `b19/data/synth_gpt.jsonl` (1/10 done: 16 rows, 134 s).
+- Raw teacher answers: `b19/runs/synth_raw/{deepseek_,gpt_,}ep_<seed>.txt` (ep_<seed>.txt without prefix = DeepSeek, old naming).
+
+### Files (`b19/`)
+| File | What |
+|---|---|
+| `extract.py` | logs (`mcbot/logs` + `..\localai-b5run\mcbot\logs`) -> `data/train.jsonl` (825) / `data/test.jsonl` (313). Split = blocks of 30 ticks per session. `keep` = ok & not wait & llm/task/user (train 620 / test 290) |
+| `render.py` | Python port of bot.js `observe()` text + grammar. Self-check `python b19/render.py` = **612/612 exact** on real logs |
+| `baselines.py` | random / follow hint / most frequent action |
+| `policy.py` | option-scoring MLP from scratch (75k params, state feats + option feats + verb/item embeddings), `--no-hint` ablation |
+| `sft.py` | `--mode zero|full|lora`, prod prompt (chat template, system of the session + obs_text), loss on answer only; eval = log p(option) argmax over legal options (= grammar). Run with `b21/.venv/Scripts/python.exe` |
+| `synth.py` | teacher episodes: random scenario card (goal 38 items + 6 free goals, phase, 16 places, time, vitals, 11 dangers, 2 of 15 twists, 14-26 decisions) -> JSONL decisions {state, options, hint, action, reason, result}; history rebuilt by us; validated vs `data/mc_names.json` (minecraft-data 1.21.11) + action legal; rendered with render.py. `--teacher deepseek` (Command Code `-p`, deepseek-v4.1-flash, prompt via stdin, cwd `runs/cc_work`) or `--teacher gpt` (Codex `exec -m gpt-6.1-sol -c model_reasoning_effort="medium" -s read-only --ephemeral`). Empty answer -> 1 retry + stderr saved to `*.err.txt` |
+| `runs/results.jsonl` | all metrics |
+Models: `models/LFM2.5-350M-hf` downloaded this session (709 MB, LiquidAI/LFM2.5-350M).
+
+### Results on REAL logs (test = 290 kept decisions; labels = LFM3's own choices)
+| Model | top1 | top3 | notes |
+|---|---|---|---|
+| random legal | 11.4% | | |
+| follow code hint | 27.2% | | |
+| most frequent action | 67.2% | | logs dominated by repeated collects |
+| LFM2.5-350M zero-shot | 68.3% | 94.8% | |
+| policy net, no hint/plan feats | 84.5% | 95.5% | 0.19 ms CPU |
+| policy net | 90.3% | 92.8% | 0.13 ms CPU, 74 s train CPU |
+| **LFM2.5-350M full SFT (2 ep)** | **98.6%** | 99.3% | 153 s train, 5.3 GB peak; HF scoring latency (1 s) meaningless (VRAM saturated) |
+| LFM3-1.7B LoRA r16 (2 ep) | pending | | |
+Caveat: this measures imitation of LFM3 (bugs included). Real judge = live bench `mcbot/eval.js`. Missing: LFM3 zero-shot
+reference on the same scorer, per-example predictions (to see the 1.4% errors).
+
+### Synthetic pilot findings
+- DeepSeek: pilot 2 eps 44/44 valid; batch: ~3-6.5 min/episode, 13-25 valid decisions per episode, rejects rare
+  (7 unknown items in one ep, 1 illegal action); **2/10 episodes came back EMPTY** (210 s and 520 s; cause unknown,
+  stderr was not captured then — now it is). Quality good: varied verbs, reacts to failures, often overrides the hint
+  with a sensible reason. Seen issues (prompt tightened after the pilot): goal changed mid-episode, hint "pursue the goal" on plan error.
+- GPT 6.1 sol medium: first episode 134 s, 16/16 valid. Compare when both are done: time/episode, valid rate, verb
+  diversity, hint-override rate, reason quality side by side (same cards).
+
+### Ideas agreed / proposed this session
+- User: teachers generate lots of fake logs, inspired by real logs for structure only. Done (`synth.py`).
+- User idea, proposed as **B23 (not yet in ROADMAP, user not asked to confirm)**: route events to the right actor =
+  cascade reflexes (code) -> policy net (if confident: softmax margin) -> small SFT LLM -> strategist (DeepSeek / 7-8B)
+  for stuck / new goal / chat / novel. Router learned from the comparison data (cheapest actor that is right per state);
+  strategist decisions fed back as training data (DAgger).
+- User declined MiniCPM3-4B / MiniCPM-V 4.7 (old / too big or vision not needed).
+
+### Next
+1. Read the LoRA result + both synth batches; write the DeepSeek vs GPT comparison (table + 2-3 sample decisions each).
+2. Faster eval in `sft.py`: prompt KV computed once per state (prefix sharing), `--eval-only --adapter`, save predictions.
+3. LFM3-1.7B zero-shot on the same scorer (reference).
+4. Pick teacher(s), generate a few hundred episodes (several k decisions; user approves volume — subscription quotas unknown).
+5. Retrain the 3 actors on real / synth / real+synth; test on real test + held-out synthetic episodes.
+6. Live: export best SFT model to GGUF (llama.cpp), plug as `--llm`, run `eval.js`; policy net needs a small server
+   (bot would send `obs.state` in the request body).
+
+## State 2026-11-17 session #4
+### B5 1 h run: FAILED (B5 and B1 NOT ticked)
+- Full write-up: `notes/b5-run-and-architecture.md`. `longrun.js` finished at 60 min (2 restarts, 2 deaths by zombie).
+  6 goals in 27 min (3 torch, iron_pickaxe, 16 torch, shield, bucket, diamond_pickaxe), then **stuck 33 min on
+  diamond_sword**: 47 diamonds, `craft diamond_sword` never tried, 48x `wait 1`, ore hopping. Watchdog fired 5x
+  (escalation up to 4) and never unstuck it: escalations just keep banning, no strategy change.
+- `..\localai-b5run` worktree **kept** (its `mcbot/logs/*.jsonl` = loop examples for datasets). Not removed.
+- Processes seen at handoff (~09:20): java (MC server) + llama-server (old 1-slot launch) since 07:55, node 14368
+  (since 02:16, unknown) and node 40052 (since 09:15, unknown). Check before starting a bot; one bot at a time (RAM).
+
+### Decisions this session
+- **No new hardcoded behaviour rules** (user rejected "drop `collect X` from the grammar when the plan has enough").
+  Code keeps only survival reflexes + safety. Loops are to be fixed by models/data, not rules.
+- Target architecture: **strategist** (big LLM: chat, orders, sub-goals, called by the watchdog instead of bans) +
+  **executor trained from scratch** (sub-goal + `obs.state` -> score legal grammar options) + reflexes. = B19 moved up.
+  ROADMAP B19 has the data protocol: compare sources A (DeepSeek synthetic), B (LFM trial & error), C (LFM plays +
+  DeepSeek labels = DAgger), D (A then C), 10k pilot each, B6 + offline eval. Target 100k-1M examples.
+- Teacher (B12): probably **Command Code + `deepseek-v4.1-flash-1017`** on the user's subscription, not the paid API.
+- 8 GB VRAM: 7-8B Q4 strategist + LFM Q4 fits with short ctx; full fine-tune of a 1.7B does not.
+
+### Next
+Same list as session #3 below, minus "finish run" (done, failed). Then the next ROADMAP brick. First new code for B19:
+extraction script logs -> (state, sub-goal, action) + count of usable examples. Nothing committed this session
+(edits: ROADMAP B5/B12/B19, `notes/`, this file) on branch `b6-b7`.
+
+### Remote access (session #4b, user works remotely from a corporate network)
+- Corporate network = HTTPS only (UDP blocked): **Chrome Remote Desktop installed + registered** (service `chromoting`,
+  auto) but it fails from there (connects, drops after ~26 s). Use it from home / 4G only.
+- Tailscale funnel `https://<tailscale-host>`: `/` -> Guacamole (docker :8090 -> TightVNC :5900, laggy for
+  3D), **`/viewer/` -> prismarine-viewer :3007** (trailing slash required). cloudflared killed, task `Cloudflared-Guacamole` disabled.
+- **Viewer**: `run-viewer.ps1 [-Target auto|EVAL|LFM]` -> `mcbot/viewer.js`: spectator player `Viewer` (invisible to bots,
+  checked), RCON-tp behind the target every 1 s, 3rd-person orbit view in the browser. auto = EVAL > LFM > B5RUN > any non-human.
+  Running detached (hidden powershell). Uses 1.21.4 textures (viewer max), new blocks may look wrong. Added deps
+  `prismarine-viewer@1.33.0` + `canvas` in `mcbot/package.json` (not committed).
+- `remote/` holds plaintext VNC/guac passwords: never commit. Claude Code shell is not admin: elevation = UAC clicked by the user via Guacamole.
+- Next: user watches `/viewer/` while we validate B6/B7 (list below).
+
+## State 2026-11-17 session #3
 ### Running when this was written (~08:30)
 - llama-server (`start-game.ps1`, still the OLD 1-slot launch), MC server (`start-mc.ps1`), and
   `node longrun.js 60 --name B5RUN --goals "iron_pickaxe,16 torch,shield,bucket,diamond_pickaxe,diamond_sword"`

@@ -68,6 +68,8 @@ Format : **ID — nom** · priorité (P1 haut) · dépend de · livrables · cri
   l'étape du plan ne change pas (max 6) ; fin sur échec / événement (danger, nuit, nouveau goal, PV −4). Bans glissants
   (échec 3× sur 12 actions → 5 min, pas seulement consécutifs) ; watchdog progrès = coût restant du plan, 20 actions sans
   baisse → ban de l'action dominante 10 min + rotation explore. Hint/grammaire ignorent les actions bannies. Réflexe noyade `surface`.
+  ✘ Run 1 h (2026-11-17) : 6 objectifs en 27 min puis bloqué 33 min sur diamond_sword (47 diamants, `wait 1` ×48) ; le watchdog
+  ne débloque pas. Pas de règles en dur → piste stratège (gros LLM) + exécutant entraîné. Voir `notes/b5-run-and-architecture.md`.
   Live (bot LFM5, inventaire vide, paisible) : iron_pickaxe en 22 actions / 4,6 min, puis diamond_pickaxe en 26 actions / 7 min
   (1 mort lave en explore). Run « 1 h » (`--goals` = file de 6 objectifs) : bans live OK (explore bloqué, `place crafting_table`
   refusé 3× → `goto crafting_table` mémorisé → iron_helmet, puis torches). Ajouts : `explore up` (escalier vers le ciel, nage si
@@ -113,6 +115,8 @@ Format : **ID — nom** · priorité (P1 haut) · dépend de · livrables · cri
   Fini : un LoRA bidon entraîné, servi, appliqué par requête.
 - [ ] **B12 — Client modèle prof** · P2 · —
   Wrapper DeepSeek API (clé en variable d'env, jamais en dur), cache disque, budget max. ChatGPT = manuel seulement.
+  **Probable (2026-11-17) : passer par Command Code avec `deepseek-v4.1-flash-1017`** (abonnement de l'utilisateur) au lieu
+  de payer l'API → le client pilote Command Code en non-interactif ; garder cache disque + format de sortie strict.
 - [ ] **B13 — Dataset décideur** · P2 · B1 B5 B12
   Sources : (a) logs bot filtrés réussites, (b) prof qui relabel les obs avec meilleure décision + raison, (c) mes parties (B17),
   (d) **datasets Andy/Mindcraft** (Sweaterdog / Mindcraft-CE, Andy-4.1 annonce ~130k ex.) convertis du format commandes
@@ -133,6 +137,20 @@ Format : **ID — nom** · priorité (P1 haut) · dépend de · livrables · cri
 
 ### Plus tard / option
 - [ ] **B19 — Décideur non-LLM** · P3 · B13 — classifieur (MLP/GBT) sur état structuré, <1 ms CPU, comparé au LoRA décideur via B6.
+  **Remonte en priorité après le run B5 raté (2026-11-17)** : architecture visée = stratège (gros LLM : chat, ordres,
+  sous-objectifs, appelé par le watchdog au lieu des bans) + **exécutant entraîné de zéro** (sous-objectif + `obs.state` →
+  score des options légales de la grammaire) + réflexes en code. Pas de nouvelles règles en dur. Cible : 100k–1M exemples.
+  Protocole — 4 sources de données comparées, même exécutant, même encodage d'état, budget égal (1re manche 10k chacune) :
+  (A) DeepSeek sur états synthétiques / variantes des logs (cohérents via `minecraft-data`) ;
+  (B) LFM seul en essais-erreurs, on garde les réussites (référence gratuite, plafonnée au niveau de LFM) ;
+  (C) LFM joue + DeepSeek étiquette les états visités (DAgger) ; (D) A puis affinage sur C.
+  Éval : banc B6 (taux de réussite, temps, événements `stuck`) + précision hors ligne sur des états réels mis de côté ; LFM seul = base.
+  Prérequis : script d'extraction logs → (état, sous-objectif, action) ; encodage d'état ; client prof B12 ; générateur d'états.
+  Pièges : décalage de distribution (→ C/DAgger), actions rares sous-représentées (rééquilibrer), étiquettes du prof
+  à vérifier (cohérence avec `planCost`, votes). Détails : `notes/b5-run-and-architecture.md`.
+  ⏳ 2026-11-17 (session 5) : `b19/` — sur logs réels (test 290) : LFM2.5-350M SFT 98,6 % top1, réseau de politique 90,3 %,
+  350M zero-shot 68,3 %, baseline action fréquente 67,2 % ; LoRA LFM3 en cours. Logs synthétiques par profs (`synth.py` :
+  DeepSeek via Command Code, GPT 6.1 sol via Codex, mêmes cartes de scénario). Voir HANDOFF.md session #5.
 - [x] **B21 — Test écriture directe dans les poids (knowledge editing)** · P3 · B6 B11 — **FERMÉ 2026-11-17 : non.** Voir `b21/REPORT.md` (MEMIT −24 pts / LoRA-faits −37 pts sur décisions réelles ; contexte B4 gagne). Garder le rejeu de décisions comme éval hors-ligne.
   Tester ROME / MEMIT / AlphaEdit (EasyEdit) sur LFM3 bf16 : injecter des faits Minecraft (ex. recettes, position de la base)
   sans entraînement. Mesurer : fait appris ? généralise aux reformulations ? dégâts ailleurs (éval B6 + IFEval mini) ?

@@ -43,7 +43,10 @@ function createSkills(bot, mcData, env = {}) {
   const stop = () => { bot.pathfinder.setGoal(null); bot.clearControlStates() }
   const hostiles = (r = 16) => Object.values(bot.entities).filter(e => e !== bot.entity && HOSTILE.has(e.name) && e.position.distanceTo(pos()) <= r)
   // abort long skills when something is hitting us and health is low: the reflex in bot.js then flees
-  const danger = () => bot.health <= 8 && hostiles(5).length > 0
+  // abort(true): a user order is waiting (bot.js userAct). Long skills see it through danger(), walks through goto().
+  let aborting = false
+  const abort = on => { aborting = !!on; if (on) stop() }
+  const danger = () => aborting || (bot.health <= 8 && hostiles(5).length > 0)
 
   // pathfinder.goto with a hard time limit. Never leaves a pending goal behind (see HANDOFF: stop() bug).
   // Walks are interrupted by danger (hostile within 3.5 m, or -4 hp since the start): reflexes only run between
@@ -59,7 +62,8 @@ function createSkills(bot, mcData, env = {}) {
         new Promise((_, rej) => {
           w = setInterval(() => {
             const foe = hostiles(3.5)[0]
-            if (foe) rej(new Error(`danger: ${foe.name} ${Math.round(foe.position.distanceTo(pos()))}m`))
+            if (aborting) rej(new Error('aborted by user order'))
+            else if (foe) rej(new Error(`danger: ${foe.name} ${Math.round(foe.position.distanceTo(pos()))}m`))
             else if (bot.health <= hp0 - 4) rej(new Error(`danger: hp ${Math.round(bot.health)}`))
           }, 250)
         }),
@@ -635,7 +639,7 @@ function createSkills(bot, mcData, env = {}) {
   }
 
   return {
-    gather, mineOre, craft, place, smelt, eat, fight, flee, buildShelter, sleep, farm, storeInChest, goHome, explore, come, follow,
+    abort, gather, mineOre, craft, place, smelt, eat, fight, flee, buildShelter, sleep, farm, storeInChest, goHome, explore, come, follow,
     // helpers for observe()/grammar
     canPlace, findPlaceSpot, inShelter, underSky, hostiles, danger, goto, mineAt,
     get shelterPos() { return shelterPos },

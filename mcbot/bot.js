@@ -17,6 +17,13 @@ const fs = require('fs')
 
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? process.argv[i + 1] : d }
 const LLM = arg('llm', 'http://127.0.0.1:8080')
+// --llm-only: the LLM decides everything. No reflexes, no task repeat, no plan / recommended action in the prompt,
+// no plan focus, no bans or watchdog. Only the grammar (actions valid right now) stays. Measures the LLM alone.
+const LLM_ONLY = process.argv.includes('--llm-only')
+// --history [tokens]: spatial + temporal context. The decider sees every past turn (position, state, action, result) as an
+// append-only chat, so llama-server's prompt cache only processes the new turn (~600 tok, ~0.1-0.25 s up to 32k).
+// Over the budget (default 24000 tokens) the old turns are compacted once into a summary (cache rebuilt once, ~2-3 s).
+const HISTORY = process.argv.includes('--history') ? (+arg('history', 0) || 24000) : 0
 const { createMemory } = require('./memory')
 const { createController, planCost } = require('./control')
 const { createChat, slotCount } = require('./chat')
@@ -31,6 +38,7 @@ for (const g of (arg('goals', '') || '').split(',').map(x => x.trim()).filter(Bo
 const RESUMED = !!M.goal() && !arg('goal', null) && !arg('goals', null)
 let goal = arg('goal', null) || M.goal() || 'iron_pickaxe' // "goal <item> [n]" -> B2 planner target; free text otherwise
 let paused = false
+let userBusy = 0 // >0 while a user-ordered action (come, go_home) runs: the loop waits so it doesn't fight over the pathfinder
 let following = null // player name in follow mode (bot follows, fights hostiles nearby, no LLM)
 
 const SYSTEM = `You control a Minecraft survival bot. Each turn you get the state and answer with ONE action.
@@ -54,7 +62,7 @@ come player - walk to the player
 wait 1 - do nothing
 The Plan line lists the next steps computed from recipes to reach the goal. Home/Remembered/Chest/Earlier lines are your memory.
 Rules: attack hostile mobs that are close if health is high; flee if health is low. Eat when food is low.
-Usually do the "Recommended action" unless danger, hunger or the goal says otherwise. If an action failed, choose something different. If nothing useful is visible, explore.
+${LLM_ONLY ? '' : 'Usually do the "Recommended action" unless danger, hunger or the goal says otherwise. '}If an action failed, choose something different. If nothing useful is visible, explore.
 Answer only: <action> <arg>`
 
 const CRAFT_CANDIDATES = ['stick', 'crafting_table', 'wooden_pickaxe', 'wooden_axe', 'wooden_sword', 'stone_pickaxe', 'stone_axe', 'stone_sword', 'furnace', 'torch', 'chest', 'iron_pickaxe', 'iron_sword']
@@ -129,7 +137,7 @@ function command(user, msg, quiet = false) {
   else if (msg === 'tasks') bot.chat('tasks: ' + (M.data.tasks.map(t => t.goal).join(' > ') || 'none'))
   else if (msg === 'memory') M.prompt(snap().pos, []).split('\n').filter(Boolean).forEach(l => bot.chat(l.slice(0, 250)))
   else if (msg === 'help') bot.chat('goal <text> | go | stop | follow | come | where | sethome | tasks | memory | or just talk to me')
-  else if (msg === 'come') act('come player', 'user').then(r => console.log('[come] ' + r))
+  else if (msg === 'come') userAct('come player').then(r => console.log('[come] ' + r))
   else return false
   return true
 }
@@ -156,7 +164,7 @@ const chat = process.argv.includes('--no-chat') ? null : createChat({
     else if (intent === 'follow') command(user, 'follow', true)
     else if (intent === 'come') command(user, 'come', true)
     else if (intent === 'set_home') command(user, 'sethome', true)
-    else if (intent === 'go_home') { paused = false; following = null; act('home base', 'user').then(r => console.log('[home] ' + r)) }
+    else if (intent === 'go_home') { paused = false; following = null; userAct('home base').then(r => console.log('[home] ' + r)) }
   },
 })
 
@@ -360,14 +368,14 @@ Nearby blocks: ${blkTxt}.
 Mobs: ${mobTxt}.
 Inventory: ${invTxt}.
 Can craft now: ${craftable.join(', ') || 'nothing'}. Crafting table nearby: ${table ? 'yes' : 'no'}. Furnace nearby: ${furnaceNear ? 'yes' : 'no'}.
-Plan: ${planTxt}.
-Recent actions: ${histTxt}.
-Recommended action: ${next}.`
+${LLM_ONLY ? '' : `Plan: ${planTxt}.
+`}Recent actions: ${histTxt}.${LLM_ONLY ? '' : `
+Recommended action: ${next}.`}`
 
   // grammar: only options valid right now
   // ban an action that just failed 3 times in a row (small model tends to loop)
   // B5: actions banned by the controller (failed 3x in the last 12 actions, or no progress) leave the grammar
-  const banned = C.banned()
+  const banned = LLM_ONLY ? [] : C.banned()
   const fightable = Object.keys(mobs).filter(n => n !== 'player')
   // mine: ores the plan needs that we can harvest but don't see (visible ones go through collect)
   const planOres = plan && !plan.error ? plan.steps.filter(s => s.do === 'collect').map(s => oreOf(s.blocks)).filter(Boolean) : []
@@ -388,7 +396,7 @@ Recommended action: ${next}.`
   }
   // focus: with an active plan and no danger, only plan-relevant collect/craft stay in the grammar.
   // Without it the 1.7B ignores "explore down" and mines whatever ore is visible (coal/copper loops, 19% hint follow).
-  const focus = !!(plan && !plan.done && !plan.error && !threat)
+  const focus = !LLM_ONLY && !!(plan && !plan.done && !plan.error && !threat)
   if (focus) {
     const wantBlocks = new Set(plan.steps.filter(s => s.do === 'collect').flatMap(s => s.blocks))
     opts.collect = opts.collect.filter(b => wantBlocks.has(b))
@@ -416,9 +424,27 @@ Recommended action: ${next}.`
 }
 
 // ---------- LLM ----------
+const hist = { msgs: [], turn: 0, compacted: '' } // --history: [user, assistant] pairs, append-only
+const estTok = msgs => msgs.reduce((n, m) => n + m.content.length, 0) / 2.5
+function historyMessages(obs) {
+  const p = bot.entity.position.floored()
+  const last = history[history.length - 1]
+  const user = `Turn ${++hist.turn}. Position ${p.x} ${p.y} ${p.z}.` + (last ? ` Result of ${last.a}: ${last.r}.` : '') + '\n' + obs.text
+  if (estTok(hist.msgs) + user.length / 2.5 > HISTORY) { // compact: keep the last 8 turns, summarize the rest as counts
+    const old = hist.msgs.slice(0, -16), counts = {}
+    for (const m of old) if (m.role === 'assistant') counts[m.content] = (counts[m.content] || 0) + 1
+    hist.compacted = `Earlier turns (compacted, ${old.length / 2} turns): ` + Object.entries(counts).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} x${v}`).join(', ') + '.'
+    hist.msgs = hist.msgs.slice(-16)
+    hist.msgs[0] = { role: 'user', content: hist.compacted + '\n' + hist.msgs[0].content.replace(/^Earlier turns[^\n]*\n/, '') }
+    console.log(`[history] compacted ${old.length / 2} turns`)
+  }
+  return { user, msgs: [{ role: 'system', content: SYSTEM }, ...hist.msgs, { role: 'user', content: user }] }
+}
+
 async function decide(obs) {
+  const h = HISTORY ? historyMessages(obs) : null
   const body = {
-    messages: [{ role: 'system', content: SYSTEM }, { role: 'user', content: obs.text }],
+    messages: h ? h.msgs : [{ role: 'system', content: SYSTEM }, { role: 'user', content: obs.text }],
     max_tokens: 16, temperature: 0, top_k: 1, repeat_penalty: 1.0,
     chat_template_kwargs: { enable_thinking: false }, reasoning_format: 'none',
     grammar: obs.grammar, cache_prompt: true,
@@ -429,7 +455,9 @@ async function decide(obs) {
   if (!r.ok) throw new Error(`LLM HTTP ${r.status}: ${(await r.text()).slice(0, 200)}`)
   const data = await r.json()
   const ms = performance.now() - t0
-  return { ms, text: data.choices[0].message.content.replace('<think></think>', '').trim() }
+  const text = data.choices[0].message.content.replace('<think></think>', '').trim()
+  if (h) { hist.msgs.push({ role: 'user', content: h.user }, { role: 'assistant', content: text }); hist.last = data.timings }
+  return { ms, text, timings: data.timings }
 }
 
 // B4 episode summary: one sentence from the last ~20 actions (runs async, every 20 actions)
@@ -528,7 +556,7 @@ async function act(text, source, extra = {}) {
   M.action(text, result, inv_delta)
   // B5: bans + progress watchdog (cost = what the plan still needs after this action)
   const cost = target ? planCost(P.plan(target.item, target.n, { inv: after.inv })) : null
-  const ctl = C.done(text, result, { cost, goal, gained: Object.values(inv_delta).filter(v => v > 0).length })
+  const ctl = LLM_ONLY ? {} : C.done(text, result, { cost, goal, gained: Object.values(inv_delta).filter(v => v > 0).length })
   if (ctl.banned) { console.log(`[ctl] banned ${ctl.banned} (failed 3x recently)`); L.event('ban', { action: ctl.banned, why: 'failures' }) }
   if (ctl.stuck) {
     exploreCount += 3 // next explore goes another way
@@ -541,10 +569,22 @@ async function act(text, source, extra = {}) {
 }
 
 // ---------- main loop ----------
+// user order run outside the loop: drop the current task and stop pathing first, then hold the loop until done
+async function userAct(text) {
+  userBusy++; C.drop()
+  if (doing) { // an action is in flight: abort it and wait (max 5 s) so it stops driving the pathfinder
+    S.abort(true)
+    for (let i = 0; i < 50 && doing; i++) await sleep(100)
+    S.abort(false)
+  }
+  bot.pathfinder.setGoal(null)
+  try { return await act(text, 'user') } finally { userBusy-- }
+}
+
 async function loop() {
   await sleep(1500) // let chunks load
   while (true) {
-    if (paused || dead || !bot.entity || bot.health <= 0) { await sleep(500); continue }
+    if (paused || userBusy || dead || !bot.entity || bot.health <= 0) { await sleep(500); continue }
     if (following) {
       const p = bot.players[following]?.entity
       const foe = bot.nearestEntity(e => HOSTILE.has(e.name) && e.position.distanceTo(bot.entity.position) < 6)
@@ -559,7 +599,7 @@ async function loop() {
       const obs = observe()
       collectN = obs.collectN
       // reflexes (code, no LLM): survive first. The LLM decides everything else.
-      const reflex = bot.entity.isInWater && bot.oxygenLevel < 12 ? 'surface up'
+      const reflex = LLM_ONLY ? null : bot.entity.isInWater && bot.oxygenLevel < 12 ? 'surface up'
         : obs.threat && (bot.health <= 8 || obs.threat[0] === 'creeper') ? `flee ${obs.threat[0]}`
         : bot.health <= 10 && bot.food < 20 && obs.foods.length && !obs.threat ? `eat ${obs.foods[0]}`
         : obs.night && obs.sheltered && !obs.threat ? 'wait 5'
@@ -570,7 +610,7 @@ async function loop() {
         continue
       }
       // B5: the current task goes on without the LLM while its plan step holds (collect/mine repeats)
-      const cont = C.next(obs)
+      const cont = LLM_ONLY ? {} : C.next(obs)
       if (cont.action) {
         const t1 = performance.now()
         const res = await act(cont.action, 'task', { obs: obs.state, obs_text: obs.text, options: obs.options, hint: obs.hint,
@@ -580,10 +620,10 @@ async function loop() {
       }
       if (cont.task) L.event('task_end', { id: cont.task.id, action: cont.task.action, runs: cont.task.runs, why: cont.why })
       fs.writeFileSync(__dirname + `/last_obs${bot.username === 'LFM' ? '' : '_' + bot.username}.txt`, obs.text + '\n\n' + obs.grammar + '\n')
-      const { ms, text } = await decide(obs)
+      const { ms, text, timings } = await decide(obs)
       const t0 = performance.now()
       const task = C.start(text, 'llm', obs)
-      const res = await act(text, 'llm', { llm_ms: Math.round(ms), obs: obs.state, obs_text: obs.text, options: obs.options,
+      const res = await act(text, 'llm', { llm_ms: Math.round(ms), ctx: timings && { prompt_n: timings.prompt_n, cache_n: timings.cache_n }, obs: obs.state, obs_text: obs.text, options: obs.options,
         grammar: obs.grammar, hint: obs.hint, banned: obs.banned, followed_hint: hintIsAction(obs) ? obs.hint === text : null,
         task: { id: task.id, run: 1, after: cont.why } })
       stats.n++; stats.lat.push(ms)

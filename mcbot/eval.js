@@ -89,6 +89,15 @@ async function prepareBot(spot) {
       const s = k ? nextSpot() : spot
       const out = await r.cmd(`spreadplayers ${s.x} ${s.z} 1 40 false ${BOT}`)
       placed = /Spread/i.test(out) && !/Could not/i.test(out)
+      if (placed) { // spreadplayers accepts ocean/coral/mangrove spots: reject if water at the feet or just below
+        await sleep(500)
+        const tests = [`block ~ ~ ~ minecraft:water`, `block ~ ~-1 ~ minecraft:water`,
+          `biome ~ ~ ~ #minecraft:is_ocean`, `biome ~ ~ ~ #minecraft:is_beach`, `biome ~ ~ ~ #minecraft:is_river`]
+        for (const t of tests) {
+          const w = await r.cmd(`execute at ${BOT} if ${t}`)
+          if (/passed/i.test(w)) { placed = false; console.log(`[eval] spot ${s.x} ${s.z} rejected (${t}), next`); break }
+        }
+      }
       if (placed) Object.assign(spot, s)
     }
     if (!placed) throw new Error('prepare: no land spot found')

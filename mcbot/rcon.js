@@ -38,7 +38,13 @@ function connect({ host = '127.0.0.1', port, password } = {}) {
       sock.write(pkt)
       return n
     }
-    const request = (type, body) => new Promise((res, rej) => { pending.set(send(type, body), { res, rej }) })
+    // every request times out (10 s): a dead socket must not leave callers (viewer tp loop) waiting forever
+    const request = (type, body) => new Promise((res, rej) => {
+      if (sock.destroyed) return rej(new Error('RCON closed'))
+      const n = send(type, body)
+      const t = setTimeout(() => { pending.delete(n); rej(new Error('RCON timeout')) }, 10000)
+      pending.set(n, { res: v => { clearTimeout(t); res(v) }, rej: e => { clearTimeout(t); rej(e) } })
+    })
     sock.on('data', d => {
       buf = Buffer.concat([buf, d])
       while (buf.length >= 4) {
@@ -52,6 +58,7 @@ function connect({ host = '127.0.0.1', port, password } = {}) {
         if (p) { pending.delete(rid); p.res(body) }
       }
     })
+    sock.on('close', () => { for (const p of pending.values()) p.rej(new Error('RCON closed')); pending.clear() })
     sock.on('error', e => { for (const p of pending.values()) p.rej(e); pending.clear(); reject(e) })
     sock.once('connect', async () => {
       try {
