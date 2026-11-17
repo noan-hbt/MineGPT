@@ -112,6 +112,21 @@ function createPlanner(mcData) {
       const take = Math.min(inv[item] || 0, n)
       if (take) { inv[item] -= take; n -= take }
       if (n === 0) return
+      // planks / logs of any wood are interchangeable: use whatever is in the inventory, then plan the rest with
+      // the main wood. Else a recipe variant picked for 4 acacia_planks asks for 1 unreachable acacia_log while
+      // the bot holds 40 oak_log (B5 run: endless "collect oak_log").
+      const fam = item.match(/_(planks|log)$/)?.[1]
+      if (fam && !/^(crimson|warped|bamboo)_/.test(item)) {
+        for (const k of Object.keys(inv)) {
+          if (n === 0) break
+          if (k.endsWith('_' + fam) && inv[k] > 0) { const t = Math.min(inv[k], n); inv[k] -= t; n -= t }
+        }
+        if (n === 0) return
+        item = `${wood}_${fam}`
+        const t2 = Math.min(inv[item] || 0, n)
+        if (t2) { inv[item] -= t2; n -= t2 }
+        if (n === 0) return
+      }
       if (depth > MAX_DEPTH || visiting.has(item)) return gather(item, n, depth)
       visiting.add(item)
       try {
