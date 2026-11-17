@@ -121,7 +121,28 @@ Strip a leading empty `<think></think>` from the content if present. Full workin
   use RCON for scripted tests.
 
 ## State at end of session 2026-11-17 (resume here)
-- **B3 in progress on branch `b3-skills`** (not merged). Done:
+- **Current branch: `b4-memory`** (branched from `b3-skills`; neither is merged into main, B3 not ticked).
+- **B4 memory done, needs the long live session** (next step, with the user in game):
+  - `mcbot/memory.js` -> `mcbot/memory/<botname>.json` (gitignored), saved every 10 s + on important events.
+    Holds: `home` (chat `sethome`, else the first crafting table the bot places; old `home.json` migrated),
+    `tasks` goal stack (new `goal` pushes the old one; when a planner target is done, it pops and resumes the previous),
+    `places` (ore veins merged within 4 blocks, crafting_table/furnace/chest/bed, max 12 per kind; forgotten when the
+    block is gone, checked within 12 m), `chests` (what the bot deposited), `deaths`, `episodes` (1 sentence every 20 actions:
+    LLM summary async ~480 ms, code summary fallback, cut at 200 chars).
+  - bot.js: startup goal = `--goal` > remembered task > `iron_pickaxe`. Chat says "back online, resuming: ...".
+    Prompt gets short lines after Goal: `Home: 10m south-west, 9 up.` / `Remembered: ...` (stations + plan ores NOT in view) /
+    `Chest (...): ...` / `Earlier: <last episode>` / `Died recently (...)`. "Recommended action" stays last line.
+    New verb `goto <ore>` (plan ore remembered within 128 m but not visible; hint prefers it over `mine`). Chat `tasks`, `memory`.
+  - skills.js: `storeInChest` calls `env.onStore(pos, {item: n})`.
+  - Tests: `node test_memory.js` passes (offline restart). Live: run 1 recorded ores/stations/death; run 2 without `--goal`
+    resumed iron_pickaxe and saw home (home was set by hand in the json to the known table at -18,65,653).
+  - NOT seen live: task-stack resume, `goto` action, chest memory, episode summary in the real loop.
+- **Long session to do (resume here)**: `.\run-bot.ps1` (no -Goal), user in game. Check: `memory` / `tasks` chat, `goal 3 torch`
+  then resume iron_pickaxe, `sethome` then kill node (wrapper restarts) -> it finds home + resumes, `goto` used for iron,
+  episodes in memory json. If OK: tick B4, merge b3-skills + b4-memory into main.
+- Seen in B4 live runs (B3 execution, not memory): `collect iron_ore` times out every time (~40 s, ore seen through walls
+  at 32 m); bot died once with cause unknown (hp dropped to 8) -> difficulty may no longer be peaceful.
+- **B3 (branch `b3-skills`, included in b4-memory)**. Done:
   - `mcbot/skills.js`: skill library, each skill returns "ok ..." or a reason, own budget/retries: gather, mineOre,
     craft, place, smelt, eat, fight, flee, buildShelter, sleep, farm, storeInChest, goHome, explore, come, follow.
   - `mcbot/rcon.js` (RCON client, `node rcon.js <cmd>`), `mcbot/test_skills.js` (one RCON test per skill, sky arena
@@ -137,7 +158,7 @@ Strip a leading empty `<think></think>` from the content if present. Full workin
   - `bot.js` wired to skills (patch applied, syntax OK, **NOT run live yet**): new verbs mine/shelter/sleep/farm/store/home,
     SYSTEM prompt updated, `collect` mines up to the plan's count (cap 4), reflexes in code (flee when hp<=8 or creeper,
     eat when hp<=10, wait when sheltered at night), `sethome` chat command (home.json), liquidCost 8 (avoid water).
-- **NEXT (short)**: 1) `node test_skills.js` once to confirm, 2) restart run-bot (LFM still runs OLD code) and watch 5 min
+- **B3 leftovers (old NEXT)**: 1) `node test_skills.js` once to confirm, 2) restart run-bot (LFM still runs OLD code) and watch 5 min
    (difficulty normal + night) — check mining in water/ice, reflexes, shelter. 3) merge b3-skills, tick B3, then B4 memory.
 - User feedback: sessions felt too long / looping. Keep iterations short, stop debugging edge cases (e.g. mine_hidden
   flakiness) once the main path works; prefer live test with the user over long offline loops.

@@ -16,13 +16,18 @@ const fs = require('fs')
 
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? process.argv[i + 1] : d }
 const LLM = arg('llm', 'http://127.0.0.1:8080')
-let goal = arg('goal', 'iron_pickaxe') // "goal <item> [n]" -> B2 planner target; free text otherwise
+const { createMemory } = require('./memory')
+// B4: long-term memory (memory/<name>.json). Episode summaries come from the LLM (code fallback inside memory.js)
+const M = createMemory(arg('name', 'LFM'), { summarize: summarizeEpisode })
+// goal: --goal wins, else resume the remembered task, else default
+let goal = arg('goal', null) || M.goal() || 'iron_pickaxe' // "goal <item> [n]" -> B2 planner target; free text otherwise
 let paused = false
 let following = null // player name in follow mode (bot follows, fights hostiles nearby, no LLM)
 
 const SYSTEM = `You control a Minecraft survival bot. Each turn you get the state and answer with ONE action.
 Actions:
 collect <block> - walk to the nearest blocks of that type, mine a few, pick up drops
+goto <ore> - walk back to a place where you saw that ore before (from memory)
 mine <ore> - dig down to where that ore is and tunnel until you find and mine it
 craft <item> - craft one item (some need a crafting_table nearby)
 place <crafting_table|furnace|chest> - put it on the ground
@@ -38,7 +43,7 @@ home base - walk back to the base
 explore <north|south|east|west|down> - walk 24 blocks (or dig 10 down) to find new things
 come player - walk to the player
 wait 1 - do nothing
-The Plan line lists the next steps computed from recipes to reach the goal.
+The Plan line lists the next steps computed from recipes to reach the goal. Home/Remembered/Chest/Earlier lines are your memory.
 Rules: attack hostile mobs that are close if health is high; flee if health is low. Eat when food is low.
 Usually do the "Recommended action" unless danger, hunger or the goal says otherwise. If an action failed, choose something different. If nothing useful is visible, explore.
 Answer only: <action> <arg>`
@@ -56,10 +61,11 @@ bot.loadPlugin(pathfinder)
 bot.loadPlugin(collectBlock)
 
 let mcData, interestingIds, rareIds, commonIds, P, S
-// base position (chat "sethome"); B4 will move this into world.json
+// base position: memory (B4); migrate the old home.json once
 const HOME_FILE = __dirname + '/home.json'
-let home = null
-try { const h = JSON.parse(fs.readFileSync(HOME_FILE, 'utf8')); home = new Vec3(h.x, h.y, h.z) } catch {}
+if (!M.home) try { const h = JSON.parse(fs.readFileSync(HOME_FILE, 'utf8')); M.setHome([h.x, h.y, h.z]) } catch {}
+let home = M.home && new Vec3(...M.home)
+const setHome = p => { M.setHome(p); home = new Vec3(...M.home) }
 let target = null, targetDone = false, exploreCount = 0
 const history = [] // [{a, r}] last actions + results
 const stats = { n: 0, lat: [] }
@@ -75,7 +81,7 @@ bot.once('spawn', () => {
   bot.pathfinder.thinkTimeout = 10000
   bot.collectBlock.movements = mv
   interestingIds = mcData.blocksArray.filter(b => /_log$/.test(b.name) || b.name in NEEDS_TIER ||
-    /_ore$/.test(b.name) || ['sand', 'gravel', 'clay', 'crafting_table', 'furnace', 'melon', 'pumpkin', 'sweet_berry_bush', 'wheat'].includes(b.name)).map(b => b.id)
+    /_ore$/.test(b.name) || ['sand', 'gravel', 'clay', 'crafting_table', 'furnace', 'chest', 'melon', 'pumpkin', 'sweet_berry_bush', 'wheat'].includes(b.name)).map(b => b.id)
   const COMMON = new Set(['stone', 'cobblestone', 'deepslate', 'sand', 'gravel'].map(n => mcData.blocksByName[n].id))
   commonIds = interestingIds.filter(id => COMMON.has(id))
   rareIds = interestingIds.filter(id => !COMMON.has(id))
@@ -83,9 +89,12 @@ bot.once('spawn', () => {
     isUnreachable, markUnreachable: p => unreachable.set(`${p.x},${p.y},${p.z}`, Date.now() + UNREACHABLE_MS),
     get home() { return home },
     keep: () => new Set(target ? P.plan(target.item, target.n, { inv: invCounts() }).steps.flatMap(st => [st.item, st.input, st.fuel]).filter(Boolean) : []),
+    onStore: (p, items) => M.stored(p, items),
   })
+  const resumed = M.data.tasks.length > 0 && !arg('goal', null)
+  if (home) console.log(`[mem] home ${M.home} (${M.where(snap().pos, M.home)}), ${M.data.actions} past actions, session #${M.data.sessions}`)
   console.log(`[bot] spawned (${bot.version}) at ${bot.entity.position.floored()} | goal: ${goal}`)
-  bot.chat('LFM3 bot online. Chat: goal <text> | stop | go | come')
+  bot.chat(resumed ? `back online, resuming: ${goal}` + (home ? ` (home ${M.where(snap().pos, M.home)})` : '') : 'LFM3 bot online. Chat: goal <text> | stop | go | come')
   L.start({ bot: bot.username, mc: bot.version, llm: LLM, goal, system: SYSTEM, system_hash: L.hash(SYSTEM),
     sampling: { temperature: 0, top_k: 1, max_tokens: 16, thinking: false }, pos: snap().pos })
   console.log('[log] ' + L.file)
@@ -95,7 +104,7 @@ bot.once('spawn', () => {
 bot.on('chat', (user, msg) => {
   if (user === bot.username) return
   const cmd = msg.split(' ')[0]
-  if (['goal', 'stop', 'go', 'follow', 'where', 'help', 'come', 'sethome'].includes(cmd)) L.event('chat_cmd', { user, msg })
+  if (['goal', 'stop', 'go', 'follow', 'where', 'help', 'come', 'sethome', 'tasks', 'memory'].includes(cmd)) L.event('chat_cmd', { user, msg })
   else L.event('chat', { user, msg })
   if (msg.startsWith('goal ')) { setGoal(msg.slice(5)); bot.chat('New goal: ' + goal + (target ? ` (target ${target.n} ${target.item})` : '')) }
   else if (msg === 'stop') { paused = true; following = null; bot.pathfinder.setGoal(null); bot.chat('paused') }
@@ -103,21 +112,25 @@ bot.on('chat', (user, msg) => {
   else if (msg === 'follow') { following = user; bot.chat(`following ${user} (say go to let me work alone)`) }
   else if (msg === 'where') { const p = bot.entity.position.floored(); bot.chat(`I'm at ${p.x} ${p.y} ${p.z}`) }
   else if (msg === 'sethome') {
-    home = bot.entity.position.floored()
-    fs.writeFileSync(HOME_FILE, JSON.stringify({ x: home.x, y: home.y, z: home.z }))
+    setHome(bot.entity.position)
     bot.chat(`home set at ${home.x} ${home.y} ${home.z}`)
   }
-  else if (msg === 'help') bot.chat('goal <text> | go | stop | follow | come | where | sethome')
+  else if (msg === 'tasks') bot.chat('tasks: ' + (M.data.tasks.map(t => t.goal).join(' > ') || 'none'))
+  else if (msg === 'memory') M.prompt(snap().pos, []).split('\n').filter(Boolean).forEach(l => bot.chat(l.slice(0, 250)))
+  else if (msg === 'help') bot.chat('goal <text> | go | stop | follow | come | where | sethome | tasks | memory')
   else if (msg === 'come') act('come player', 'user').then(r => console.log('[come] ' + r))
 })
 bot.on('kicked', r => { console.log('[bot] kicked', r); L.event('kicked', { reason: String(r).slice(0, 200) }) })
 bot.on('error', e => { console.log('[bot] error', e.message); L.event('error', { msg: e.message.slice(0, 200) }) })
-bot.on('end', () => { console.log('[bot] disconnected'); L.event('end'); process.exit(0) })
+bot.on('end', () => { console.log('[bot] disconnected'); L.event('end'); M.close(); process.exit(0) })
+process.on('SIGINT', () => { M.close(); process.exit(0) })
 let dead = false
 bot.on('death', () => {
   dead = true
   console.log('[bot] died')
   L.event('death', { ...snap(), last: history.slice(-3) })
+  const foe = bot.nearestEntity(e => HOSTILE.has(e.name) && e.position.distanceTo(bot.entity.position) < 8)
+  M.died(bot.entity.position, foe ? foe.name : 'unknown', history.slice(-3).map(h => h.a))
   history.push({ a: 'died', r: 'respawned' })
   try { bot.collectBlock.cancelTask() } catch {}
   bot.pathfinder.setGoal(null); bot.clearControlStates()
@@ -134,13 +147,17 @@ function parseTarget(text) {
   }
   return null
 }
-function setGoal(text) {
+// remember=true (chat / startup): the goal goes on top of the task stack; the previous one resumes when it is done
+function setGoal(text, remember = true) {
   goal = text
+  if (remember) M.pushGoal(text)
   target = mcData ? parseTarget(text) : null
   targetDone = false
   if (target) L.event('target', target)
 }
 const DIRS = ['north', 'east', 'south', 'west']
+const GOTO_RANGE = 128 // remembered ores farther than this are not worth the walk
+const MEM_KINDS = new Set(['crafting_table', 'furnace', 'chest'])
 // plan step blocks -> the base ore name for "mine <ore>" (deepslate_iron_ore -> iron_ore)
 const oreOf = blocks => blocks.map(b => b.replace(/^deepslate_/, '')).find(b => /_ore$/.test(b))
 // plan step -> concrete action string (may be invalid if the world disagrees; the LLM then picks)
@@ -149,12 +166,15 @@ function stepToAction(s, blocks, tier, y) {
     const b = s.blocks.find(b => blocks[b] !== undefined && (NEEDS_TIER[b] || 0) <= tier)
     if (b) return `collect ${b}`
     const ore = oreOf(s.blocks)
-    if (ore && (NEEDS_TIER[ore] || 0) <= tier) return `mine ${ore}`
+    if (ore && (NEEDS_TIER[ore] || 0) <= tier) return M.nearest(ore, bot.entity.position, GOTO_RANGE) ? `goto ${ore}` : `mine ${ore}`
     return `explore ${DIRS[Math.floor(exploreCount / 3) % 4]}`
   }
   if (s.do === 'smelt') return `smelt ${s.input}`
   return `${s.do} ${s.item}`
 }
+
+// ores the plan still has to collect (base names)
+const planOresAll = plan => plan && !plan.error ? plan.steps.filter(s => s.do === 'collect').map(s => oreOf(s.blocks)).filter(Boolean) : []
 
 // ---------- observation ----------
 const invCounts = () => {
@@ -197,13 +217,16 @@ function observe() {
       if (isUnreachable(pos)) continue
       const name = bot.blockAt(pos).name
       const d = Math.round(pos.distanceTo(p))
+      if (/_ore$/.test(name)) M.see(name.replace(/^deepslate_/, ''), pos) // B4: remember ore veins + stations
+      else if (MEM_KINDS.has(name)) M.see(name, pos)
       if (!(name in blocks) || d < blocks[name]) blocks[name] = d
     }
   }
   scan(rareIds, 32, 400)
   scan(commonIds, 16, 40)
+  M.verify(p, q => bot.blockAt(new Vec3(q[0], q[1], q[2]))?.name ?? null, 12) // forget mined ores / broken stations
   for (const st of ['crafting_table', 'furnace']) if (blocks[st] > STATION_RANGE) delete blocks[st]
-  const collectable = Object.keys(blocks).filter(n => (NEEDS_TIER[n] || 0) <= tier && !['crafting_table', 'furnace'].includes(n))
+  const collectable = Object.keys(blocks).filter(n => (NEEDS_TIER[n] || 0) <= tier && !MEM_KINDS.has(n))
   // B2: recipe plan from the real inventory, recomputed every tick
   const plan = target ? P.plan(target.item, target.n, { inv, near: blocks }) : null
   const planCrafts = plan ? plan.steps.filter(s => s.do === 'craft').map(s => s.item) : []
@@ -246,14 +269,20 @@ function observe() {
   const threat = Object.entries(mobs).filter(([n, d]) => HOSTILE.has(n) && d <= 6).sort((a, b) => a[1] - b[1])[0]
   const night = tod >= 12500 && tod < 23500
   const peaceful = bot.game.difficulty === 'peaceful'
-  const bedNear = !!bot.findBlock({ matching: b => b.name.endsWith('_bed'), maxDistance: 24 }) || Object.keys(inv).some(n => n.endsWith('_bed'))
+  const bedBlock = bot.findBlock({ matching: b => b.name.endsWith('_bed'), maxDistance: 24 })
+  if (bedBlock) M.see('bed', bedBlock.position)
+  const bedNear = !!bedBlock || Object.keys(inv).some(n => n.endsWith('_bed'))
   const sheltered = S.inShelter()
   const canShelter = night && !peaceful && !sheltered && !bedNear && (BUILD.some(b => inv[b]) || tier >= 1)
   const ripe = !!bot.findBlock({ maxDistance: 16, matching: b => CROPS[b.name] && b.getProperties().age >= CROPS[b.name].age })
   const chestOk = !!bot.findBlock({ matching: mcData.blocksByName.chest.id, maxDistance: 16 }) || !!inv.chest
   const invFull = bot.inventory.items().length >= 30
   const farFromHome = home && home.distanceTo(p) > 16
-  if (plan?.done && !targetDone) { targetDone = true; bot.chat(`Goal reached: ${target.n} ${target.item}`); L.event('target_done', target) }
+  if (plan?.done && !targetDone) {
+    targetDone = true; bot.chat(`Goal reached: ${target.n} ${target.item}`); L.event('target_done', target)
+    const prev = M.popGoal() // B4 task stack: resume the goal that was interrupted
+    if (prev) { setGoal(prev, false); bot.chat('resuming: ' + prev) }
+  }
   const planNext = !plan ? 'pursue the goal' : plan.done ? 'wait 1' : plan.error ? `explore ${DIRS[Math.floor(exploreCount / 3) % 4]}`
     : stepToAction(plan.steps[0], blocks, tier, Math.floor(p.y))
   const next = threat ? (bot.health > 8 && threat[0] !== 'creeper' ? `attack ${threat[0]}` : `flee ${threat[0]}`)
@@ -264,8 +293,9 @@ function observe() {
     : planNext
   const planTxt = !plan ? 'none (free-text goal)' : plan.done ? 'goal reached' : plan.error ? 'unknown: ' + plan.error
     : plan.steps.slice(0, 4).map(P.fmt).join(' > ') + (plan.steps.length > 4 ? ` (+${plan.steps.length - 4})` : '')
+  const memTxt = M.prompt(p, [...new Set(planOresAll(plan))].filter(o => blocks[o] === undefined && blocks['deepslate_' + o] === undefined)) // only ores not in view
   const text = `Goal: ${goal}
-Time: ${night ? 'night' : 'day'}${sheltered ? ' (in shelter)' : ''}. Health ${Math.round(bot.health)}/20, food ${bot.food}/20.
+${memTxt ? memTxt + '\n' : ''}Time: ${night ? 'night' : 'day'}${sheltered ? ' (in shelter)' : ''}. Health ${Math.round(bot.health)}/20, food ${bot.food}/20.
 Nearby blocks: ${blkTxt}.
 Mobs: ${mobTxt}.
 Inventory: ${invTxt}.
@@ -282,8 +312,10 @@ Recommended action: ${next}.`
   // mine: ores the plan needs that we can harvest but don't see (visible ones go through collect)
   const planOres = plan && !plan.error ? plan.steps.filter(s => s.do === 'collect').map(s => oreOf(s.blocks)).filter(Boolean) : []
   const minable = [...new Set(planOres)].filter(o => (NEEDS_TIER[o] || 0) <= tier && blocks[o] === undefined && blocks['deepslate_' + o] === undefined)
+  // goto: remembered (B4) but not visible -> walk back to the vein instead of digging blind
+  const gotoable = minable.filter(o => M.nearest(o, p, GOTO_RANGE))
   const opts = { // verb -> allowed args (empty list = verb unavailable)
-    collect: collectable, mine: minable, craft: craftable, place: placeable, smelt: smeltable,
+    collect: collectable, goto: gotoable, mine: minable, craft: craftable, place: placeable, smelt: smeltable,
     attack: fightable, flee: fightable.filter(n => HOSTILE.has(n)),
     eat: bot.food < 20 ? foods : [],
     shelter: canShelter ? ['here'] : [], sleep: night && bedNear ? ['bed'] : [], farm: ripe ? ['crops'] : [],
@@ -308,7 +340,7 @@ Recommended action: ${next}.`
     goal, pos: [Math.floor(p.x), Math.floor(p.y), Math.floor(p.z)], dim: bot.game.dimension,
     hp: Math.round(bot.health), food: bot.food, time: tod, night: tod >= 12500,
     blocks, mobs, inv, tier, craftable, table: !!table, furnace: furnaceNear, history: history.slice(-4),
-    sheltered, home: home && [home.x, home.y, home.z],
+    sheltered, home: home && [home.x, home.y, home.z], memory: memTxt,
     target, focus, plan: plan && { done: plan.done, error: plan.error, steps: plan.steps.map(P.fmt) },
   }
   const options = Object.fromEntries(Object.entries(opts).filter(([, xs]) => xs.length))
@@ -334,6 +366,19 @@ async function decide(obs) {
   return { ms, text: data.choices[0].message.content.replace('<think></think>', '').trim() }
 }
 
+// B4 episode summary: one sentence from the last ~20 actions (runs async, every 20 actions)
+async function summarizeEpisode(w, g) {
+  const lines = w.map(x => `${x.a} -> ${x.r}`).join('\n')
+  const body = {
+    messages: [{ role: 'system', content: 'Summarize what a Minecraft bot did in ONE short sentence (max 25 words): what it achieved, what failed, where it is in its goal. No preamble.' },
+      { role: 'user', content: `Goal: ${g}\nActions:\n${lines}` }],
+    max_tokens: 60, temperature: 0, chat_template_kwargs: { enable_thinking: false }, reasoning_format: 'none', cache_prompt: false,
+  }
+  const r = await fetch(LLM + '/v1/chat/completions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: AbortSignal.timeout(8000) })
+  if (!r.ok) return null
+  return (await r.json()).choices[0].message.content.replace(/<think>[\s\S]*?<\/think>/, '').trim()
+}
+
 // ---------- actions ----------
 const sleep = ms => new Promise(r => setTimeout(r, ms))
 function withTimeout(p, ms) {
@@ -347,6 +392,7 @@ let collectN = {}
 const ACTIONS = {
   collect: name => S.gather(name, collectN[name] || 2),
   mine: ore => S.mineOre(ore),
+  goto: gotoPlace,
   craft: name => S.craft(name),
   place: name => S.place(name || 'crafting_table'),
   smelt: input => S.smelt(input),
@@ -363,7 +409,18 @@ const ACTIONS = {
   async wait(n) { await sleep(1000 * (+n || 1)); return 'ok' },
 }
 const TIMEOUT = { collect: 55000, mine: 75000, craft: 20000, place: 15000, attack: 20000, flee: 12000, eat: 8000, shelter: 35000,
-  sleep: 50000, farm: 50000, store: 30000, home: 55000, explore: 30000, come: 30000, wait: 10000, smelt: 110000 }
+  sleep: 50000, farm: 50000, store: 30000, home: 55000, goto: 65000, explore: 30000, come: 30000, wait: 10000, smelt: 110000 }
+
+// walk to a remembered place (B4). Arrival: the ore shows up in the next scan and "collect" takes over
+async function gotoPlace(kind) {
+  const q = M.nearest(kind, bot.entity.position, GOTO_RANGE)
+  if (!q) return `nothing remembered for ${kind}`
+  const err = await S.goto(new goals.GoalNear(q[0], q[1], q[2], 3), 60000)
+  const d = Math.round(bot.entity.position.distanceTo(new Vec3(q[0], q[1], q[2])))
+  if (d <= 4) return `ok at ${kind}`
+  if (err && err !== 'timeout') { M.forget(kind, q); return `failed: ${err}, forgot it` }
+  return `ok on the way, ${d}m left`
+}
 
 async function run(act, a) {
   if (!ACTIONS[act]) return `unknown action ${act}`
@@ -388,8 +445,12 @@ async function act(text, source, extra = {}) {
   history.push({ a: text, r: result })
   if (history.length > 20) history.shift()
   const after = snap()
+  const inv_delta = invDelta(before.inv, after.inv)
   L.decision({ source, action: text, verb, arg: a, result, dur_ms, ...extra,
-    after: { pos: after.pos, hp: after.hp, food: after.food, inv_delta: invDelta(before.inv, after.inv), died: dead } })
+    after: { pos: after.pos, hp: after.hp, food: after.food, inv_delta, died: dead } })
+  M.action(text, result, inv_delta)
+  // first crafting table placed = home, if none was set
+  if (!home && verb === 'place' && a === 'crafting_table' && L.isOk(result)) { setHome(bot.entity.position); bot.chat(`home set here (${home})`) }
   return result
 }
 

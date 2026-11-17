@@ -13,3 +13,9 @@ node_modules/
 mcbot/logs/
 mcbot/last_obs.txt
 __pycache__/
+
+# remote access credentials
+remote/guac/user-mapping.xml
+remote/Caddyfile
+remote/*.pem
+mcbot/memory/

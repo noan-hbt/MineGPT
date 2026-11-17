@@ -11,7 +11,7 @@
 //   await S.follow('ZeiK_0', 10000)
 //
 // env (all optional): isUnreachable(pos), markUnreachable(pos), keep: () => Set of item names storeInChest keeps,
-//                     home: Vec3 | null (goHome target; set by bot.js)
+//                     home: Vec3 | null (goHome target; set by bot.js), onStore(chestPos, {item: n}) (B4 memory)
 'use strict'
 const { goals } = require('mineflayer-pathfinder')
 const { Vec3 } = require('vec3')
@@ -542,13 +542,14 @@ function createSkills(bot, mcData, env = {}) {
     let c
     try { c = await bot.openContainer(bot.blockAt(ch.position)) } catch (e) { return 'failed: ' + short(e) }
     let n = 0
+    const put = {}
     try {
       for (const it of bot.inventory.items()) {
         if (TOOL_RE.test(it.name) || FOOD.has(it.name) || keep.has(it.name) || ['crafting_table', 'furnace', 'torch'].includes(it.name)) continue
-        try { await c.deposit(it.type, null, it.count); n += it.count } catch { break }
+        try { await c.deposit(it.type, null, it.count); n += it.count; put[it.name] = (put[it.name] || 0) + it.count } catch { break }
       }
     } finally { c.close() }
-    if (env.onStore) env.onStore(ch.position)
+    if (env.onStore) env.onStore(ch.position, put)
     return n ? `ok stored ${n} items` : 'nothing to store'
   }
 

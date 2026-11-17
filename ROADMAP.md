@@ -53,6 +53,10 @@ Format : **ID — nom** · priorité (P1 haut) · dépend de · livrables · cri
 - [ ] **B4 — Mémoire longue** · P1 · B1
   `world.json` (base, lit, coffres+contenu, minerais vus, morts, biomes), journal d'épisodes résumé toutes les N actions (résumé par LLM), pile de tâches. Injection sélective (<2k tokens de prompt).
   Fini : redémarrage du bot → il retrouve sa base et reprend sa tâche.
+  ⏳ 2026-11-17 : branche `b4-memory` (depuis `b3-skills`). `mcbot/memory.js` → `mcbot/memory/<nom>.json` : home (sethome ou 1re table posée),
+  pile de tâches (goal interrompu repris quand le nouveau est fini), minerais/stations/lits/coffres vus (+ contenu déposé), morts,
+  épisodes (résumé LLM toutes les 20 actions, async). Prompt : lignes Home/Remembered/Chest/Earlier. Verbe `goto <ore>` (minerai mémorisé
+  non visible). Chat `tasks`, `memory`. `test_memory.js` OK. Live : redémarrage sans `--goal` → reprend iron_pickaxe + home vu. Reste : session longue.
 - [ ] **B5 — Boucle décision hiérarchique** · P1 · B2 B3 B4
   Réflexes (code) > LLM décideur appelé seulement sur fin/échec de tâche ou événement > exécution skill. Le décideur choisit un *skill+arg*, plus une action unitaire. Grammaire dynamique conservée.
   Fini : session 1 h autonome sans boucle infinie, progression au-delà de stone pickaxe.
