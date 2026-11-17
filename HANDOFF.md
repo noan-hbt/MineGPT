@@ -14,7 +14,9 @@ Run a LiquidAI LFM model locally, as fast as possible (target 100-200 tps single
 | Path | What |
 |---|---|
 | `llama.cpp\` | llama.cpp b12445, Windows CUDA 13.5 build (+ cudart DLLs) |
-| `models\LFM3-1.7B-QAD-Q4_0.gguf` | LFM3-1.7B, quantization-aware Q4_0 (1 GB). Only model on disk |
+| `models\LFM3-1.7B-QAD-Q4_0.gguf` | LFM3-1.7B, quantization-aware Q4_0 (1 GB). Prod model |
+| `models\LFM3-1.7B-hf\` | Same model, HF bf16 safetensors (3.4 GB) for training/eval |
+| `b21\` | Closed B21 bench (weight editing). `b21\.venv` = torch 2.13 cu130 + transformers 5.12.1 + peft, works on the GPU. `lfm3_compat.py` = shim needed to load LFM3 in HF |
 | `start-game.ps1` | **Single-agent low-latency server (use this for Minecraft)**, port 8080 |
 | `game_latency.py` | Simulated Minecraft-like loop; reference client for game requests |
 | `start-lfm3.ps1` | General server, N parallel slots (`-Slots`, `-CtxPerSlot`, `-Reasoning`) |
@@ -117,6 +119,25 @@ Strip a leading empty `<think></think>` from the content if present. Full workin
 - No progression beyond stone pickaxe (then mines stone forever). No iron/furnace, night shelter, farming.
 - Bot does not talk (no LLM chat replies). Ideas: LLM chat replies, commands like "mine iron" / "build shelter",
   use RCON for scripted tests.
+
+## State at end of session 2026-11-17 (resume here)
+- **B2 recipe planner committed on main** (`mcbot/planner.js`, `node mcbot/test_planner.js` passes). bot.js: `goal <item> [n]`
+  sets the planner target (default `iron_pickaxe`), Plan line in the observation, grammar focused on plan steps,
+  new actions `smelt <item>`, `place furnace`, explore down; blocks the pathfinder failed on are hidden for a while;
+  stations farther than STATION_RANGE are ignored (re-place instead of walking back).
+- **NEXT: live test of B2** (was paused right after the bot reached `place crafting_table`). Run start-game, start-mc,
+  run-bot, `goal iron_pickaxe`, watch `mcbot/last_obs.txt` + `mcbot/logs/*.jsonl`. Then tick B2 (and B1 after a real 1 h run).
+- **B21 closed: no.** Weight editing (ROME/MEMIT) and a LoRA trained on isolated facts both wreck decisions on logged
+  ticks (276 → 205 / 166 of 300). World facts go in context (B4). Verdict in `b21/REPORT.md`.
+- **Reusable from B21:** `b21/eval.py` `compare()` replays logged decisions (argmax log-prob over the valid options)
+  = offline eval of any HF model/LoRA without Minecraft → use for B6 / B15.
+- **Training plan agreed with the user:** mass DeepSeek-generated tool-calling examples are worth it for the LoRA
+  decider (B12-B15), NOT for weight editing. Rules: label REAL logged observations (teacher sees plan + memory),
+  keep actions that succeeded in game, exact prod format (`verb arg` + bot SYSTEM), diversity over volume,
+  mix general data, low rank / few epochs, judge with the decision replay. Then DAgger loop (student plays, teacher relabels).
+  Only start mass generation after B3/B5 freeze the action format.
+- Codex was judged not very relevant on B21 (bad fact choice, broken metrics). If delegating again, give tight scope + metrics.
+- `mcbot/last_obs_LFM2.txt` = untracked debug leftover, can be deleted.
 
 ## Next: see ROADMAP.md
 Plan decided 2026-11-17 (blocks B1-B20): skills+recipe planner+memory, voice chat, LoRA training (option A: 1 base + 2 LoRA), teacher model, control app, Fabric mod.

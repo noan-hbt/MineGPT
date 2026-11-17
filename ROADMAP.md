@@ -106,7 +106,7 @@ Format : **ID — nom** · priorité (P1 haut) · dépend de · livrables · cri
 
 ### Plus tard / option
 - [ ] **B19 — Décideur non-LLM** · P3 · B13 — classifieur (MLP/GBT) sur état structuré, <1 ms CPU, comparé au LoRA décideur via B6.
-- [ ] **B21 — Test écriture directe dans les poids (knowledge editing)** · P3 · B6 B11 — demandé par l'utilisateur.
+- [x] **B21 — Test écriture directe dans les poids (knowledge editing)** · P3 · B6 B11 — **FERMÉ 2026-11-17 : non.** Voir `b21/REPORT.md` (MEMIT −24 pts / LoRA-faits −37 pts sur décisions réelles ; contexte B4 gagne). Garder le rejeu de décisions comme éval hors-ligne.
   Tester ROME / MEMIT / AlphaEdit (EasyEdit) sur LFM3 bf16 : injecter des faits Minecraft (ex. recettes, position de la base)
   sans entraînement. Mesurer : fait appris ? généralise aux reformulations ? dégâts ailleurs (éval B6 + IFEval mini) ?
   Comparer à LoRA et à la mémoire B4. Attention : archi hybride LFM (conv + attention) → adapter le choix des couches MLP.
