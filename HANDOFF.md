@@ -120,7 +120,30 @@ Strip a leading empty `<think></think>` from the content if present. Full workin
 - Bot does not talk (no LLM chat replies). Ideas: LLM chat replies, commands like "mine iron" / "build shelter",
   use RCON for scripted tests.
 
-## State 2026-11-17 session #6 (RESUME HERE) — v2 restart decided, v1 archived
+## State 2026-11-17 session #7 (RESUME HERE) — v2 started, H1 done
+Branch `v2` (not pushed). Commits: `22df018` clean restart layout, `13a59d3` DSL + turns frozen, then schemas.
+
+### Done
+- Clean restructure (details in session #6 "Next" below). `.venv/` (python, + jsonschema), `bot/` (node deps).
+- User decisions at H1 review: DSL lines for BOTH models; section budgets measured in H2; **no predefined build
+  templates** (model builds block by block, may save its own routines); place names chosen by the model;
+  **keep `models/LFM2.5-350M-wedit*` + base models as reference baselines** to measure fine-tuning gains.
+- **H1 frozen in `spec/`**: `dsl.md` (grammar, values, normalized AST, errors), `turns.md` (decision / monitor /
+  mind tags), `catalog.json` (71 verbs + 13 tools, typed params), `names.json` (minecraft-data 1.21.11 + jar tags,
+  `tools/gen_names.py`), `state.schema.json` + `events.schema.json` (+ `golden/state_example.json`,
+  `tools/validate.py`). Reference parser `bot/dsl/parse.js` + `turn.js` (errors written for the model, with
+  "did you mean" ids), `bot/dsl/check.js` = JSONL validation service for Python. `cd bot; npm test` = 176 golden.
+
+### Open points to raise with the user
+- Catalogue still has code-side macros of the same kind as build templates: `strip_mine`, `branch_mine`, `chop`
+  (whole tree), `toss_junk`, `sort`, `equip_best`, `water_bucket_save`. Keep (motor skills) or drop (model decides)?
+- HANDOFF.md (committed, public repo) mentions the Tailscale funnel hostname: scrub before any push.
+
+### Next = H2
+Big sheet renderer + ledger + mental map + more inputs in `bot/`, logged live (state JSON per call, validated by
+`spec/tools/validate.py`). First: perception -> state.schema.json, renderer state -> text, measure tokens/section.
+
+## State 2026-11-17 session #6 — v2 restart decided, v1 archived
 
 ### Read first
 - `notes/harness-v2.md` (rev 3 + section 8 MineSim): the agreed v2 plan. `notes/spec-v2.md`: H1 spec draft (turn

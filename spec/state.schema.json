@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "minegpt/state.schema.json",
+  "title": "MineGPT structured state (v2.0)",
+  "description": "Everything the situation sheet is rendered from. Logged with every model call so datasets can be re-rendered with a newer renderer. Only facts the bot actually perceived or remembers (no omniscience). Times in ms since session start, positions are block coords [x,y,z]. Sections follow the sheet order, stable -> volatile.",
+  "type": "object",
+  "required": ["meta", "memory", "map", "episode", "goals", "ledger", "body", "inventory", "affordances", "surroundings", "events", "now"],
+  "properties": {
+    "meta": {"type": "object", "required": ["t", "session", "bot", "version"], "properties": {
+      "t": {"type": "integer"}, "session": {"type": "string"}, "bot": {"type": "string"},
+      "version": {"type": "string", "description": "state schema version"},
+      "mc_version": {"type": "string"}, "source": {"enum": ["live", "sim"]}}},
+
+    "memory": {"type": "object", "properties": {
+      "notes": {"type": "array", "items": {"type": "object", "required": ["text", "t"], "properties": {
+        "key": {"type": "string"}, "text": {"type": "string"}, "t": {"type": "integer"}}}},
+      "places": {"type": "array", "items": {"type": "object", "required": ["name", "pos"], "properties": {
+        "name": {"type": "string", "pattern": "^[a-z0-9_]+$"}, "pos": {"$ref": "#/$defs/pos"},
+        "dimension": {"type": "string"}, "what": {"type": "string"}, "seen_t": {"type": "integer"}}}},
+      "routines": {"type": "array", "items": {"type": "object", "required": ["name", "src"], "properties": {
+        "name": {"type": "string"}, "src": {"type": "string"}, "runs": {"type": "integer"}, "ok": {"type": "integer"}}}}}},
+
+    "map": {"type": "object", "description": "coarse grid of what the bot has seen", "properties": {
+      "cell": {"type": "integer", "description": "cell size in blocks (16)"},
+      "cells": {"type": "array", "items": {"type": "object", "required": ["cx", "cz"], "properties": {
+        "cx": {"type": "integer"}, "cz": {"type": "integer"}, "biome": {"type": "string"},
+        "visited": {"type": "boolean"}, "seen_t": {"type": "integer"}, "surface_y": {"type": "integer"},
+        "resources": {"$ref": "#/$defs/counts", "description": "blocks of interest seen in the cell"},
+        "structures": {"type": "array", "items": {"type": "string"}},
+        "dangers": {"type": "array", "items": {"type": "string", "description": "lava, ravine, mob_spawner, deaths, ..."}}}}},
+      "frontier": {"type": "array", "items": {"type": "object", "properties": {
+        "dir": {"type": "string"}, "dist": {"type": "number"}}}, "description": "nearest unexplored directions"},
+      "costs": {"type": "array", "items": {"type": "object", "required": ["to", "dist"], "properties": {
+        "to": {"type": "string", "description": "@place"}, "dist": {"type": "number"}, "eta_s": {"type": "number"}}}}}},
+
+    "episode": {"type": "object", "properties": {
+      "summary": {"type": "string", "description": "model-written running summary"}, "summary_t": {"type": "integer"},
+      "deaths": {"type": "array", "items": {"type": "object", "properties": {
+        "t": {"type": "integer"}, "pos": {"$ref": "#/$defs/pos"}, "cause": {"type": "string"}}}},
+      "goals_done": {"type": "array", "items": {"type": "object", "properties": {
+        "text": {"type": "string"}, "t": {"type": "integer"}, "status": {"enum": ["done", "fail"]}}}}}},
+
+    "goals": {"type": "object", "properties": {
+      "stack": {"type": "array", "description": "top first", "items": {"type": "object", "required": ["text", "source"], "properties": {
+        "text": {"type": "string"}, "source": {"enum": ["player", "self", "mind", "strategist", "scenario"]},
+        "from": {"type": "string", "description": "player name for orders"}, "t": {"type": "integer"}}}},
+      "plan": {"type": "array", "items": {"type": "object", "required": ["step"], "properties": {
+        "step": {"type": "string"}, "done": {"type": "boolean"}}}}}},
+
+    "ledger": {"type": "object", "properties": {
+      "agg": {"type": "array", "items": {"type": "object", "required": ["key"], "properties": {
+        "key": {"type": "string", "description": "verb + main argument, e.g. 'mine iron_ore'"},
+        "ok": {"type": "integer"}, "partial": {"type": "integer"}, "failed": {"type": "integer"}, "interrupted": {"type": "integer"},
+        "causes": {"$ref": "#/$defs/counts"}, "last_t": {"type": "integer"}}}},
+      "recent": {"type": "array", "items": {"$ref": "events.schema.json"}, "description": "last 30 result events"}}},
+
+    "body": {"type": "object", "required": ["hp", "food"], "properties": {
+      "hp": {"type": "number"}, "food": {"type": "number"}, "sat": {"type": "number"}, "xp": {"type": "integer"},
+      "armor": {"type": "integer"}, "air": {"type": "integer"},
+      "effects": {"type": "array", "items": {"type": "object", "properties": {
+        "name": {"type": "string"}, "amp": {"type": "integer"}, "dur_s": {"type": "number"}}}},
+      "held": {"type": ["string", "null"]}, "offhand": {"type": ["string", "null"]},
+      "worn": {"type": "object", "properties": {"head": {"type": ["string", "null"]}, "chest": {"type": ["string", "null"]},
+        "legs": {"type": ["string", "null"]}, "feet": {"type": ["string", "null"]}}},
+      "tools": {"type": "array", "items": {"type": "object", "required": ["name"], "properties": {
+        "name": {"type": "string"}, "dur": {"type": "integer"}, "max": {"type": "integer"},
+        "enchants": {"type": "array", "items": {"type": "string"}}}}}}},
+
+    "inventory": {"type": "object", "required": ["items"], "properties": {
+      "items": {"$ref": "#/$defs/counts"}, "free_slots": {"type": "integer"},
+      "chests": {"type": "array", "items": {"type": "object", "properties": {
+        "at": {"type": "string", "description": "@place or (x,y,z)"}, "items": {"$ref": "#/$defs/counts"}, "seen_t": {"type": "integer"}}}}}},
+
+    "affordances": {"type": "object", "description": "computed by code from recipes + inventory + known stations; facts only, no advice", "properties": {
+      "craftable": {"type": "array", "items": {"type": "object", "required": ["item"], "properties": {
+        "item": {"type": "string"}, "max": {"type": "integer"}, "station": {"type": "string"}}}},
+      "craftable_soon": {"type": "array", "items": {"type": "object", "required": ["item", "missing"], "properties": {
+        "item": {"type": "string"}, "missing": {"$ref": "#/$defs/counts"}, "steps": {"type": "integer"}}}},
+      "smeltable": {"type": "array", "items": {"type": "string"}},
+      "edible": {"type": "array", "items": {"type": "string"}},
+      "placeable": {"type": "array", "items": {"type": "string"}},
+      "stations": {"type": "array", "items": {"type": "object", "properties": {
+        "kind": {"type": "string"}, "pos": {"$ref": "#/$defs/pos"}, "dist": {"type": "number"}}}}}},
+
+    "surroundings": {"type": "object", "required": ["pos", "time"], "properties": {
+      "pos": {"$ref": "#/$defs/pos"}, "facing": {"type": "string"}, "dimension": {"type": "string"},
+      "biome": {"type": "string"}, "time": {"type": "integer", "description": "day ticks 0-23999"},
+      "day": {"type": "integer"}, "light": {"type": "integer"}, "sky": {"type": "boolean"},
+      "weather": {"enum": ["clear", "rain", "thunder"]},
+      "flags": {"type": "array", "items": {"type": "string"}, "description": "in_water, in_lava, on_fire, on_ground, sneaking ..."},
+      "slice": {"type": "object", "description": "local 3D slice around the feet block", "properties": {
+        "origin": {"$ref": "#/$defs/pos"}, "size": {"type": "array", "items": {"type": "integer"}},
+        "legend": {"type": "object", "additionalProperties": {"type": "string"}},
+        "layers": {"type": "array", "items": {"type": "array", "items": {"type": "string"}}, "description": "one ascii grid per y, bottom first"}}},
+      "blocks": {"type": "array", "description": "blocks of interest within 32", "items": {"type": "object", "required": ["name", "pos"], "properties": {
+        "name": {"type": "string"}, "pos": {"$ref": "#/$defs/pos"}, "n": {"type": "integer", "description": "cluster size"},
+        "dist": {"type": "number"}, "dir": {"type": "string"}, "visible": {"type": "boolean"}}}},
+      "entities": {"type": "array", "description": "within 48", "items": {"type": "object", "required": ["ref", "dist"], "properties": {
+        "ref": {"type": "string", "description": "#kind.id"}, "dist": {"type": "number"}, "dir": {"type": "string"},
+        "dy": {"type": "integer"}, "hostile": {"type": "boolean"}, "approaching": {"type": "boolean"},
+        "hp": {"type": "number"}, "held": {"type": "string"}}}},
+      "players": {"type": "array", "items": {"type": "object", "properties": {
+        "name": {"type": "string"}, "dist": {"type": "number"}, "dir": {"type": "string"}, "held": {"type": "string"}}}}}},
+
+    "events": {"type": "array", "items": {"$ref": "events.schema.json"}, "description": "since the previous call"},
+
+    "now": {"type": "object", "properties": {
+      "running": {"type": ["object", "null"], "properties": {
+        "src": {"type": "string"}, "ast": {"type": "object"}, "started_t": {"type": "integer"},
+        "progress": {"type": "string", "description": "verb-specific, e.g. '2/4 trees, 9 logs'"}}},
+      "expect": {"type": ["object", "null"], "properties": {"src": {"type": "string"}, "deadline_t": {"type": "integer"}}},
+      "since_last_ms": {"type": "integer"},
+      "call": {"enum": ["decision", "monitor", "mind"]}}}
+  },
+  "$defs": {
+    "pos": {"type": "array", "items": {"type": "integer"}, "minItems": 3, "maxItems": 3},
+    "counts": {"type": "object", "additionalProperties": {"type": "integer"}}
+  }
+}

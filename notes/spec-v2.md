@@ -68,6 +68,8 @@ Failure causes (closed set, extend in the spec only): `no_target_known`, `no_pat
 `danger`, `died`, `invalid` (DSL/validation), `server_refused`.
 
 ## 3. Situation sheet
+**Structured state (what is logged and rendered): `spec/state.schema.json`, example `spec/golden/state_example.json`,
+validator `spec/tools/validate.py`. The text rendering (layout, per-section budgets) is defined by the H2 renderer.**
 Plain text, sections in this fixed order, each with a `## NAME` header and a version stamp so the prefix
 cache works. Stable first. Target 10-20k tokens full; sections have budgets and truncate oldest/farthest first.
 
@@ -90,7 +92,7 @@ Diff mode (monitor calls): sections 1-9 omitted when unchanged (`## BODY unchang
 Every logged call stores the full structured state (JSON) so datasets can be re-rendered later with a new
 renderer version without replaying the game.
 
-## 4. Events (JSON, logged; rendered into EVENTS)
+## 4. Events (JSON, logged; rendered into EVENTS) — schema `spec/events.schema.json`
 `{t, kind, ...}` with kind in: `result, gain, loss, damage, death, respawn, chat, sound, entity_appear, entity_leave,
 time (dusk/dawn), weather, surprise, interrupt, goal (set/done/failed), note, tool_answer, invalid_output`.
 

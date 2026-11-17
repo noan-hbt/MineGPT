@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "minegpt/events.schema.json",
+  "title": "MineGPT event (v2.0)",
+  "description": "One event, logged as JSONL and rendered into the EVENTS section. t = ms since session start.",
+  "type": "object",
+  "required": ["t", "kind"],
+  "properties": {
+    "t": {"type": "integer", "minimum": 0},
+    "kind": {"enum": ["result", "gain", "loss", "damage", "death", "respawn", "chat", "sound", "entity_appear",
+      "entity_leave", "time", "weather", "surprise", "interrupt", "goal", "note", "tool_answer", "invalid_output",
+      "reflex", "mind", "strategist", "order"]}
+  },
+  "allOf": [
+    {"if": {"properties": {"kind": {"const": "result"}}}, "then": {
+      "required": ["status", "stmt", "dur_s"],
+      "properties": {
+        "status": {"enum": ["ok", "partial", "failed", "interrupted"]},
+        "stmt": {"type": "string", "description": "source text of the statement"},
+        "dur_s": {"type": "number"},
+        "gained": {"$ref": "#/$defs/counts"}, "lost": {"$ref": "#/$defs/counts"},
+        "cause": {"enum": ["no_target_known", "no_path", "unreachable", "timeout", "missing_items", "missing_tool",
+          "tool_too_weak", "inventory_full", "interrupted_until", "interrupted_by_model", "danger", "died", "invalid",
+          "server_refused"]},
+        "detail": {"type": "string"}
+      }}},
+    {"if": {"properties": {"kind": {"enum": ["gain", "loss"]}}}, "then": {
+      "required": ["items"], "properties": {"items": {"$ref": "#/$defs/counts"}, "why": {"type": "string"}}}},
+    {"if": {"properties": {"kind": {"const": "damage"}}}, "then": {
+      "required": ["amount", "hp"], "properties": {"amount": {"type": "number"}, "hp": {"type": "number"},
+        "source": {"type": "string", "description": "entity ref (#zombie.417), fall, lava, fire, drown, starve, ..."}}}},
+    {"if": {"properties": {"kind": {"const": "death"}}}, "then": {
+      "required": ["cause", "pos"], "properties": {"cause": {"type": "string"}, "pos": {"$ref": "#/$defs/pos"},
+        "lost": {"$ref": "#/$defs/counts"}}}},
+    {"if": {"properties": {"kind": {"const": "chat"}}}, "then": {
+      "required": ["from", "text"], "properties": {"from": {"type": "string"}, "text": {"type": "string"},
+        "whisper": {"type": "boolean"}}}},
+    {"if": {"properties": {"kind": {"enum": ["entity_appear", "entity_leave"]}}}, "then": {
+      "required": ["ref"], "properties": {"ref": {"type": "string"}, "dist": {"type": "number"}, "dir": {"type": "string"}}}},
+    {"if": {"properties": {"kind": {"const": "time"}}}, "then": {
+      "required": ["what"], "properties": {"what": {"enum": ["dusk", "night", "dawn", "day"]}}}},
+    {"if": {"properties": {"kind": {"const": "surprise"}}}, "then": {
+      "required": ["expect", "unmet"], "properties": {
+        "expect": {"type": "string", "description": "source text of the expectation"},
+        "unmet": {"type": "array", "items": {"type": "object", "required": ["cond", "actual"],
+          "properties": {"cond": {"type": "string"}, "actual": {"type": ["number", "boolean", "string"]}}}}}}},
+    {"if": {"properties": {"kind": {"const": "invalid_output"}}}, "then": {
+      "required": ["error"], "properties": {"error": {"type": "string"}, "output": {"type": "string"}}}},
+    {"if": {"properties": {"kind": {"const": "tool_answer"}}}, "then": {
+      "required": ["tool", "answer"], "properties": {"tool": {"type": "string"}, "answer": {"type": "string"}}}},
+    {"if": {"properties": {"kind": {"const": "reflex"}}}, "then": {
+      "required": ["what"], "properties": {"what": {"enum": ["step_back_lava", "step_back_fire", "swim_up", "eat_low_hp", "flee_low_hp"]},
+        "detail": {"type": "string"}}}},
+    {"if": {"properties": {"kind": {"enum": ["mind", "strategist"]}}}, "then": {
+      "required": ["text"], "properties": {"text": {"type": "string"}}}}
+  ],
+  "$defs": {
+    "pos": {"type": "array", "items": {"type": "integer"}, "minItems": 3, "maxItems": 3},
+    "counts": {"type": "object", "additionalProperties": {"type": "integer"}}
+  }
+}

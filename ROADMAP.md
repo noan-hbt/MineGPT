@@ -3,7 +3,8 @@
 Plan and rationale: `notes/harness-v2.md`. Contract: `notes/spec-v2.md` (H1, then `spec/`).
 v1 (blocks B1-B23, one verb from a closed grammar + code hint) is archived on branch `v1-archive`, tag `v1-final`.
 
-- [ ] **H1 spec**: sheet schema, turn formats, full DSL + tools, events, ledger -> `spec/` (grammar, JSON schemas, golden examples)
+- [x] **H1 spec**: sheet schema, turn formats, full DSL + tools, events, ledger -> `spec/` (grammar, JSON schemas, golden examples)
+  Done 2026-11-17: `spec/` + reference parser `bot/dsl/` (176 golden cases, `cd bot; npm test`).
 - [ ] **H2 sheet**: big situation sheet renderer + ledger + mental map + more inputs in `bot/`, logged live
 - [ ] **H3 DSL interpreter** (JS) covering the action families, rich results -> scripted live runs pass
 - [ ] **H4 MineSim**: vanilla server sprinted + lockstep mineflayer, scenario cards, snapshots; measure throughput first
