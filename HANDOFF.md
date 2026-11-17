@@ -120,7 +120,37 @@ Strip a leading empty `<think></think>` from the content if present. Full workin
 - Bot does not talk (no LLM chat replies). Ideas: LLM chat replies, commands like "mine iron" / "build shelter",
   use RCON for scripted tests.
 
-## State 2026-11-17 session #19 (RESUME HERE) — VAL3 triage, 4 skill fixes, VAL4 495/495; next: LFM2.5-350M track
+## State 2026-11-17 session #20 (RESUME HERE) — mind policy works with gpt-6.2-sol; SFT trace generation running
+Branch `v2`, nothing committed this session (bot/sim/mind.js, run_cards.js, export_sft.js, dsl/parse.js).
+
+### Running (detached from Claude Code, survives /clear)
+`data/sft/run_traces.ps1` (PowerShell, hidden): gpt-6.2-sol medium via Codex as the mind policy on train cards,
+rest of d1 (18 cards) then d2 (51), seeds 1,2. Progress `data/sft/traces_d1_rest.txt`, `traces_d2.txt`; done marker
+`data/sft/traces_DONE.txt`. Episode logs `data/own/2026-11-17/*_T_SOL_*_cards.jsonl` (+ earlier `*_CODEX1_*`,
+`*_T_SOL_d1_*` = first 5 d1 cards). Stop it: kill powershell/node whose command line has `run_traces`/`T_SOL_`,
+then `node sim/instance.js stop 0; start 0` (a killed lockstep run leaves the sim frozen -> next login `slow_login`).
+When done: `node sim/export_sft.js ../data/own/2026-11-17/*_CODEX1_cards.jsonl ../data/own/2026-11-17/*_T_SOL_*_cards.jsonl`
+-> `data/sft/mind_sft.jsonl` (one example per valid call in judge-success episodes; invalid outputs dropped).
+
+### Mind policy findings
+- Loop works end to end in lockstep (sheet -> LLM -> turns -> action -> judge). Sheet now logged at round 0.
+- Local 4B models fail on format, not the harness: Nemotron3-Nano-4B 2/6 (43/62 invalid), K2-Horizon partial
+  (22/25 invalid). They copy the MANUAL grammar notation (`think: *`, `expect: true`, `act: idle`) and ignore chat
+  orders. SYSTEM prompt in mind.js now has concrete example turns (validated by parseTurn): helped a little.
+- **gpt-6.2-sol medium (Codex) = 6/6 easy cards, 12/13 valid turns**, then 11/11 on the first d1 trace cards. Uses
+  tools, goals, correct recipe math, reasons in the chat's language. Chosen teacher (memory/lfm350m-experiments.md).
+- Backends: `--policy mind` + llama-server (default), `--key-env OPENAI_API_KEY --model id` (not used: user prefers
+  Codex), `--codex low|medium [--model gpt-6.2-sol]` (codex exec read-only/ephemeral, ~7-12 s per call).
+- llama-server here has no `--no-mmap`: use `--load-mode none`. Never run llama-server while a GPU training job runs
+  (8 GB VRAM: OOM'd the user's LoRA job once). One llama-server leaked 5.8 GB RAM (K2-Horizon, mmap).
+- dsl/parse.js suggestions: ties -> shortest first (`birch` suggests birch_log before birch_door).
+
+### Next
+1. Export SFT set when traces finish; SFT LFM2.5-350M on it (GPU free of other jobs first). 2. Bench LFM3 and
+Bonsai on the mind policy (not done: GPU was busy). 3. More traces: more seeds, d3 cards, 2-3 MineSim in parallel
+(Codex uses no local RAM/GPU). 4. Baseline raw 350M on heldout cards.
+
+## State 2026-11-17 session #19 — VAL3 triage, 4 skill fixes, VAL4 495/495; next: LFM2.5-350M track
 Branch `v2`. Session #18 + #19 work committed together.
 
 ### VAL3 -> VAL4

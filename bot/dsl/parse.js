@@ -82,7 +82,8 @@ function suggest(word, pool, k = 3) {
     if (w.includes(word) || word.includes(w)) s = Math.min(s, 1.5);
     if (s <= max) scored.push([s, w]);
   }
-  scored.sort((a, b) => a[0] - b[0] || a[1].localeCompare(b[1]));
+  // ties: shortest first (birch -> birch_log before birch_door), then alphabetical
+  scored.sort((a, b) => a[0] - b[0] || a[1].length - b[1].length || a[1].localeCompare(b[1]));
   const out = scored.slice(0, k).map(x => x[1]);
   return out.length ? ` (did you mean ${out.join(', ')}?)` : '';
 }

@@ -1,6 +1,7 @@
 // H4 scenario-card runner (notes/scenario-cards.md). Runs cards x seeds on a MineSim instance with a policy:
 //   node sim/run_cards.js [--sim 0] [--lock] [--only id1,id2|area.] [--seeds 1,2] [--policy script|mind] [--name LFM]
-//     mind: [--llm http://127.0.0.1:8080] [--max-tokens 1024] (llama-server running; DBG_MIND=1 prints each turn)
+//     mind: [--llm http://127.0.0.1:8080] [--max-tokens 1024] [--model id] [--key-env OPENAI_API_KEY (remote API)]
+//       [--codex low|medium (Codex CLI as the model, --model optional)] (llama-server running; DBG_MIND=1 prints each turn)
 // policy script = the card's reference solution (validates that the card is solvable and the judge agrees).
 // One `episode` record per run in data/own/<day>/<stamp>_<name>_cards.jsonl (+ the usual call/result records).
 'use strict'
@@ -100,6 +101,7 @@ async function main() {
   await connect()
   if (LOCK) await lock.start()
   const mind = POLICY === 'mind' ? new (require('./mind').Mind)({ url: arg('llm', 'http://127.0.0.1:8080'), maxTokens: +arg('max-tokens', 1024),
+    model: arg('model', null), key: arg('key-env', null) ? process.env[arg('key-env')] : null, codex: arg('codex', null),
     hold: LOCK ? fn => lock.hold(fn) : fn => fn(), setT: LOCK ? clock.realSetTimeout : setTimeout, write }) : null
 
   // a fresh mind per episode (throwaway memory): same Senses listeners, new stores

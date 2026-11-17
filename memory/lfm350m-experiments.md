@@ -12,6 +12,9 @@ weight-space programming (wedit, see [[weight-writing-retention]]), or a mix. Cl
 the judge replaces it.
 
 Teacher / reference models for traces: DeepSeek, Claude, ChatGPT (frontier APIs). NOT LFM3-1.7B.
+Main teacher chosen 2026-11-17: gpt-6.2-sol medium via Codex CLI (`run_cards --policy mind --codex medium --model gpt-6.2-sol`,
+no API key: user prefers Codex over OPENAI_API_KEY). First run 6/6 easy cards, 12/13 valid turns; user wants
+abundant traces from it to train small models. Local 4B models (Nemotron, K2-Horizon) mostly invalid format.
 
 **Why:** user judges frontier models better suited as teachers than LFM3.
 **How to apply:** generate traces with those APIs (+ script-policy card solutions); baseline = raw 350M on heldout
