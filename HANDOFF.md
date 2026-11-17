@@ -120,7 +120,66 @@ Strip a leading empty `<think></think>` from the content if present. Full workin
 - Bot does not talk (no LLM chat replies). Ideas: LLM chat replies, commands like "mine iron" / "build shelter",
   use RCON for scripted tests.
 
-## State 2026-11-17 session #8 (RESUME HERE) — H2 done
+## State 2026-11-17 session #10 (RESUME HERE) — H3 done, committed
+Branch `v2`. H3 = interpreter + skills + tools + turns (see session #9 below for content).
+
+### Done this session
+- Live suite `node bot/test/live.js`: **63/64** full run (log `data/own/2026-11-17/2026-11-17-13-40_LFM_live.jsonl`,
+  `spec/tools/validate.py` OK); the one failure (eat_full: food not refilled by reset) fixed and verified with `--only`.
+- Fixes: `C.reach` falls back to GoalNear when GoalLookAtBlock has no path (crops, non-full blocks); `pickup` skips
+  unreachable drops instead of stopping; enchant/repair move items by WINDOW slot (mineflayer `putTargetItem` uses
+  inventory-window slots -> table stayed empty, `ready` never fired; `anvil.combine` refuses on 1.21 components
+  "Not anvil-able"): repair = manual slots + shift-click result; `perceive.js` tolerates `it.enchants` throwing.
+- Test fixes: reset refills food (saturation), smelt_no_fuel places its furnace, tools2 names its own place
+  (`pre_act`), since say_note_forget forgets `spot`.
+- `--only` still resets before `keep` cases (break_one, dig_box, tools2, eat_hungry fail alone): expected.
+- Comparison models downloading one at a time to `models/compare/` (log `models/compare/download.log`):
+  LFM3-1.7B-Uncensored Q4_K_M (AtomicChat), Ternary-Bonsai-2-2B Q2_0 (prism-ml; may need prism's llama.cpp fork),
+  Nemotron-3-Nano-4B Q4_K_M (nvidia), Sharp-Spark-X2.6-4B Q4_K_XL, K2-Horizon-3.7B Q4_K_M (IFM), Spark-X2.6-4B Q4_K_M.
+
+### Next
+1. H4 (MineSim) or the mind loop (model in the loop on the sheet + DSL).
+- Still open: macros (strip_mine, branch_mine, chop, toss_junk, sort, equip_best, water_bucket_save) keep or drop?
+  Tailscale hostname in HANDOFF: scrub before any push. `brew`, `stonecut`, grindstone repair not implemented.
+
+## State 2026-11-17 session #9 — H3 nearly done (uncommitted)
+Branch `v2`, nothing committed this session. Semantics documented in `notes/spec-v2.md` 2.5.
+
+### Done (H3)
+- `bot/dsl/fmt.js` (AST -> canonical source), `bot/dsl/cond.js` (cond eval, relative baselines, unmet -> surprise),
+  `bot/dsl/run.js` = `Interpreter`: cancellable scopes, seq/if/repeat/routine, until (ok + cause interrupted_until),
+  timeout (failed/partial), death abort, interrupt/stop, `adjust`, expect check -> `surprise`, one `result` event per
+  statement with gained/lost/cause/detail, `avoid` watcher (interrupt events).
+- `bot/skills/` (common, movement, gather, craft, combat (+place/use), inventory, social (+farm, meta)): 69/71 verbs;
+  `brew`, `stonecut`, grindstone repair not implemented (result `invalid`). No omniscience: targets = seen blocks.
+- `bot/tools.js`: all 13 tools (`wiki` stub until H5). `bot/turns.js`: apply a parsed turn (tools -> tool_answer,
+  act/interrupt/override -> interpreter, note/say/goal/plan -> memory).
+- `bot/harness.js` uses the interpreter; `drive.js` removed (`git rm`). `--script file` (decision turns separated by
+  `---`, `--exit-when-done`), chat `do <stmt> [=> <expect>]`, `tool <call>`, `stop`.
+- `Senses.chests` (contents seen when opened) -> `inventory.chests`. `perceive.js` exports `seesSky`.
+- Tests: `bot/test/interp.js` offline (fmt round trip on golden, conds, interpreter control flow on a fake bot) PASS;
+  added to `npm test` (full `npm test` not re-run after the last edits: run it first).
+- `bot/test/live.js`: 64 live cases, arena built by RCON at (3000,200,3000) (y=100 had water flowing in), throwaway
+  memory, restores gamerule spawn_monsters. Last full run **52/64**. Fixes applied after it (not yet verified):
+  `C.go` checks `goal.isEnd` (pathfinder.goto resolves silently when no path), `placeReach` for placing into air,
+  arena reset clears above the floor (a leftover pillar put the bot inside dirt -> blind: look/harvest/bonemeal/plant/
+  sleep/enchant/repair failures), descend case uses `Y-5`, shear picks up wool, tools2 keeps inventory.
+  Rerun of 16 cases with `--only` (log `data/own/2026-11-17/2026-11-17-13-25_LFM_live.jsonl`): **9/16**.
+  Fixed: place_list, descend, look, plant, shear, sleep. Still failing:
+  - break_one, dig_box, tools2: test artifact, `--only` resets before `keep` cases (they depend on the previous case);
+    should pass in a full run (or make `--only` honour keep).
+  - harvest, bonemeal: `no_path` after 5 s on the crop block (likely `C.reach` -> GoalLookAtBlock on a non-full block):
+    use placeReach-style GoalNear for crops.
+  - enchant: hangs until the 120 s timeout, the enchanting table `ready` event never fires: add a timeout / debug.
+  - repair: mineflayer anvil refuses ("Not anvil-able") two damaged iron_pickaxe: check `combine` usage / item args.
+
+### Next
+1. `cd bot; npm test`, then `node test/live.js --only place_list,break_one,dig_box,descend,strip_mine,ascend,look,harvest,bonemeal,plant,shear,sleep,enchant,repair,tools,tools2`, then full `node test/live.js` (~4 min), `spec/tools/validate.py` on the `_live.jsonl` log.
+2. Commit H3. Then H4 (MineSim) or the mind loop.
+- Still open: macros (strip_mine, branch_mine, chop, toss_junk, sort, equip_best, water_bucket_save) keep or drop?
+  Tailscale hostname in HANDOFF: scrub before any push.
+
+## State 2026-11-17 session #8 — H2 done
 Branch `v2` (not pushed).
 
 ### Done (H2)

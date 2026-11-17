@@ -25,6 +25,7 @@ class Senses {
     this.memory = new Memory(dataDir && `${dataDir}/memory/${bot.username}.json`, this.t0)
     this.map = new MentalMap(dataDir && `${dataDir}/memory/${bot.username}.map.json`, this.t0)
     this.ledger = new Ledger()
+    this.chests = new Map() // "x,y,z" -> {at, items, seen_at}: contents seen when the bot opened it
     this.pending = []
     this.ctx = {}
     this.seen = new Set() // block positions seen in line of sight this session
@@ -173,7 +174,7 @@ class Senses {
       goals: mem.goals,
       ledger: this.ledger.state(),
       body: P.body(bot, this.mcData),
-      inventory: { ...inventory, chests: [] },
+      inventory: { ...inventory, chests: [...this.chests.values()].map(c => ({ at: c.at, items: { ...c.items }, seen_t: c.seen_at - this.t0 })) },
       affordances: affordances(inventory.items, { stations: P.stations(this.ctx.clusters) }),
       surroundings,
       events,

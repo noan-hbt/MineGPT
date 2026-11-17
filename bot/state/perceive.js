@@ -83,7 +83,9 @@ function body(bot, mcData) {
   for (const it of bot.inventory.slots) {
     if (!it || !it.maxDurability) continue
     const t = { name: it.name, dur: it.maxDurability - (it.durabilityUsed || 0), max: it.maxDurability }
-    const en = (it.enchants || []).map(e => `${e.name} ${e.lvl}`)
+    let raw = []
+    try { raw = it.enchants } catch {} // prismarine-item getter can throw / return non-arrays on 1.21 components
+    const en = (Array.isArray(raw) ? raw : []).map(e => `${e.name} ${e.lvl}`)
     if (en.length) t.enchants = en
     tools.push(t)
   }
@@ -310,4 +312,4 @@ function stations(clusters) {
 }
 
 module.exports = { sightFilter, biomeName, body, inventory, invCounts, allCounts, surroundings, scanBlocks, stations, dir8, facing, r1, fl,
-  passable, LOGS, HOSTILE }
+  passable, LOGS, HOSTILE, seesSky, STATIONS, CONTAINERS }

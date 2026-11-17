@@ -67,6 +67,34 @@ Failure causes (closed set, extend in the spec only): `no_target_known`, `no_pat
 `missing_items`, `missing_tool`, `tool_too_weak`, `inventory_full`, `interrupted_until`, `interrupted_by_model`,
 `danger`, `died`, `invalid` (DSL/validation), `server_refused`.
 
+### 2.5 Interpreter semantics (H3, 2026-11-17) — `bot/dsl/run.js`, skills in `bot/skills/`, tools in `bot/tools.js`
+- One statement runs at a time. A new `act:`/`interrupt:`/`override:` aborts the running one (result `interrupted`,
+  cause `interrupted_by_model`); `stop` does the same and has its own `ok` result.
+- **One result event per started statement** (top level only). seq/repeat report the failing step in `detail`
+  (`step 2/3 \`chop\` failed: no tree seen`), status `partial` when earlier steps succeeded.
+- `until(cond)` met -> status `ok`, cause `interrupted_until` (cause = how it ended, not a failure). Already true at
+  start -> ok at once. Relative values (`+N`, `~N`) are measured from the start of the statement that owns the until.
+- `timeout=` -> `failed` (or `partial` if the verb had done part of its n), cause `timeout`. Default timeout per verb
+  (120 s; longer for mine/chop/dig/smelt/follow..., none for wait/avoid).
+- Death during a statement -> `failed`, cause `died`.
+- `expect:` is checked once: when the statement ends, or when its duration passes if still running (surprise then
+  carries `detail: deadline passed`). One `surprise` event lists all unmet conditions with `actual` (delta `+2` for
+  relative conditions). Not checked when the model itself interrupted the statement.
+- `adjust: k=v` mutates the running verb's args (skills re-read `n` etc. while running); `adjust: until(...)` replaces
+  the until; logged as an `interrupt` event `adjusted: now \`...\``.
+- No omniscience: targets by name/tag are the nearest blocks **seen** (senses.seen or line of sight now); entities =
+  what the server sends; `@place` from memory. Nothing known -> `no_target_known`.
+- `mine` refuses blocks the held tools cannot harvest: `missing_tool` / `tool_too_weak` (detail names the minimum tool).
+  `craft` without ingredients -> `missing_items` with the missing counts; 3x3 recipe without a known table ->
+  `no_target_known`. `craft n=` is a number of items, not of crafts.
+- `avoid X radius=R` is a background modifier: paths go around X, and an `interrupt` event fires when one comes within
+  R (facts only, the model decides to flee). `avoid X radius=0` ends it.
+- `trade offer=N` is 1-based. Not implemented yet (result `invalid`): `brew`, `stonecut`, grindstone `repair`.
+- Tools answer one line (`tool_answer` event, and `result: <call> -> <answer>` lines appended to the tool round).
+  `wiki` answers "not built yet" until H5. `simulate` is a static check (missing items, unseen targets, rough time).
+- Test hook: harness chat `do <stmt> [=> <expect>]`, `tool <call>`, `stop`; `--script file` = decision turns separated
+  by `---`. Scripted live suite: `node bot/test/live.js [--only a,b]` (arena at 3000,200,3000 built by RCON).
+
 ## 3. Situation sheet
 **Structured state (what is logged and rendered): `spec/state.schema.json`, example `spec/golden/state_example.json`,
 validator `spec/tools/validate.py`. The text rendering (layout, per-section budgets) is defined by the H2 renderer.**
