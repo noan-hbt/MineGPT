@@ -46,12 +46,26 @@ function createSkills(bot, mcData, env = {}) {
   const danger = () => bot.health <= 8 && hostiles(5).length > 0
 
   // pathfinder.goto with a hard time limit. Never leaves a pending goal behind (see HANDOFF: stop() bug).
+  // Walks are interrupted by danger (hostile within 3.5 m, or -4 hp since the start): reflexes only run between
+  // actions, and a 20 s explore let a zombie kill the bot from full health (B5 run, "slain by Zombie" at y -3).
+  // attack / flee drive the pathfinder directly, so they are not affected.
   async function goto(goal, ms = 15000) {
-    let t
+    let t, w
+    const hp0 = bot.health
     try {
-      await Promise.race([bot.pathfinder.goto(goal), new Promise((_, rej) => { t = setTimeout(() => rej(new Error('timeout')), ms) })])
+      await Promise.race([
+        bot.pathfinder.goto(goal),
+        new Promise((_, rej) => { t = setTimeout(() => rej(new Error('timeout')), ms) }),
+        new Promise((_, rej) => {
+          w = setInterval(() => {
+            const foe = hostiles(3.5)[0]
+            if (foe) rej(new Error(`danger: ${foe.name} ${Math.round(foe.position.distanceTo(pos()))}m`))
+            else if (bot.health <= hp0 - 4) rej(new Error(`danger: hp ${Math.round(bot.health)}`))
+          }, 250)
+        }),
+      ])
       return null
-    } catch (e) { return short(e) } finally { clearTimeout(t); stop() }
+    } catch (e) { return short(e) } finally { clearTimeout(t); clearInterval(w); stop() }
   }
 
   // ---------- digging ----------
