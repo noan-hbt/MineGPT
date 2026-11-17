@@ -141,7 +141,7 @@ Branch `v2`. H3 = interpreter + skills + tools + turns (see session #9 below for
 1. **H4 (MineSim)**, decided by the user 2026-11-17 (plan `notes/harness-v2.md` section 8).
    If the downloads stopped: `bash models/compare/dl.sh > models/compare/download.log 2>&1` (hf skips finished files).
 - Still open: macros (strip_mine, branch_mine, chop, toss_junk, sort, equip_best, water_bucket_save) keep or drop?
-  Tailscale hostname in HANDOFF: scrub before any push. `brew`, `stonecut`, grindstone repair not implemented.
+  Tailscale hostname scrubbed from history (2026-11-17), keep it out. `brew`, `stonecut`, grindstone repair not implemented.
 
 ## State 2026-11-17 session #9 — H3 nearly done (uncommitted)
 Branch `v2`, nothing committed this session. Semantics documented in `notes/spec-v2.md` 2.5.
@@ -178,7 +178,7 @@ Branch `v2`, nothing committed this session. Semantics documented in `notes/spec
 1. `cd bot; npm test`, then `node test/live.js --only place_list,break_one,dig_box,descend,strip_mine,ascend,look,harvest,bonemeal,plant,shear,sleep,enchant,repair,tools,tools2`, then full `node test/live.js` (~4 min), `spec/tools/validate.py` on the `_live.jsonl` log.
 2. Commit H3. Then H4 (MineSim) or the mind loop.
 - Still open: macros (strip_mine, branch_mine, chop, toss_junk, sort, equip_best, water_bucket_save) keep or drop?
-  Tailscale hostname in HANDOFF: scrub before any push.
+  Tailscale hostname scrubbed from history (2026-11-17), keep it out.
 
 ## State 2026-11-17 session #8 — H2 done
 Branch `v2` (not pushed).
@@ -215,7 +215,7 @@ knowledge cards, longer ledger, once a model shows what it needs.
 - Driver `goto` places scaffolding (pathfinder) -> `lost cobblestone` in results: real, not a bug.
 - Session names use UTC time.
 - Open points from H1 still open: catalogue macros (strip_mine, chop, toss_junk, sort, equip_best,
-  water_bucket_save) keep or drop? HANDOFF mentions the Tailscale funnel hostname: scrub before any push.
+  water_bucket_save) keep or drop? Tailscale hostname scrubbed (2026-11-17).
 
 ### Next = H3
 DSL interpreter in `bot/` (replaces drive.js): each verb -> mineflayer skill with rich `result` events (gained/lost,
@@ -238,7 +238,7 @@ Branch `v2` (not pushed). Commits: `22df018` clean restart layout, `13a59d3` DSL
 ### Open points to raise with the user
 - Catalogue still has code-side macros of the same kind as build templates: `strip_mine`, `branch_mine`, `chop`
   (whole tree), `toss_junk`, `sort`, `equip_best`, `water_bucket_save`. Keep (motor skills) or drop (model decides)?
-- HANDOFF.md (committed, public repo) mentions the Tailscale funnel hostname: scrub before any push.
+- Never write the Tailscale funnel hostname in committed files (public repo); it lives in `remote/` only.
 
 ### Next = H2
 Big sheet renderer + ledger + mental map + more inputs in `bot/`, logged live (state JSON per call, validated by
