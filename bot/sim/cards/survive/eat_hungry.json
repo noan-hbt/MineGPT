@@ -6,7 +6,7 @@
   "difficulty": 1,
   "split": "train",
   "seeds": [1, 2],
-  "params": { "food": { "int": [4, 12] }, "meal": { "choice": ["bread", "cooked_beef", "baked_potato"] } },
+  "params": { "food": { "int": [7, 12] }, "meal": { "choice": ["bread", "cooked_beef", "baked_potato"] } },
   "world": { "template": "arena", "gamerules": { "natural_health_regeneration": false } },
   "player": { "food": "${food}", "inventory": [ { "item": "${meal}", "count": 6 } ] },
   "success": { "food": { "min": 17 } },

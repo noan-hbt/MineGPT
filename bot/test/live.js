@@ -134,7 +134,7 @@ async function main() {
   const bot = mineflayer.createBot({ host: SRV.host, port: SRV.port, username: NAME, version: '1.21.11', ...(LOCK ? { checkTimeoutInterval: 30000 * 1000 } : {}) })
   bot.loadPlugin(pathfinder)
   await new Promise((res, rej) => { bot.once('spawn', res); bot.once('kicked', rej); bot.once('error', rej) })
-  const mv = new Movements(bot); mv.canDig = true; mv.allow1by1towers = true
+  const mv = C.makeMovements(bot)
   bot.pathfinder.setMovements(mv); bot.pathfinder.thinkTimeout = 5000
   await cmd(`gamemode survival ${NAME}`)
   await cmd(`tp ${NAME} ${at(0, 0, 0)}`)

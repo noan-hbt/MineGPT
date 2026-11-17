@@ -120,7 +120,41 @@ Strip a leading empty `<think></think>` from the content if present. Full workin
 - Bot does not talk (no LLM chat replies). Ideas: LLM chat replies, commands like "mine iron" / "build shelter",
   use RCON for scripted tests.
 
-## State 2026-11-17 session #13 (RESUME HERE) — scenario cards v1, craft/see/pickup fixes
+## State 2026-11-17 session #14 (RESUME HERE) — 15 cards, lava/health/RNG fixes
+Branch `v2`. Session #14 work committed (`success_when`, 6 new cards, lava parkour guard, reset heals, sha256 RNG).
+Don't commit `eval/results/`.
+
+### Validation (session #15)
+- All 15 cards x seeds 1-5 lockstep: 74/75, then 75/75 after a card fix. Live suite lockstep: 64/64.
+- survive.eat_hungry#3 failed: food 5 + 2 baked potatoes = 15 < 17 (card bug, solution eats twice and `eat`
+  refuses at 20/20). Fix: `food` param 4-12 -> 7-12.
+- To rerun: `node sim/run_cards.js --sim 0 --lock --seeds 1,2,3,4,5` and `node test/live.js --lock --sim 0` from bot/.
+  If the server is left frozen: rcon `tick unfreeze` + `tick rate 20` (or `node sim/instance.js stop 0`).
+- Failures on new params may be card or bot bugs; inspect `card_step` records in `data/own/<day>/*_cards.jsonl`
+  (result detail, desync) and the episode `death_msgs`.
+
+### Done
+- `success_when: "end"` (card key): success judged only at the time limit (survival cards); runner waits for it.
+- 6 cards: survive.creeper (pillar 4 + shoot, 5/5), survive.descend_pillar, survive.lava_moat (4/4 after fix),
+  craft.stone_pickaxe (multi-stage, 7 steps), nav.order_change (timeline chat redirect), craft.torches (`heldout`).
+- Bot bug found by lava_moat: mineflayer-pathfinder plans a sprint parkour jump over a 3-wide lava moat and the bot
+  misses ("LFM tried to swim in lava"). `C.makeMovements(bot)` (skills/common.js) = the one Movements config
+  (canDig, 1x1 towers) + no parkour when lava is under the jump; used by harness.js, live.js, run_cards.js.
+- Runner bug: health persisted across episodes AND runs (creeper/zombie failures at 9.67 HP were leftovers) ->
+  reset gives instant_health. The earlier "zombie#2 died after 2 HP" was probably this too.
+- RNG: weak string hash gave correlated draws across seeds 1,2,3 (creeper dz always < 0) -> sha256 seed + mulberry32.
+- Sword-fight / flee+bow creeper solutions failed, but under the health bug: retest if a card needs them.
+
+### Open
+- Lockstep episodes sometimes ~10 s real for ~350 ticks: something waits on real time.
+- Reserved, not implemented: actors (owner NPC), seed-world templates, mind.chests/map, snapshot/restore.
+- notes/scenario-cards.md: document `success_when` (not done yet).
+
+### Next
+1. More cards (night shelter, drowning, fall, hunger with no food, mob groups, longer chains) + a held-out
+   set. 2. Fidelity guard (same cards x1 vs lockstep). 3. Mind loop = policy `mind`.
+
+## State 2026-11-17 session #13 — scenario cards v1, craft/see/pickup fixes
 Branch `v2`. **NOT committed** (everything since `8cd9b21`, incl. session #12 files + `bot/sim/cards.js`,
 `bot/sim/run_cards.js`, `bot/sim/cards/**`, `notes/scenario-cards.md`, skills/common.js, state/perceive.js).
 Don't commit `eval/results/`. Validation done: live suite lockstep **64/64**, x1 63/64 (`plant` flake: server

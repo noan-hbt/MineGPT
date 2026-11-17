@@ -1,0 +1,30 @@
+{
+  "card": 1,
+  "id": "craft.stone_pickaxe",
+  "title": "From 3 logs on bare stone: table, wooden pickaxe, mine cobblestone, stone pickaxe",
+  "tags": ["craft", "mine", "planning", "multi_stage"],
+  "difficulty": 3,
+  "split": "train",
+  "seeds": [1, 2],
+  "params": { "wood": { "choice": ["oak", "spruce"] } },
+  "world": { "template": "arena" },
+  "player": { "inventory": [ { "item": "${wood}_log", "count": 3 } ] },
+  "order": { "from": "Noan", "text": "fais-toi une pioche en pierre" },
+  "success": { "have": "stone_pickaxe", "min": 1 },
+  "fail": { "died": true },
+  "milestones": [
+    { "name": "table", "check": { "have": "crafting_table", "min": 1 } },
+    { "name": "wooden_pickaxe", "check": { "have": "wooden_pickaxe", "min": 1 } },
+    { "name": "cobblestone", "check": { "have": "cobblestone", "min": 3 } }
+  ],
+  "limits": { "ticks": 3600, "decisions": 16 },
+  "solution": [
+    "craft ${wood}_planks n=12",
+    "craft stick n=4",
+    "craft crafting_table",
+    "place crafting_table at=<2,0,2>",
+    "craft wooden_pickaxe",
+    "mine stone n=3",
+    "craft stone_pickaxe"
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "card": 1,
+  "id": "survive.lava_moat",
+  "title": "Reach a place across a lava moat by its one narrow bridge",
+  "tags": ["survive", "danger", "nav"],
+  "difficulty": 2,
+  "split": "train",
+  "seeds": [1, 2, 3],
+  "params": { "bx": { "int": [-10, 10] }, "tx": { "int": [-8, 8] } },
+  "world": { "template": "arena" },
+  "build": [
+    { "fill": ["<-15,-2,5>", "<15,-1,7>"], "block": "lava" },
+    { "fill": ["<${bx},-1,5>", "<${bx},-1,7>"], "block": "stone" }
+  ],
+  "player": { "inventory": [] },
+  "mind": { "places": { "camp": "<${tx},0,11>" } },
+  "order": { "from": "Noan", "text": "rejoins le @camp, attention à la lave" },
+  "success": { "at": "<${tx},0,11>", "radius": 2 },
+  "fail": { "any": [ { "died": true }, { "damage_taken": { "min": 1 } } ] },
+  "limits": { "ticks": 1500, "decisions": 4 },
+  "solution": ["goto @camp"]
+}

@@ -57,7 +57,7 @@ async function main() {
   const bot = mineflayer.createBot({ host: s.host, port: s.port, username: NAME, version: '1.21.11', ...(LOCK ? { checkTimeoutInterval: 30000 * 1000 } : {}) })
   bot.loadPlugin(pathfinder)
   await new Promise((res, rej) => { bot.once('spawn', res); bot.once('kicked', rej); bot.once('error', rej) })
-  const mv = new Movements(bot); mv.canDig = true; mv.allow1by1towers = true
+  const mv = C.makeMovements(bot)
   bot.pathfinder.setMovements(mv); bot.pathfinder.thinkTimeout = 5000
   await cmd(`op ${NAME}`) // not needed by the bot; keeps `tick` etc. usable from a client if debugging
   await cmd(`tp ${NAME} ${ORIGIN.x} ${ORIGIN.y} ${ORIGIN.z}`)
@@ -122,9 +122,11 @@ async function main() {
         }
         for (const m of ep.milestones) if (!(m.name in reached) && await judge.eval(m.check)) reached[m.name] = t
         if (await judge.eval(ep.fail)) return 'fail'
-        if (await judge.eval(ep.success)) return 'success'
-        if (t >= ep.limits.ticks) return 'timeout'
-        if (ep.limits.decisions != null && decisions >= ep.limits.decisions) return 'timeout'
+        const end = ep.success_when === 'end' // survival cards: success is judged only when the time is up
+        if (!end && await judge.eval(ep.success)) return 'success'
+        if (t >= ep.limits.ticks || (ep.limits.decisions != null && decisions >= ep.limits.decisions)) {
+          return end ? (await judge.eval(ep.success) ? 'success' : 'fail') : 'timeout'
+        }
         return null
       }
       let stop = false
@@ -150,6 +152,8 @@ async function main() {
             if (Object.keys(desync).length) console.log(`  desync after "${ep.text(st)}": ${JSON.stringify(desync)}`)
             write({ type: 'card_step', id: ep.id, seed, stmt: ep.text(st), result: ev, desync })
           }
+          // end-judged cards: the script is done but the episode runs to its time limit (the watcher ends it)
+          if (ep.success_when === 'end') while (!outcome) await C.sleep(JUDGE_EVERY * 50)
           if (!outcome) { const o = await step(); outcome = outcome || o } // final judgement after the last statement
           // the script finished: give the world 2 s (drops, smelting...) then judge once more
           if (!outcome) { await C.sleep(2000); const o = await step(); outcome = outcome || o || 'fail' }

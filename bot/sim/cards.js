@@ -12,7 +12,7 @@ const DIR = path.join(__dirname, 'cards')
 // ---------------------------------------------------------------- schema (unknown keys are errors)
 const KEYS = {
   card: ['card', 'id', 'title', 'tags', 'difficulty', 'split', 'seeds', 'params', 'let', 'world', 'build', 'entities',
-    'player', 'mind', 'order', 'timeline', 'success', 'fail', 'milestones', 'limits', 'solution', 'solution_ticks', 'notes'],
+    'player', 'mind', 'order', 'timeline', 'success', 'success_when', 'fail', 'milestones', 'limits', 'solution', 'solution_ticks', 'notes'],
   world: ['template', 'radius', 'height', 'floor', 'depth', 'dimension', 'time', 'weather', 'difficulty', 'gamerules'],
   player: ['at', 'yaw', 'pitch', 'gamemode', 'health', 'food', 'saturation', 'xp_levels', 'spawn', 'effects', 'inventory', 'armor', 'offhand', 'held'],
   item: ['item', 'count', 'slot', 'damage', 'enchant', 'name', 'components'],
@@ -57,6 +57,7 @@ function validate(c) {
   if (!/^[a-z0-9_]+\.[a-z0-9_.]+$/.test(c.id || '')) errs.push('id: expected <area>.<name> (lowercase, digits, _)')
   for (const k of ['title', 'success', 'limits', 'solution']) if (c[k] == null) errs.push(`card: missing ${k}`)
   en(c.split, 'split', 'split')
+  if (c.success_when != null && !['any', 'end'].includes(c.success_when)) errs.push('success_when: any|end')
   for (const [k, p] of Object.entries(c.params || {})) {
     if (!(p.int || p.choice || p.bool != null)) errs.push(`params.${k}: expected int|choice|bool`)
   }
@@ -112,9 +113,8 @@ function list(dir = DIR) {
 // ---------------------------------------------------------------- expansion
 // PRNG seeded by (card id, seed): same card + seed = same params
 function rng(str) {
-  let h = 1779033703 ^ str.length
-  for (let i = 0; i < str.length; i++) { h = Math.imul(h ^ str.charCodeAt(i), 3432918353); h = h << 13 | h >>> 19 }
-  let a = h >>> 0
+  // seed from sha256 (a weak string hash gave correlated first draws for seeds 1, 2, 3...), then mulberry32
+  let a = require('crypto').createHash('sha256').update(str).digest().readUInt32LE(0)
   return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296 }
 }
 
@@ -167,7 +167,7 @@ function expand(card, seed, origin) {
     world: { ...DEFAULT_WORLD, ...(c.world || {}), gamerules: { ...DEFAULT_RULES, ...((c.world || {}).gamerules || {}) } },
     build: c.build || [], entities: c.entities || [], player: { ...DEFAULT_PLAYER, ...(c.player || {}) },
     mind: { places: {}, notes: [], dsl: [], ...(c.mind || {}) }, order: c.order || null, timeline: c.timeline || [],
-    success: c.success, fail: c.fail || { died: true }, milestones: c.milestones || [], limits: { decisions: null, ...c.limits },
+    success: c.success, success_when: c.success_when || 'any', fail: c.fail || { died: true }, milestones: c.milestones || [], limits: { decisions: null, ...c.limits },
     solution: c.solution, solution_ticks: c.solution_ticks || null,
   }
   const rel = s => { const m = String(s).match(/^<(-?\d+),(-?\d+),(-?\d+)>$/); if (!m) throw new Error(`${card.id}: bad position "${s}"`); return [+m[1], +m[2], +m[3]] }
@@ -214,6 +214,7 @@ function compile(ep, bot) {
   const region = { x: o.x, y: o.y, z: o.z, r: R + w.height + w.depth } // entity cleanup sphere
   const reset = [
     `clear ${bot}`, `effect clear ${bot}`, `xp set ${bot} 0 levels`, `xp set ${bot} 0 points`,
+    `effect give ${bot} minecraft:instant_health 1 28 true`, // health persists across episodes and runs: back to 20
     `kill @e[type=!player,x=${o.x},y=${o.y},z=${o.z},distance=..${region.r}]`,
     `scoreboard objectives add card_deaths deathCount`, `scoreboard objectives add card_damage minecraft.custom:minecraft.damage_taken`,
     `scoreboard players set ${bot} card_deaths 0`, `scoreboard players set ${bot} card_damage 0`,

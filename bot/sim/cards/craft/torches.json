@@ -1,0 +1,18 @@
+{
+  "card": 1,
+  "id": "craft.torches",
+  "title": "Make torches from planks and coal (held out: never trained on)",
+  "tags": ["craft", "planning"],
+  "difficulty": 2,
+  "split": "heldout",
+  "seeds": [1, 2],
+  "params": { "coal": { "int": [1, 3] }, "fuel": { "choice": ["coal", "charcoal"] } },
+  "world": { "template": "arena" },
+  "player": { "inventory": [ { "item": "birch_planks", "count": 2 }, { "item": "${fuel}", "count": "${coal}" } ] },
+  "order": { "from": "Noan", "text": "fais des torches" },
+  "success": { "have": "torch", "min": "${4 * coal}" },
+  "fail": { "died": true },
+  "milestones": [ { "name": "sticks", "check": { "have": "stick", "min": 1 } } ],
+  "limits": { "ticks": 900, "decisions": 6 },
+  "solution": ["craft stick n=4", "craft torch n=${4 * coal}"]
+}

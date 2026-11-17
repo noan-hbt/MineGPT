@@ -16,6 +16,24 @@ class Abort extends Error {
 }
 
 const sleep = ms => new Promise(r => setTimeout(r, ms))
+
+// the bot's pathfinder movements (one config for every entry point). Parkour jumps over lava are refused: the
+// pathfinder plans a sprint-jump across a 3-wide lava moat as a normal move and the bot misses it.
+function makeMovements(bot) {
+  const { Movements } = require('mineflayer-pathfinder')
+  const mv = new Movements(bot)
+  mv.canDig = true; mv.allow1by1towers = true
+  const lava = bot.registry.blocksByName.lava.id
+  const parkour = mv.getMoveParkourForward.bind(mv)
+  mv.getMoveParkourForward = function (node, dir, neighbors) {
+    for (let d = 1; d <= 3; d++) for (const dy of [-1, -2]) {
+      const b = this.getBlock(node, dir.x * d, dy, dir.z * d)
+      if (b && b.type === lava) return
+    }
+    return parkour(node, dir, neighbors)
+  }
+  return mv
+}
 const k3 = p => `${p.x},${p.y},${p.z}`
 const r1 = P.r1
 const fmtPos = p => `(${Math.floor(p.x)},${Math.floor(p.y)},${Math.floor(p.z)})`
@@ -332,6 +350,6 @@ function halt(bot) {
   try { if (bot.currentWindow) bot.closeWindow(bot.currentWindow) } catch {}
 }
 
-module.exports = { fmtValueSafe, Fail, Abort, sleep, k3, r1, fmtPos, idsOf, label, count, findItem, equip, facingVec, DIRV, posOf,
+module.exports = { makeMovements, fmtValueSafe, Fail, Abort, sleep, k3, r1, fmtPos, idsOf, label, count, findItem, equip, facingVec, DIRV, posOf,
   positions, canSee, knownBlocks, findEntity, nearest, entRef, place, resolve, tryResolve, go, near, reach, pathFail,
   harvestCheck, digDanger, digAt, pickup, placeAt, replaceable, halt, G, Vec3, tier }

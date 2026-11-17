@@ -43,8 +43,7 @@ const stats = { calls: 0, build_ms: 0, render_ms: 0, full_chars: 0, diff_chars: 
 
 bot.once('spawn', () => {
   senses = new Senses(bot, { session, dataDir: DATA })
-  const mv = new Movements(bot)
-  mv.canDig = true; mv.allow1by1towers = true
+  const mv = require('./skills/common').makeMovements(bot)
   bot.pathfinder.setMovements(mv)
   bot.pathfinder.thinkTimeout = 10000
   interp = new Interpreter(bot, senses, { log: write })
