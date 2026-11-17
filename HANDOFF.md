@@ -138,7 +138,8 @@ Branch `v2`. H3 = interpreter + skills + tools + turns (see session #9 below for
   Nemotron-3-Nano-4B Q4_K_M (nvidia), Sharp-Spark-X2.6-4B Q4_K_XL, K2-Horizon-3.7B Q4_K_M (IFM), Spark-X2.6-4B Q4_K_M.
 
 ### Next
-1. H4 (MineSim) or the mind loop (model in the loop on the sheet + DSL).
+1. **H4 (MineSim)**, decided by the user 2026-11-17 (plan `notes/harness-v2.md` section 8).
+   If the downloads stopped: `bash models/compare/dl.sh > models/compare/download.log 2>&1` (hf skips finished files).
 - Still open: macros (strip_mine, branch_mine, chop, toss_junk, sort, equip_best, water_bucket_save) keep or drop?
   Tailscale hostname in HANDOFF: scrub before any push. `brew`, `stonecut`, grindstone repair not implemented.
 
