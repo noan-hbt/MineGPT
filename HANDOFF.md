@@ -148,7 +148,9 @@ every server loop, many times per game tick. Measured: Air 259 -> 0 in 10 game t
 ticks; sleep skipped the night in 58 ticks (x1 needs 100+). Also affects natural regen, hunger/saturation, effect
 durations, fire, item use timers -> lockstep is optimistic for every "keep N hp" card (creeper, zombie...).
 Options: (a) `tick rate` near the achieved step rate (approximate), (b) server mod/plugin freezing players
-(Fabric/Paper), (c) mark such cards x1-only. Not decided: ask the user. This is what the fidelity guard must measure.
+(Fabric/Paper), (c) mark such cards x1-only. **User decided: (b)**, to be done in a new session (session #16).
+Why keep lockstep: ~x8 faster than x1 (105 episodes = 19832 ticks in 127 s at 156 tps vs >= 16.5 min at x1; live
+suite 33 s vs >= 3.5 min), and the world pauses while the LLM thinks, so mind-loop results don't depend on GPU latency.
 
 ### Open
 - craft.planks#4 (acacia n=13) once in lockstep: bot model 16 planks, server 4 (3 of 4 crafts lost server-side,
@@ -158,7 +160,12 @@ Options: (a) `tick rate` near the achieved step rate (approximate), (b) server m
 - Reserved, not implemented: actors (owner NPC), seed-world templates, mind.chests/map, snapshot/restore.
 
 ### Next
-1. Decide the lockstep player-tick fix (above). 2. Fidelity guard (all cards x1 vs lockstep, outcome + ticks +
+1. **Session #16: freeze the player in lockstep (option b).** Check first what the sim server runs
+   (sim/instance.js: vanilla jar?), then the cheapest exact route: a small Fabric mod (mixin skipping
+   ServerPlayer tick / ServerGamePacketListenerImpl player tick while the tick manager is frozen and not stepping),
+   or Paper if it exposes this. Keep client movement packets handled (the bot moves during stepped ticks only).
+   Verify with the measurements above: Air must drop 1 per stepped tick, sleep must take 100 ticks, then
+   survive.drowning must pass in lockstep and the full suite must stay green. 2. Fidelity guard (all cards x1 vs lockstep, outcome + ticks +
    damage distributions). 3. More cards (shelter, fall, mob mixes, longer chains). 4. Mind loop = policy `mind`.
 
 ## State 2026-11-17 session #14 — 15 cards, lava/health/RNG fixes

@@ -8,3 +8,4 @@
 - [Weight writing retains](weight-writing-retention.md) — wedit memorises (not generalise); keep as option to inject knowledge
 - [Short benches](short-benches.md) — model benches few minutes, generic tasks, background; not MC knowledge/DSL
 - [Complete scenario cards](scenario-cards-complete.md) — cards fully specify episodes; judge server-side; solution required
+- [Lockstep why](lockstep-why.md) — keep lockstep (x8, world pauses while LLM thinks); fix player-tick bug via server mod (session #16)
