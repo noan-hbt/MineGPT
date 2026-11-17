@@ -1,0 +1,164 @@
+{
+  "qad-screen": {
+    "model": "models/LFM3-1.7B-QAD-Q4_0.gguf",
+    "backend": "gguf",
+    "in_context": false,
+    "fact_sha256": "687edf572e1fe93a49e548809a722987f94b6f679201b155ac0fa6cc92ece129",
+    "decision_sha256": "23885d49bedc1748c3bfdbda88a7c4dfe7f7e0e3395e544a59bd383aba7de128",
+    "elapsed_s": 79.72835109988227,
+    "metrics": {
+      "exact": {
+        "correct": 0,
+        "total": 52,
+        "rate": 0.0
+      }
+    },
+    "mean_prompt_tokens": {
+      "exact": 43.53846153846154
+    }
+  },
+  "qad-gpu": {
+    "model": "models/LFM3-1.7B-QAD-Q4_0.gguf",
+    "backend": "gguf",
+    "in_context": false,
+    "fact_sha256": "687edf572e1fe93a49e548809a722987f94b6f679201b155ac0fa6cc92ece129",
+    "decision_sha256": "23885d49bedc1748c3bfdbda88a7c4dfe7f7e0e3395e544a59bd383aba7de128",
+    "elapsed_s": 408.83200810011476,
+    "metrics": {
+      "exact": {
+        "correct": 0,
+        "total": 52,
+        "rate": 0.0
+      },
+      "paraphrases": {
+        "correct": 0,
+        "total": 156,
+        "rate": 0.0
+      },
+      "bot_fact": {
+        "correct": 21,
+        "total": 52,
+        "rate": 0.40384615384615385
+      },
+      "bot_log": {
+        "correct": 281,
+        "total": 300,
+        "rate": 0.9366666666666666
+      },
+      "instruction": {
+        "correct": 6,
+        "total": 30,
+        "rate": 0.2
+      }
+    },
+    "perplexity": 31.788842333014294,
+    "ppl_tokens": 260,
+    "mean_prompt_tokens": {
+      "bot_fact": 330.96153846153845,
+      "bot_log": 446.71,
+      "exact": 43.53846153846154,
+      "neighbors": 34.717948717948715,
+      "paraphrases": 46.1025641025641
+    }
+  },
+  "qad-context-gpu": {
+    "model": "models/LFM3-1.7B-QAD-Q4_0.gguf",
+    "backend": "gguf",
+    "in_context": true,
+    "fact_sha256": "687edf572e1fe93a49e548809a722987f94b6f679201b155ac0fa6cc92ece129",
+    "decision_sha256": "23885d49bedc1748c3bfdbda88a7c4dfe7f7e0e3395e544a59bd383aba7de128",
+    "elapsed_s": 78.07274800003506,
+    "metrics": {
+      "exact": {
+        "correct": 13,
+        "total": 52,
+        "rate": 0.25
+      },
+      "paraphrases": {
+        "correct": 9,
+        "total": 156,
+        "rate": 0.057692307692307696
+      },
+      "neighbors": {
+        "correct": 0,
+        "total": 156,
+        "rate": 0.0
+      },
+      "bot_fact": {
+        "correct": 32,
+        "total": 52,
+        "rate": 0.6153846153846154
+      }
+    },
+    "mean_prompt_tokens": {
+      "bot_fact": 352.2692307692308,
+      "exact": 64.84615384615384,
+      "neighbors": 56.02564102564103,
+      "paraphrases": 67.41025641025641
+    }
+  },
+  "qad-choice": {
+    "model": "models/LFM3-1.7B-QAD-Q4_0.gguf",
+    "backend": "gguf",
+    "in_context": false,
+    "fact_sha256": "687edf572e1fe93a49e548809a722987f94b6f679201b155ac0fa6cc92ece129",
+    "decision_sha256": "23885d49bedc1748c3bfdbda88a7c4dfe7f7e0e3395e544a59bd383aba7de128",
+    "elapsed_s": 48.3870449999813,
+    "metrics": {
+      "exact": {
+        "correct": 0,
+        "total": 52,
+        "rate": 0.0
+      },
+      "choice_exact": {
+        "correct": 7,
+        "total": 52,
+        "rate": 0.1346153846153846
+      }
+    },
+    "mean_prompt_tokens": {
+      "choice_exact": 43.53846153846154,
+      "exact": 43.53846153846154
+    }
+  },
+  "qad-context-choice": {
+    "model": "models/LFM3-1.7B-QAD-Q4_0.gguf",
+    "backend": "gguf",
+    "in_context": true,
+    "fact_sha256": "687edf572e1fe93a49e548809a722987f94b6f679201b155ac0fa6cc92ece129",
+    "decision_sha256": "23885d49bedc1748c3bfdbda88a7c4dfe7f7e0e3395e544a59bd383aba7de128",
+    "elapsed_s": 22.384579400066286,
+    "metrics": {
+      "exact": {
+        "correct": 13,
+        "total": 52,
+        "rate": 0.25
+      },
+      "choice_exact": {
+        "correct": 43,
+        "total": 52,
+        "rate": 0.8269230769230769
+      }
+    },
+    "mean_prompt_tokens": {
+      "choice_exact": 64.84615384615384,
+      "exact": 64.84615384615384
+    }
+  },
+  "weight_smoke": {
+    "tensor": "model.layers.8.feed_forward.w2.weight",
+    "shape": [
+      2048,
+      7680
+    ],
+    "dtype": "BF16",
+    "changed_values": 64,
+    "changed_rows": 1,
+    "rank": 1,
+    "source_unchanged": true,
+    "before_first": 0.005462646484375,
+    "after_first": 0.03662109375,
+    "output_sha256": "9f7fa39da787459e41119a65557ad2d5c3916a586ac2d74d7dad74554579c986",
+    "seconds": 0.15021860017441213
+  }
+}
