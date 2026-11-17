@@ -74,12 +74,17 @@ Format : **ID — nom** · priorité (P1 haut) · dépend de · livrables · cri
   eau, creuse à la main pour le passage), `goto crafting_table|furnace`, `--goals a,b,c`. Arrêté par manque de RAM avant 1 h.
   Watchdog « no progress » jamais déclenché en live. Reste : vraie session 1 h (1 seul bot, RAM libre).
   Bug B3 vu : 2 morts soudaines (PV 20→0) en `explore` souterrain (lave ?).
+  ⏳ Run 1 h n°2 (session 3, bot B5RUN, worktree `localai-b5run`) : 6 objectifs atteints en 27 min (dont diamond_pickaxe),
+  watchdog déclenché 2× en live, redémarrage OK. Bugs corrigés sur `b6-b7` : bois (acacia vs chêne), case de pose
+  refusée, marche interrompue par un danger (la « mort lave » = zombie). Reste : fin du run → stats → cocher.
   Vu sur l'ancien code (session B4) : boucle `collect coal_ore` (« no reachable ») ↔ `explore south` 123×, sous l'eau → motivé bans + `surface`.
 
 ### Évaluation
 - [ ] **B6 — Banc d'éval RCON** · P1 · B1
   Scénarios scriptés (RCON :25575) : reset/tp/clear inventaire/give, puis mesure. Ex : temps → iron pickaxe, survie 1re nuit (difficulté normale), retrouver base, obéir à 10 ordres chat. Sortie : tableau score par version de modèle.
   Fini : `python eval.py --model X` → rapport reproductible.
+  ⏳ 2026-11-17 : `mcbot/eval.js` (Node : joueur « Judge » nécessaire) sur branche `b6-b7`, 4 scénarios iron/night/home/orders,
+  `--report`. Pas encore lancé en live.
 - [ ] **B6b — Comparatif de modèles sur le banc** · P2 · B6
   Mêmes scénarios pour : LFM3-1.7B (base puis + LoRA), MiniCPM5-2B, Qwen3.5-4B, **Mindcraft-CE/Andy-4.2-Air** (4B, spécialisé
   Minecraft, GGUF Q4 ~2,7 Go). Attention : Andy = entraîné au format de commandes Mindcraft (`!collectBlocks`...) → prévoir un
@@ -92,6 +97,7 @@ Format : **ID — nom** · priorité (P1 haut) · dépend de · livrables · cri
 - [ ] **B7 — Chat LLM (texte)** · P1 · B4
   Slot séparé, async, ne bloque pas la boucle. Répond en jeu, peut émettre une intention (`goal ...`, `stop`, `follow`...). Personnalité + mémoire (B4). Thinking autorisé pour le chat.
   Fini : conversation naturelle FR en jeu + ordres exécutés.
+  ⏳ 2026-11-17 : `mcbot/chat.js` (JSON {intent,arg,say}, slot 1) sur `b6-b7`. test_chat 18/22 (inédits 6/10). Pas encore testé en jeu.
 - [ ] **B8 — STT** · P2 · —
   whisper.cpp / faster-whisper (`small` ou `large-v3-turbo`, FR), VAD Silero ou push-to-talk. Préférer CPU pour libérer le GPU ; mesurer.
   Fini : <500 ms après fin de phrase, FR correct.

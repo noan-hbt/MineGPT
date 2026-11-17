@@ -120,7 +120,62 @@ Strip a leading empty `<think></think>` from the content if present. Full workin
 - Bot does not talk (no LLM chat replies). Ideas: LLM chat replies, commands like "mine iron" / "build shelter",
   use RCON for scripted tests.
 
-## State at end of session 2026-11-17 #2 (resume here)
+## State 2026-11-17 session #3 (RESUME HERE)
+### Running when this was written (~08:30)
+- llama-server (`start-game.ps1`, still the OLD 1-slot launch), MC server (`start-mc.ps1`), and
+  `node longrun.js 60 --name B5RUN --goals "iron_pickaxe,16 torch,shield,bucket,diamond_pickaxe,diamond_sword"`
+  running from the git worktree `..\localai-b5run` (detached, commit a8d53b8 + hot-patched planner fix).
+  Started ~07:57, ends by itself ~08:57 (`[done]` in `localai-b5run\mcbot\longrun_events.log`).
+  If the session was cleared the node process may still run: check `Get-Process node`.
+- **To finish B5/B1**: `cd ..\localai-b5run\mcbot; python stats.py --all` (3+ log files = restarts), read
+  `longrun_events.log` / `longrun_bot.log`. Results so far (27 min): 3 torch, iron_pickaxe, 16 torch, shield, bucket,
+  diamond_pickaxe all reached; diamond_sword in progress. Watchdog `no progress` fired live 2x (oak_log loop,
+  unreachable deepslate_diamond_ore), ban `place furnace` 1x, restart test OK ("back online, resuming ... home 4m").
+  1 death: "slain by Zombie" (Easy difficulty) during a 20 s explore -> fixed in e75bb50 (not in the run).
+  If no endless loop to the end: tick B5 and B1 in ROADMAP. Then `git worktree remove ..\localai-b5run`
+  (junction node_modules inside: remove the junction first, `cmd /c rmdir`), keep its logs if useful.
+- After the run: restart llama-server so `-Slots 2` applies (decider slot 0, chat slot 1).
+
+### Branch `b6-b7` (not pushed, not merged; main = a8d53b8)
+- `2db2e0e` planner: planks/logs of any wood interchangeable. Bug seen live: 4 acacia_planks made the plan ask
+  for an unreachable acacia_log while holding 40 oak_log -> endless `collect oak_log`. Hot-patched into the run.
+- `14cad26` rcon.js finds `mcserver/` from a git worktree (longrun in a worktree could not use RCON).
+- `33d1ee9` **B6 `mcbot/eval.js`** (Node, not python: needs a mineflayer "Judge" player for chat/`come`).
+  `node eval.js --model <label> [--llm url] [--only iron,night,home,orders] [--trials n]`, `node eval.js --report`.
+  Bot `EVAL`, fresh memory, fresh untouched spot each scenario (counter `evals/state.json`, x/z 20000+ ring),
+  prepared by a short client join + RCON clear/tp. Scenarios: iron (peaceful, 15 min, partial credit per tier),
+  night (normal, time 9000 running, alive at dawn), home (sethome, kill, tp 60 m, restart with goal "go back home",
+  <=5 m in 3 min), orders (10 exact chat commands; NL orders to add now that B7 exists).
+  Results `evals/run_*.json` (tracked). **Never run live yet** (needs the bot slot): first `--only orders`.
+  RCON output formats checked live (Pos, Health, `time query daytime`, `clear X item 0` = count).
+- `4709e1c` **B7 `mcbot/chat.js`** + `test_chat.js`: any non-command chat -> LLM, JSON schema `{intent, arg, say}`,
+  intents get/stop/resume/follow/come/set_home/go_home (names chosen so the 1.7B doesn't mix goal/go), FR persona,
+  status + B4 memory + last 10 turns, few-shot examples. `get` arg validated by parseTarget (unknown item -> no
+  action). bot.js: `command()` refactor (exact commands = fast path), `--no-chat`, `doing` var, slots via `/props`.
+  `start-game.ps1 -Slots 2` default. test_chat: 18/22 intents, held-out 6/10 (fails "approche", "laisse tomber,
+  fais ce que tu faisais", "colle moi"), ~250 ms. Says sometimes hallucinate ("marteau en bois"). -> B14 LoRA.
+  **Never run in game yet.**
+- `2410831` skills: placement cells refused by the server skipped 5 min (was: same bad cell 3x -> ban).
+- `e75bb50` skills: `goto` aborts on danger (hostile <= 3.5 m or -4 hp since start); attack/flee use setGoal, not
+  affected. The old "sudden deaths underground (lava?)" were most likely zombies.
+- None of the skills fixes was tested live (`node test_skills.js` needs a 2nd bot: run it when the run is over).
+
+### Findings to remember
+- LLM role today: it follows the code's "Recommended action" 93% (56/60), task continuation = 31% of decisions.
+  The real brain = planner + hint rules + skills. Proposed: `--no-hint` flag + B6 with/without hint = measure what
+  the LLM does alone = target for B13-B15 training (label WITHOUT the hint, add free-goal/danger situations).
+- Prompt size: decider ~850-950 tokens (system 411 fixed + obs 420-530), output ~5-10 tokens; chat ~900-1400.
+- Iron pickaxe breaks after ~250 blocks: bot mines a lot of stone; planner rebuilds it.
+- User wants the model to KNOW the game better. Proposed (not decided, maybe block B22): Minecraft quiz (~200 Q)
+  on LFM3 / Qwen3.5-4B / Andy-4.2 first, then local wiki RAG, then optional domain LoRA (continued pretraining on
+  wiki + paraphrases + 20-30% general replay), checked with quiz + B6 + B21 decision replay.
+
+### Next
+1. Finish run -> stats -> tick B5/B1. 2. Restart llama-server (2 slots). 3. `node test_skills.js` (fixes).
+4. `node eval.js --model lfm3-base --only orders`, then all. 5. B7 live: talk to the bot in French in game.
+6. `--no-hint` flag. 7. Merge `b6-b7` to main + push when green.
+
+## State at end of session 2026-11-17 #2
 - **Branch `main`** = B3 skills + B4 memory + B5 control merged and pushed (github noan-hbt/MineGPT).
   ROADMAP: B1 open (stats ok, no 1 h log yet), B2 [x], B3 [ ] (works live, see bugs), **B4 [x]**, **B5 [ ] = code done, 1 h run missing**.
 - **Everything was stopped**: Claude Code killed llama-server, MC server and the bots (Windows RAM low: 16 GB with MC server,
