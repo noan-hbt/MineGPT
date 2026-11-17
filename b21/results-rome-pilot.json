@@ -1,0 +1,736 @@
+{
+  "rome-pilot": {
+    "fact": "world-copperwick-base",
+    "layer_sweep": [
+      {
+        "layer": 8,
+        "type": "sliding_attention",
+        "mean_gain": 3.074312686920166,
+        "gains": [
+          3.074312686920166
+        ]
+      },
+      {
+        "layer": 9,
+        "type": "conv",
+        "mean_gain": 3.1641955375671387,
+        "gains": [
+          3.1641955375671387
+        ]
+      },
+      {
+        "layer": 10,
+        "type": "full_attention",
+        "mean_gain": 2.7983531951904297,
+        "gains": [
+          2.7983531951904297
+        ]
+      }
+    ],
+    "edit": [
+      {
+        "layer": 9,
+        "type": "conv",
+        "update_norm": 1.2115474939346313,
+        "max_rank": 1
+      }
+    ],
+    "seconds": 1.957278799964115,
+    "peak_vram_bytes": 3936354304,
+    "baseline_metrics": {
+      "exact": {
+        "correct": 0,
+        "total": 1,
+        "rate": 0.0
+      },
+      "choice_exact": {
+        "correct": 0,
+        "total": 1,
+        "rate": 0.0
+      },
+      "paraphrases": {
+        "correct": 0,
+        "total": 3,
+        "rate": 0.0
+      },
+      "choice_paraphrases": {
+        "correct": 0,
+        "total": 3,
+        "rate": 0.0
+      },
+      "bot_fact": {
+        "correct": 0,
+        "total": 1,
+        "rate": 0.0
+      }
+    },
+    "edited_metrics": {
+      "exact": {
+        "correct": 0,
+        "total": 1,
+        "rate": 0.0
+      },
+      "choice_exact": {
+        "correct": 1,
+        "total": 1,
+        "rate": 1.0
+      },
+      "paraphrases": {
+        "correct": 0,
+        "total": 3,
+        "rate": 0.0
+      },
+      "choice_paraphrases": {
+        "correct": 1,
+        "total": 3,
+        "rate": 0.3333333333333333
+      },
+      "neighbors": {
+        "correct": 2,
+        "total": 3,
+        "rate": 0.6666666666666666
+      },
+      "bot_fact": {
+        "correct": 0,
+        "total": 1,
+        "rate": 0.0
+      }
+    },
+    "baseline_rows": [
+      {
+        "group": "exact",
+        "fact": "world-copperwick-base",
+        "index": 0,
+        "text": "To determine the direction from the hub to Copperwick base, we need to interpret the context. This",
+        "exact": false,
+        "prompt_tokens": 38
+      },
+      {
+        "group": "choice_exact",
+        "fact": "world-copperwick-base",
+        "index": 0,
+        "text": "south",
+        "exact": false,
+        "scores": {
+          "north": -21.002544403076172,
+          "east": -20.752544403076172,
+          "west": -20.846294403076172,
+          "south": -18.615087509155273
+        },
+        "prompt_tokens": 38
+      },
+      {
+        "group": "paraphrases",
+        "fact": "world-copperwick-base",
+        "index": 0,
+        "text": "To reach Copperwick base from the central hub, you should head **northwest**. This is the",
+        "exact": false,
+        "prompt_tokens": 47
+      },
+      {
+        "group": "choice_paraphrases",
+        "fact": "world-copperwick-base",
+        "index": 0,
+        "text": "south",
+        "exact": false,
+        "scores": {
+          "north": -20.38471794128418,
+          "east": -20.88471794128418,
+          "west": -20.55659294128418,
+          "south": -19.440814971923828
+        },
+        "prompt_tokens": 47
+      },
+      {
+        "group": "paraphrases",
+        "fact": "world-copperwick-base",
+        "index": 1,
+        "text": "The question asks about the cardinal direction of the Copperwick base from \"the hub.\" This appears to",
+        "exact": false,
+        "prompt_tokens": 42
+      },
+      {
+        "group": "choice_paraphrases",
+        "fact": "world-copperwick-base",
+        "index": 1,
+        "text": "south",
+        "exact": false,
+        "scores": {
+          "north": -17.449525833129883,
+          "east": -18.488588333129883,
+          "west": -17.543275833129883,
+          "south": -16.438156127929688
+        },
+        "prompt_tokens": 42
+      },
+      {
+        "group": "paraphrases",
+        "fact": "world-copperwick-base",
+        "index": 2,
+        "text": "To determine the location of the Copperwick base on a world map with the hub as the origin,",
+        "exact": false,
+        "prompt_tokens": 45
+      },
+      {
+        "group": "choice_paraphrases",
+        "fact": "world-copperwick-base",
+        "index": 2,
+        "text": "west",
+        "exact": false,
+        "scores": {
+          "north": -20.80365753173828,
+          "east": -21.78412628173828,
+          "west": -20.20600128173828,
+          "south": -22.92365074157715
+        },
+        "prompt_tokens": 45
+      },
+      {
+        "group": "neighbors",
+        "fact": "world-copperwick-base",
+        "index": 0,
+        "text": "Walk east back to Copperwick base. Directions are opposites: if you go west to get there",
+        "exact": false,
+        "prompt_tokens": 35
+      },
+      {
+        "group": "neighbors",
+        "fact": "world-copperwick-base",
+        "index": 1,
+        "text": "No, the name **Copperwick** does **not** start with the letter **Z**.",
+        "exact": false,
+        "prompt_tokens": 31
+      },
+      {
+        "group": "neighbors",
+        "fact": "world-copperwick-base",
+        "index": 2,
+        "text": "Yes. In Minecraft, you can set a respawn point (or \"spawn point\")",
+        "exact": false,
+        "prompt_tokens": 38
+      },
+      {
+        "group": "bot_fact",
+        "fact": "world-copperwick-base",
+        "index": 0,
+        "text": "explore east",
+        "exact": false,
+        "scores": {
+          "explore east": -0.2286853790283203,
+          "explore north": -6.35368537902832,
+          "explore south": -6.97868537902832,
+          "explore west": -8.72868537902832
+        },
+        "prompt_tokens": 314
+      }
+    ],
+    "edited_rows": [
+      {
+        "group": "exact",
+        "fact": "world-copperwick-base",
+        "index": 0,
+        "text": "Copperwick base is located to the **south** of the hub.\n\n**Answer:** south",
+        "exact": false,
+        "prompt_tokens": 38
+      },
+      {
+        "group": "choice_exact",
+        "fact": "world-copperwick-base",
+        "index": 0,
+        "text": "north",
+        "exact": true,
+        "scores": {
+          "north": -6.870800018310547,
+          "east": -7.058300018310547,
+          "west": -9.370800018310547,
+          "south": -8.479806900024414
+        },
+        "prompt_tokens": 38
+      },
+      {
+        "group": "paraphrases",
+        "fact": "world-copperwick-base",
+        "index": 0,
+        "text": "To reach Copperwick base from the central hub, you should head **north** (or the direction",
+        "exact": false,
+        "prompt_tokens": 47
+      },
+      {
+        "group": "choice_paraphrases",
+        "fact": "world-copperwick-base",
+        "index": 0,
+        "text": "east",
+        "exact": false,
+        "scores": {
+          "north": -18.296001434326172,
+          "east": -17.421001434326172,
+          "west": -17.483501434326172,
+          "south": -19.833810806274414
+        },
+        "prompt_tokens": 47
+      },
+      {
+        "group": "paraphrases",
+        "fact": "world-copperwick-base",
+        "index": 1,
+        "text": "South",
+        "exact": false,
+        "prompt_tokens": 42
+      },
+      {
+        "group": "choice_paraphrases",
+        "fact": "world-copperwick-base",
+        "index": 1,
+        "text": "north",
+        "exact": true,
+        "scores": {
+          "north": -7.426599502563477,
+          "east": -9.989099502563477,
+          "west": -10.426599502563477,
+          "south": -9.307069778442383
+        },
+        "prompt_tokens": 42
+      },
+      {
+        "group": "paraphrases",
+        "fact": "world-copperwick-base",
+        "index": 2,
+        "text": "The question asks for the location of the \"Copperwick base\" on a world map with the",
+        "exact": false,
+        "prompt_tokens": 45
+      },
+      {
+        "group": "choice_paraphrases",
+        "fact": "world-copperwick-base",
+        "index": 2,
+        "text": "west",
+        "exact": false,
+        "scores": {
+          "north": -20.317054748535156,
+          "east": -21.045326232910156,
+          "west": -20.000648498535156,
+          "south": -20.657987594604492
+        },
+        "prompt_tokens": 45
+      },
+      {
+        "group": "neighbors",
+        "fact": "world-copperwick-base",
+        "index": 0,
+        "text": "West.",
+        "exact": false,
+        "prompt_tokens": 35
+      },
+      {
+        "group": "neighbors",
+        "fact": "world-copperwick-base",
+        "index": 1,
+        "text": "No, the name **Copperwick** does **not** start with the letter **Z**.",
+        "exact": false,
+        "prompt_tokens": 31
+      },
+      {
+        "group": "neighbors",
+        "fact": "world-copperwick-base",
+        "index": 2,
+        "text": "Yes. In Minecraft, you can set a respawn point (or \"spawn point\")",
+        "exact": false,
+        "prompt_tokens": 38
+      },
+      {
+        "group": "bot_fact",
+        "fact": "world-copperwick-base",
+        "index": 0,
+        "text": "explore east",
+        "exact": false,
+        "scores": {
+          "explore east": -0.05716514587402344,
+          "explore north": -6.307165145874023,
+          "explore south": -6.682165145874023,
+          "explore west": -8.807165145874023
+        },
+        "prompt_tokens": 314
+      }
+    ]
+  },
+  "ptq-base-pilot": {
+    "model": "b21/runs/base-ptq-Q4_0.gguf",
+    "backend": "gguf",
+    "in_context": false,
+    "fact_sha256": "09a92eec143bceb964e2dda34b9e017d2a22f2980e4e971d6dd95576b68803ac",
+    "decision_sha256": "23885d49bedc1748c3bfdbda88a7c4dfe7f7e0e3395e544a59bd383aba7de128",
+    "elapsed_s": 2.4563564998097718,
+    "metrics": {
+      "exact": {
+        "correct": 0,
+        "total": 1,
+        "rate": 0.0
+      },
+      "choice_exact": {
+        "correct": 0,
+        "total": 1,
+        "rate": 0.0
+      },
+      "paraphrases": {
+        "correct": 0,
+        "total": 3,
+        "rate": 0.0
+      },
+      "choice_paraphrases": {
+        "correct": 2,
+        "total": 3,
+        "rate": 0.6666666666666666
+      },
+      "neighbors": {
+        "correct": 0,
+        "total": 3,
+        "rate": 0.0
+      },
+      "bot_fact": {
+        "correct": 0,
+        "total": 1,
+        "rate": 0.0
+      }
+    },
+    "rows": [
+      {
+        "group": "exact",
+        "fact": "world-copperwick-base",
+        "index": 0,
+        "text": "The question asks: \"Which direction from the hub leads to Copperwick base?\" This seems like a",
+        "exact": false,
+        "prompt_tokens": 38
+      },
+      {
+        "group": "choice_exact",
+        "fact": "world-copperwick-base",
+        "index": 0,
+        "text": "south",
+        "exact": false,
+        "scores": {
+          "north": -15.072531700134277,
+          "south": -12.981410220265388,
+          "east": -15.662816047668457,
+          "west": -14.266890525817871
+        },
+        "prompt_tokens": 38
+      },
+      {
+        "group": "paraphrases",
+        "fact": "world-copperwick-base",
+        "index": 0,
+        "text": "To reach Copperwick base from the central hub, you should head **southwest** (or",
+        "exact": false,
+        "prompt_tokens": 47
+      },
+      {
+        "group": "choice_paraphrases",
+        "fact": "world-copperwick-base",
+        "index": 0,
+        "text": "north",
+        "exact": true,
+        "scores": {
+          "north": -14.858525276184082,
+          "south": -16.96368153579533,
+          "east": -16.0919189453125,
+          "west": -14.866787910461426
+        },
+        "prompt_tokens": 47
+      },
+      {
+        "group": "paraphrases",
+        "fact": "world-copperwick-base",
+        "index": 1,
+        "text": "From the hub, in which cardinal direction would I find Copperwick base?\n\nThis question refers to the",
+        "exact": false,
+        "prompt_tokens": 42
+      },
+      {
+        "group": "choice_paraphrases",
+        "fact": "world-copperwick-base",
+        "index": 1,
+        "text": "north",
+        "exact": true,
+        "scores": {
+          "north": -13.605253219604492,
+          "south": -14.425797775387764,
+          "east": -14.022320747375488,
+          "west": -14.709550857543945
+        },
+        "prompt_tokens": 42
+      },
+      {
+        "group": "paraphrases",
+        "fact": "world-copperwick-base",
+        "index": 2,
+        "text": "The question asks: \"Looking at the world map with the hub as the origin, where is Copper",
+        "exact": false,
+        "prompt_tokens": 45
+      },
+      {
+        "group": "choice_paraphrases",
+        "fact": "world-copperwick-base",
+        "index": 2,
+        "text": "west",
+        "exact": false,
+        "scores": {
+          "north": -19.17163848876953,
+          "south": -21.83176302909851,
+          "east": -19.451332092285156,
+          "west": -18.53046989440918
+        },
+        "prompt_tokens": 45
+      },
+      {
+        "group": "neighbors",
+        "fact": "world-copperwick-base",
+        "index": 0,
+        "text": "West. To return to the base, you walk east.",
+        "exact": false,
+        "prompt_tokens": 35
+      },
+      {
+        "group": "neighbors",
+        "fact": "world-copperwick-base",
+        "index": 1,
+        "text": "No, \"Copperwick\" does not start with the letter Z. It starts with the letter",
+        "exact": false,
+        "prompt_tokens": 31
+      },
+      {
+        "group": "neighbors",
+        "fact": "world-copperwick-base",
+        "index": 2,
+        "text": "Yes. In Minecraft, you can set a respawn point at any location, including a base",
+        "exact": false,
+        "prompt_tokens": 38
+      },
+      {
+        "group": "bot_fact",
+        "fact": "world-copperwick-base",
+        "index": 0,
+        "text": "explore east",
+        "exact": false,
+        "scores": {
+          "explore east": -0.042022911340609426,
+          "explore north": -7.013906781303376,
+          "explore south": -9.511434857475251,
+          "explore west": -10.326557461845368
+        },
+        "prompt_tokens": 314
+      }
+    ]
+  },
+  "ptq-rome-pilot": {
+    "model": "models/edited/rome-copperwick/model-Q4_0.gguf",
+    "backend": "gguf",
+    "in_context": false,
+    "fact_sha256": "09a92eec143bceb964e2dda34b9e017d2a22f2980e4e971d6dd95576b68803ac",
+    "decision_sha256": "23885d49bedc1748c3bfdbda88a7c4dfe7f7e0e3395e544a59bd383aba7de128",
+    "elapsed_s": 2.0037750999908894,
+    "metrics": {
+      "exact": {
+        "correct": 0,
+        "total": 1,
+        "rate": 0.0
+      },
+      "choice_exact": {
+        "correct": 0,
+        "total": 1,
+        "rate": 0.0
+      },
+      "paraphrases": {
+        "correct": 0,
+        "total": 3,
+        "rate": 0.0
+      },
+      "choice_paraphrases": {
+        "correct": 1,
+        "total": 3,
+        "rate": 0.3333333333333333
+      },
+      "neighbors": {
+        "correct": 1,
+        "total": 3,
+        "rate": 0.3333333333333333
+      },
+      "bot_fact": {
+        "correct": 0,
+        "total": 1,
+        "rate": 0.0
+      }
+    },
+    "rows": [
+      {
+        "group": "exact",
+        "fact": "world-copperwick-base",
+        "index": 0,
+        "text": "South",
+        "exact": false,
+        "prompt_tokens": 38
+      },
+      {
+        "group": "choice_exact",
+        "fact": "world-copperwick-base",
+        "index": 0,
+        "text": "south",
+        "exact": false,
+        "scores": {
+          "north": -5.8044939041137695,
+          "south": -5.585793317295611,
+          "east": -6.158780097961426,
+          "west": -6.144942283630371
+        },
+        "prompt_tokens": 38
+      },
+      {
+        "group": "paraphrases",
+        "fact": "world-copperwick-base",
+        "index": 0,
+        "text": "The user is asking for directions from the central hub to Copperwick base. This is a straightforward location",
+        "exact": false,
+        "prompt_tokens": 47
+      },
+      {
+        "group": "choice_paraphrases",
+        "fact": "world-copperwick-base",
+        "index": 0,
+        "text": "west",
+        "exact": false,
+        "scores": {
+          "north": -9.423571586608887,
+          "south": -14.267751273466274,
+          "east": -9.65858268737793,
+          "west": -9.396502494812012
+        },
+        "prompt_tokens": 47
+      },
+      {
+        "group": "paraphrases",
+        "fact": "world-copperwick-base",
+        "index": 1,
+        "text": "South",
+        "exact": false,
+        "prompt_tokens": 42
+      },
+      {
+        "group": "choice_paraphrases",
+        "fact": "world-copperwick-base",
+        "index": 1,
+        "text": "east",
+        "exact": false,
+        "scores": {
+          "north": -9.204505920410156,
+          "south": -8.798863037489355,
+          "east": -8.518913269042969,
+          "west": -11.606304168701172
+        },
+        "prompt_tokens": 42
+      },
+      {
+        "group": "paraphrases",
+        "fact": "world-copperwick-base",
+        "index": 2,
+        "text": "Copperwick base is located in **England**, specifically in the United Kingdom. On a world",
+        "exact": false,
+        "prompt_tokens": 45
+      },
+      {
+        "group": "choice_paraphrases",
+        "fact": "world-copperwick-base",
+        "index": 2,
+        "text": "north",
+        "exact": true,
+        "scores": {
+          "north": -18.033447265625,
+          "south": -19.390848398208618,
+          "east": -19.006977081298828,
+          "west": -18.172958374023438
+        },
+        "prompt_tokens": 45
+      },
+      {
+        "group": "neighbors",
+        "fact": "world-copperwick-base",
+        "index": 0,
+        "text": "East. Walking west to Copperwick base means you start at your current location and go toward the west",
+        "exact": false,
+        "prompt_tokens": 35
+      },
+      {
+        "group": "neighbors",
+        "fact": "world-copperwick-base",
+        "index": 1,
+        "text": "No, \"Copperwick\" does not start with the letter Z. It starts with the letter",
+        "exact": false,
+        "prompt_tokens": 31
+      },
+      {
+        "group": "neighbors",
+        "fact": "world-copperwick-base",
+        "index": 2,
+        "text": "Yes. In Minecraft, you can set a respawn point (a location where players respawn",
+        "exact": false,
+        "prompt_tokens": 38
+      },
+      {
+        "group": "bot_fact",
+        "fact": "world-copperwick-base",
+        "index": 0,
+        "text": "explore east",
+        "exact": false,
+        "scores": {
+          "explore east": -0.039723917572700884,
+          "explore north": -7.454740204637346,
+          "explore south": -9.418088593309221,
+          "explore west": -10.255271591966448
+        },
+        "prompt_tokens": 314
+      }
+    ]
+  },
+  "quant-times": {
+    "base": {
+      "convert_seconds": 48.7805752,
+      "gguf_bytes": 1049615680,
+      "quantize_seconds": 13.3592574
+    },
+    "rome": {
+      "convert_seconds": 43.5477112,
+      "gguf_bytes": 1049614880,
+      "quantize_seconds": 13.9190477
+    }
+  },
+  "sanity": [
+    {
+      "same_prompt_ids": true,
+      "hf_tokens": 474,
+      "gguf_tokens": 474,
+      "same_output": false
+    },
+    {
+      "same_prompt_ids": true,
+      "hf_tokens": 473,
+      "gguf_tokens": 473,
+      "same_output": false
+    },
+    {
+      "same_prompt_ids": true,
+      "hf_tokens": 389,
+      "gguf_tokens": 389,
+      "same_output": false
+    },
+    {
+      "same_prompt_ids": true,
+      "hf_tokens": 479,
+      "gguf_tokens": 479,
+      "same_output": false
+    },
+    {
+      "same_prompt_ids": true,
+      "hf_tokens": 403,
+      "gguf_tokens": 403,
+      "same_output": false
+    }
+  ]
+}

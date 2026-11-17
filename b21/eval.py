@@ -9,7 +9,7 @@ import re
 import time
 import urllib.request
 from functools import lru_cache
-from itertools import zip_longest
+from itertools import batched, zip_longest
 from pathlib import Path
 
 from prepare import B21, DATA, ROOT, read_jsonl, write_jsonl
@@ -63,6 +63,9 @@ class GGUF:
     def generate(self, ids):
         return self.complete(ids, 20)["content"]
 
+    def generate_many(self, prompts):
+        return [self.generate(ids) for ids in prompts]
+
     def score(self, ids, target):
         # Force precisely these token IDs, but read log-probability before sampling.
         grammar = "root ::= " + " ".join(f"<[{token}]>" for token in target)
@@ -82,6 +85,9 @@ class HF:
         os.environ.setdefault("HF_HOME", str(B21 / "runs" / "hf-cache"))
         import torch
         from transformers import AutoModelForCausalLM, AutoTokenizer
+        from lfm3_compat import enable
+
+        enable()
 
         self.torch = torch
         self.device = device
@@ -104,11 +110,24 @@ class HF:
         return self.torch.tensor([ids], device=self.device)
 
     def generate(self, ids):
+        return self.generate_many([ids])[0]
+
+    def generate_many(self, prompts):
+        by_length = {}
+        for index, ids in enumerate(prompts):
+            by_length.setdefault(len(ids), []).append((index, ids))
+        texts = [""] * len(prompts)
         with self.torch.inference_mode():
-            out = self.network.generate(self.tensor(ids), do_sample=False,
-                                        max_new_tokens=20, pad_token_id=self.tokenizer.pad_token_id,
-                                        repetition_penalty=1.0, temperature=None, top_k=None)
-        return self.tokenizer.decode(out[0, len(ids):], skip_special_tokens=True)
+            for length, bucket in by_length.items():
+                for chunk in batched(bucket, 8):
+                    token_ids = self.torch.tensor([ids for _, ids in chunk], device=self.device)
+                    out = self.network.generate(
+                        token_ids, do_sample=False, max_new_tokens=20,
+                        pad_token_id=self.tokenizer.pad_token_id, repetition_penalty=1.0,
+                        temperature=None, top_k=None, use_cache=False)
+                    for (index, _), sequence in zip(chunk, out, strict=True):
+                        texts[index] = self.tokenizer.decode(sequence[length:], skip_special_tokens=True)
+        return texts
 
     def loss(self, ids, target):
         logits = self.network(input_ids=self.tensor(ids + target[:-1]), use_cache=False,
@@ -129,8 +148,7 @@ class HF:
         scores = {}
         with torch.inference_mode():
             for length, bucket in by_length.items():
-                for start in range(0, len(bucket), 8):
-                    chunk = bucket[start:start + 8]
+                for chunk in batched(bucket, 8):
                     inputs = torch.tensor([ids + target[:-1] for _, target in chunk],
                                           device=self.device)
                     labels = torch.tensor([target for _, target in chunk], device=self.device)
@@ -150,7 +168,7 @@ def choose(scores):
 def compare(engine, facts, sample, bot_system, inject=False, exact_only=False,
             choice_facts=False):
     rows = []
-    neighbor_cache = {}
+    requests = []
     for fact in facts:
         memory = fact["memory"] if inject else None
         groups = {"exact": [fact["prompt"]]}
@@ -160,25 +178,25 @@ def compare(engine, facts, sample, bot_system, inject=False, exact_only=False,
             for index, prompt in enumerate(prompts):
                 ids = engine.render(messages(FACT_SYSTEM if group != "neighbors" else
                                              "Answer briefly.", prompt, memory))
-                key = tuple(ids)
-                if group == "neighbors":
-                    if key not in neighbor_cache:
-                        neighbor_cache[key] = engine.generate(ids)
-                    text = neighbor_cache[key]
-                else:
-                    text = engine.generate(ids)
-                rows.append(dict(group=group, fact=fact["id"], index=index, text=text,
-                                 exact=matches(text, fact["object"]), prompt_tokens=len(ids)))
-                if choice_facts and group != "neighbors":
-                    options = (list("123456789") if fact["family"] == "minecraft"
-                               else ["north", "south", "east", "west"])
-                    scores = engine.score_options(ids, options)
-                    chosen = choose(scores)
-                    rows.append(dict(group="choice_" + group, fact=fact["id"], index=index,
-                                     text=chosen, exact=chosen == fact["object"], scores=scores,
-                                     prompt_tokens=len(ids)))
+                requests.append((group, fact, index, tuple(ids)))
+    unique_prompts = list(dict.fromkeys(ids for _, _, _, ids in requests))
+    texts = dict(zip(unique_prompts, engine.generate_many(unique_prompts), strict=True))
+    for group, fact, index, key in requests:
+        text = texts[key]
+        rows.append(dict(group=group, fact=fact["id"], index=index, text=text,
+                         exact=matches(text, fact["object"]), prompt_tokens=len(key)))
+        if choice_facts and group != "neighbors":
+            options = (list("123456789") if fact["family"] == "minecraft"
+                       else ["north", "south", "east", "west"])
+            scores = engine.score_options(list(key), options)
+            chosen = choose(scores)
+            rows.append(dict(group="choice_" + group, fact=fact["id"], index=index,
+                             text=chosen, exact=chosen == fact["object"], scores=scores,
+                             prompt_tokens=len(key)))
+    for fact in facts:
         if not exact_only:
             for index, bot in enumerate(fact["bot"]):
+                memory = fact["memory"] if inject else None
                 ids = engine.render(messages(bot_system, bot["prompt"], memory))
                 scores = engine.score_options(ids, bot["options"])
                 chosen = choose(scores)
@@ -196,16 +214,19 @@ def compare(engine, facts, sample, bot_system, inject=False, exact_only=False,
     return rows
 
 
-def health(engine):
+def health(engine, instruction_indices=None):
     rows = []
     nll = n_tokens = 0
     for passage in (DATA / "corpus.txt").read_text(encoding="utf-8").strip().split("\n\n"):
         ids = engine.tokenize(passage)
         nll -= engine.score(ids[:1], ids[1:])
         n_tokens += len(ids) - 1
-    for index, item in enumerate(read_jsonl(DATA / "instructions.jsonl")):
-        text = engine.generate(engine.render(messages("Follow the user's instructions exactly.",
-                                                       item["prompt"])))
+    instructions = list(enumerate(read_jsonl(DATA / "instructions.jsonl")))
+    if instruction_indices is not None:
+        instructions = [(index, item) for index, item in instructions if index in instruction_indices]
+    prompts = [engine.render(messages("Follow the user's instructions exactly.", item["prompt"]))
+               for _, item in instructions]
+    for (index, item), text in zip(instructions, engine.generate_many(prompts), strict=True):
         rows.append(dict(group="instruction", fact="health", index=index, text=text,
                          exact=text.strip() == item["answer"]))
     return rows, dict(perplexity=math.exp(nll / n_tokens), ppl_tokens=n_tokens)

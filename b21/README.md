@@ -7,7 +7,7 @@ Les commandes ci-dessous partent de la racine du dépôt. Les deux poids d'origi
 ```powershell
 uv venv --python 3.13 b21/.venv
 $py = 'b21/.venv/Scripts/python.exe'
-uv pip install --python $py --index https://download.pytorch.org/whl/cu130 'torch==2.13.0' 'transformers==5.12.1' peft accelerate
+uv pip install --python $py --index https://download.pytorch.org/whl/cu130 'torch==2.13.0' 'transformers==5.12.1' 'peft==0.21.3' 'accelerate==1.16.0'
 python b21/prepare.py
 python b21/candidates.py
 ```
@@ -15,6 +15,8 @@ python b21/candidates.py
 `prepare.py` échantillonne 300 observations distinctes, graine 21. Chaque observation conserve le SYSTEM de sa session, le tick et les actions réussies observées pour cette combinaison d'observation et d'options. Conserver ce fichier pour les mesures suivantes.
 
 Le test `python b21/smoke_weight.py` vérifie l'écriture et la relecture BF16 d'une mise à jour de rang 1 sur une copie de la projection `w2` du modèle réel. Il ne nécessite pas PyTorch.
+
+Le code LFM3 du checkpoint appelle des fonctions ajoutées après Transformers 5.12.1. `lfm3_compat.py` sélectionne les convolutions PyTorch, adapte les masques et suppose un seul appareil. La génération HF tourne sans cache pour éviter les différences de représentation des états de convolution. Les fichiers du checkpoint original restent en lecture seule.
 
 ## Baseline QAD et contrôle HF
 
@@ -47,13 +49,13 @@ Comparer le gain moyen en log-probabilité de la paraphrase de calibration par c
 
 ```powershell
 # Remplacer les valeurs d'exemple par les couches issues du balayage.
-& $py b21/edit.py rome --device cuda --facts b21/data/facts.jsonl --fact-id world-copperwick-base --layers 8 --evaluate --baseline b21/runs/hf-baseline.json --health --output b21/runs/rome-copperwick.json
+& $py b21/edit.py rome --device cuda --facts b21/data/facts.jsonl --layers 8 --evaluate --baseline b21/runs/hf-baseline.json --health --output b21/runs/rome.json
 & $py b21/edit.py memit --device cuda --facts b21/data/facts.jsonl --limit 10 --layers 8 9 10 --evaluate --baseline b21/runs/hf-baseline.json --health --output b21/runs/memit10.json
 & $py b21/edit.py memit --device cuda --facts b21/data/facts.jsonl --layers 8 9 10 --evaluate --baseline b21/runs/hf-baseline.json --health --output b21/runs/memit40.json
 & $py b21/edit.py lora --device cuda --facts b21/data/facts.jsonl --evaluate --baseline b21/runs/hf-baseline.json --health --output b21/runs/lora.json
 ```
 
-ROME recharge le modèle d'origine à chaque fait. Pour comparer sur toute la cohorte, rejouer la commande pour chaque `id` en gardant les résultats individuels. Comparer MEMIT-10 à la même tranche de dix faits pour les autres méthodes. Les trois projections sont `model.layers.{i}.feed_forward.w1` (gate), `w3` (up) et `w2` (down). ROME et MEMIT ajustent uniquement `w2`. Leurs adaptations utilisent une covariance empirique régularisée, une cible optimisée sur deux formulations et une pénalité sur la déviation du vecteur. LoRA utilise le rang 8 et les trois projections. ROME/MEMIT sont des adaptations minimales des implémentations publiées. [ROME](https://arxiv.org/abs/2202.05262), [MEMIT](https://arxiv.org/abs/2210.07229).
+ROME restaure la projection d'origine entre les faits. Les 300 décisions et 30 consignes sont réparties en tourniquet entre ces éditions indépendantes. La perplexité agrège la log-vraisemblance du corpus répété pour chaque édition. Ajouter `--fact-id` pour isoler une édition et l'évaluer sur l'échantillon entier. Comparer MEMIT-10 à la même tranche de dix faits pour les autres méthodes. Les trois projections sont `model.layers.{i}.feed_forward.w1` (gate), `w3` (up) et `w2` (down). ROME et MEMIT ajustent uniquement `w2`. Leurs adaptations utilisent une covariance empirique régularisée, une cible optimisée sur deux formulations et une pénalité sur la déviation du vecteur. LoRA utilise le rang 8 et les trois projections. ROME/MEMIT sont des adaptations minimales des implémentations publiées. [ROME](https://arxiv.org/abs/2202.05262), [MEMIT](https://arxiv.org/abs/2210.07229).
 
 ## Réexport et comparaison Q4_0
 

@@ -128,6 +128,7 @@ def lora(engine, facts, epochs):
     from peft import LoraConfig, get_peft_model
 
     torch = engine.torch
+    torch.manual_seed(21)
     model = get_peft_model(engine.network, LoraConfig(
         r=8, lora_alpha=16, target_modules=["w1", "w2", "w3"], task_type="CAUSAL_LM"))
     # Non-reentrant checkpointing supports a frozen embedding input.
