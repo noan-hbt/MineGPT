@@ -50,16 +50,31 @@ Format : **ID — nom** · priorité (P1 haut) · dépend de · livrables · cri
   Skills paramétrés robustes (timeout, retry, raison d'échec) : `gather(item,n)`, `craft`, `smelt`, `mineOre(type)`, `buildShelter`, `sleep`, `farm`, `eat`, `fight`, `flee`, `explore`, `goHome`, `storeInChest`, `follow`, `come`.
   Fini : chaque skill a un test RCON (B6) qui passe.
   ⏳ 2026-11-17 : branche `b3-skills`, `skills.js` + `test_skills.js` (19/19 en arène, mine réel ~2/3), branché dans bot.js, reste test live.
-- [ ] **B4 — Mémoire longue** · P1 · B1
+- [x] **B4 — Mémoire longue** · P1 · B1
   `world.json` (base, lit, coffres+contenu, minerais vus, morts, biomes), journal d'épisodes résumé toutes les N actions (résumé par LLM), pile de tâches. Injection sélective (<2k tokens de prompt).
   Fini : redémarrage du bot → il retrouve sa base et reprend sa tâche.
   ⏳ 2026-11-17 : branche `b4-memory` (depuis `b3-skills`). `mcbot/memory.js` → `mcbot/memory/<nom>.json` : home (sethome ou 1re table posée),
   pile de tâches (goal interrompu repris quand le nouveau est fini), minerais/stations/lits/coffres vus (+ contenu déposé), morts,
   épisodes (résumé LLM toutes les 20 actions, async). Prompt : lignes Home/Remembered/Chest/Earlier. Verbe `goto <ore>` (minerai mémorisé
   non visible). Chat `tasks`, `memory`. `test_memory.js` OK. Live : redémarrage sans `--goal` → reprend iron_pickaxe + home vu. Reste : session longue.
+  Session longue auto (`localai-b4run/mcbot/longrun.js`, joueur spectateur « Tester », 30 min avant arrêt mémoire système) :
+  ✔ `tasks`/`memory` en chat, ✔ pile (`goal 3 torch` → atteint → reprend iron_pickaxe), ✔ `sethome` + kill → « back online » +
+  home retrouvé, ✔ 20 épisodes résumés LLM, ✔ iron_pickaxe atteint. Pas vu : mémoire coffre, `goto` minerai. Bug corrigé : faux
+  « resuming » au redémarrage quand la pile est vide.
 - [ ] **B5 — Boucle décision hiérarchique** · P1 · B2 B3 B4
   Réflexes (code) > LLM décideur appelé seulement sur fin/échec de tâche ou événement > exécution skill. Le décideur choisit un *skill+arg*, plus une action unitaire. Grammaire dynamique conservée.
   Fini : session 1 h autonome sans boucle infinie, progression au-delà de stone pickaxe.
+  ⏳ 2026-11-17 : `mcbot/control.js` (+ `test_control.js` 7/7). Tâche = skill+arg ; collect/mine répétés sans LLM tant que
+  l'étape du plan ne change pas (max 6) ; fin sur échec / événement (danger, nuit, nouveau goal, PV −4). Bans glissants
+  (échec 3× sur 12 actions → 5 min, pas seulement consécutifs) ; watchdog progrès = coût restant du plan, 20 actions sans
+  baisse → ban de l'action dominante 10 min + rotation explore. Hint/grammaire ignorent les actions bannies. Réflexe noyade `surface`.
+  Live (bot LFM5, inventaire vide, paisible) : iron_pickaxe en 22 actions / 4,6 min, puis diamond_pickaxe en 26 actions / 7 min
+  (1 mort lave en explore). Run « 1 h » (`--goals` = file de 6 objectifs) : bans live OK (explore bloqué, `place crafting_table`
+  refusé 3× → `goto crafting_table` mémorisé → iron_helmet, puis torches). Ajouts : `explore up` (escalier vers le ciel, nage si
+  eau, creuse à la main pour le passage), `goto crafting_table|furnace`, `--goals a,b,c`. Arrêté par manque de RAM avant 1 h.
+  Watchdog « no progress » jamais déclenché en live. Reste : vraie session 1 h (1 seul bot, RAM libre).
+  Bug B3 vu : 2 morts soudaines (PV 20→0) en `explore` souterrain (lave ?).
+  Vu sur l'ancien code (session B4) : boucle `collect coal_ore` (« no reachable ») ↔ `explore south` 123×, sous l'eau → motivé bans + `surface`.
 
 ### Évaluation
 - [ ] **B6 — Banc d'éval RCON** · P1 · B1

@@ -88,10 +88,10 @@ Strip a leading empty `<think></think>` from the content if present. Full workin
 
 ### bot.js design
 - Node 22, mineflayer 4.39 + mineflayer-pathfinder + mineflayer-collectblock. Bot name `LFM`.
-- Loop: `observe()` -> LLM picks ONE high-level action -> Mineflayer executes it (with per-action timeout).
-  Actions: collect/craft/place/attack/flee/eat/explore/come/wait.
+- Loop (B5): reflexes (code) > current task (repeats without LLM) > LLM picks ONE skill+arg (`skills.js`).
+  Verbs: collect/goto/mine/craft/place/smelt/attack/flee/eat/shelter/sleep/farm/store/home/explore/come/wait.
 - **Per-tick dynamic grammar**: only currently valid options (visible blocks minable with current pickaxe tier,
-  craftable items, present mobs, food) -> 100% valid actions. Options that failed 3x in a row are removed.
+  craftable items, present mobs, food) -> 100% valid actions. Banned actions (control.js) are removed.
 - Observation = goal, time, hp/food, nearby blocks, mobs, inventory, craftables, last 4 actions+results,
   then LAST line `Recommended action:` computed by code (`next` in observe()):
   danger reflex (hostile <=6 m: attack if hp>8 and not creeper, else flee) > eat if food<14 >
@@ -116,57 +116,58 @@ Strip a leading empty `<think></think>` from the content if present. Full workin
 
 ### Not tested / open
 - `follow` mode and the danger reflex with the real player (bot died to a zombie before the fixes; then Peaceful).
-- No progression beyond stone pickaxe (then mines stone forever). No iron/furnace, night shelter, farming.
+- (fixed since: iron and diamond pickaxes reached autonomously, see B5 below.)
 - Bot does not talk (no LLM chat replies). Ideas: LLM chat replies, commands like "mine iron" / "build shelter",
   use RCON for scripted tests.
 
-## State at end of session 2026-11-17 (resume here)
-- **Current branch: `b4-memory`** (branched from `b3-skills`; neither is merged into main, B3 not ticked).
-- **B4 memory done, needs the long live session** (next step, with the user in game):
-  - `mcbot/memory.js` -> `mcbot/memory/<botname>.json` (gitignored), saved every 10 s + on important events.
-    Holds: `home` (chat `sethome`, else the first crafting table the bot places; old `home.json` migrated),
-    `tasks` goal stack (new `goal` pushes the old one; when a planner target is done, it pops and resumes the previous),
-    `places` (ore veins merged within 4 blocks, crafting_table/furnace/chest/bed, max 12 per kind; forgotten when the
-    block is gone, checked within 12 m), `chests` (what the bot deposited), `deaths`, `episodes` (1 sentence every 20 actions:
-    LLM summary async ~480 ms, code summary fallback, cut at 200 chars).
-  - bot.js: startup goal = `--goal` > remembered task > `iron_pickaxe`. Chat says "back online, resuming: ...".
-    Prompt gets short lines after Goal: `Home: 10m south-west, 9 up.` / `Remembered: ...` (stations + plan ores NOT in view) /
-    `Chest (...): ...` / `Earlier: <last episode>` / `Died recently (...)`. "Recommended action" stays last line.
-    New verb `goto <ore>` (plan ore remembered within 128 m but not visible; hint prefers it over `mine`). Chat `tasks`, `memory`.
-  - skills.js: `storeInChest` calls `env.onStore(pos, {item: n})`.
-  - Tests: `node test_memory.js` passes (offline restart). Live: run 1 recorded ores/stations/death; run 2 without `--goal`
-    resumed iron_pickaxe and saw home (home was set by hand in the json to the known table at -18,65,653).
-  - NOT seen live: task-stack resume, `goto` action, chest memory, episode summary in the real loop.
-- **Long session to do (resume here)**: `.\run-bot.ps1` (no -Goal), user in game. Check: `memory` / `tasks` chat, `goal 3 torch`
-  then resume iron_pickaxe, `sethome` then kill node (wrapper restarts) -> it finds home + resumes, `goto` used for iron,
-  episodes in memory json. If OK: tick B4, merge b3-skills + b4-memory into main.
-- Seen in B4 live runs (B3 execution, not memory): `collect iron_ore` times out every time (~40 s, ore seen through walls
-  at 32 m); bot died once with cause unknown (hp dropped to 8) -> difficulty may no longer be peaceful.
-- **B3 (branch `b3-skills`, included in b4-memory)**. Done:
-  - `mcbot/skills.js`: skill library, each skill returns "ok ..." or a reason, own budget/retries: gather, mineOre,
-    craft, place, smelt, eat, fight, flee, buildShelter, sleep, farm, storeInChest, goHome, explore, come, follow.
-  - `mcbot/rcon.js` (RCON client, `node rcon.js <cmd>`), `mcbot/test_skills.js` (one RCON test per skill, sky arena
-    x=3000 z=3000 on a bedrock platform; `node test_skills.js [names] [--skip names]`). **19/19 pass** (except mine_hidden, see below).
-  - Fixes found by the tests: never dig the block under your feet; enclosed ores (dig what blocks the line of sight);
-    place in a 1x1 shaft (dig a wall cell, don't walk into it); crops (rays pass through them); bed = wait for the 2nd half.
-  - **Mining bug (user report "breaking stops before the block breaks", worse in water/ice)**: mineflayer computes the dig
-    time once and only detects water if the eye block is named `water` -> sends "finished" too early, server refuses.
-    Patched in skills.js (`bot.digTime` x5 when physics says in water, + margin 1.15/2/5 per retry). Not yet checked live.
-  - `mineOre`: own staircase/tunnel digging (`digStep`), refuses steps next to liquid, walks to dry ground when boxed in.
-    Pathfinder GoalY was too slow ("Took to long to decide path"). Real terrain test: ~2/3 pass (oceans/frozen biome near
-    x=3400 z=3200). Last change (gather counts success only if it got the block's own drop) is NOT re-tested.
-  - `bot.js` wired to skills (patch applied, syntax OK, **NOT run live yet**): new verbs mine/shelter/sleep/farm/store/home,
-    SYSTEM prompt updated, `collect` mines up to the plan's count (cap 4), reflexes in code (flee when hp<=8 or creeper,
-    eat when hp<=10, wait when sheltered at night), `sethome` chat command (home.json), liquidCost 8 (avoid water).
-- **B3 leftovers (old NEXT)**: 1) `node test_skills.js` once to confirm, 2) restart run-bot (LFM still runs OLD code) and watch 5 min
-   (difficulty normal + night) — check mining in water/ice, reflexes, shelter. 3) merge b3-skills, tick B3, then B4 memory.
-- User feedback: sessions felt too long / looping. Keep iterations short, stop debugging edge cases (e.g. mine_hidden
-  flakiness) once the main path works; prefer live test with the user over long offline loops.
-- Server state: peaceful, advance_time false, keep_inventory true. RCON gamerules are snake_case on 1.21.11.
-- **B21 closed: no.** Verdict in `b21/REPORT.md`. `b21/eval.py compare()` = offline decision replay, reuse for B6/B15.
+## State at end of session 2026-11-17 #2 (resume here)
+- **Branch `main`** = B3 skills + B4 memory + B5 control merged and pushed (github noan-hbt/MineGPT).
+  ROADMAP: B1 open (stats ok, no 1 h log yet), B2 [x], B3 [ ] (works live, see bugs), **B4 [x]**, **B5 [ ] = code done, 1 h run missing**.
+- **Everything was stopped**: Claude Code killed llama-server, MC server and the bots (Windows RAM low: 16 GB with MC server,
+  llama-server, 3 bot clients, Windows Update TiWorker 1.4 GB, Roblox, ChatGPT). Roblox + ChatGPT closed since.
+  Restart: `.\start-game.ps1`, `.\start-mc.ps1`. Run ONE bot at a time.
+
+### B5 — hierarchical control (`mcbot/control.js`, tests `node test_control.js` 7/7)
+- Loop: reflexes (code) > current task > LLM decider. Task = the skill+arg the LLM picked. `collect`/`mine` repeat
+  WITHOUT the LLM while the plan's first step is unchanged and the result is ok (max 6 runs). Task ends on failure or event
+  (hostile appears, night/day flips, new goal, hp -4) -> LLM asked again. Log: source `task`, event `task_end` (why).
+- Bans: action failing 3x within the last 12 actions -> banned 5 min (grammar + hint skip it). Catches A,B,A,B loops that the
+  old "3x in a row" rule missed (B4 run: `collect coal_ore` <-> `explore south` 123x).
+- Watchdog: progress = remaining plan cost (`planCost`). 20 actions without a new best -> ban the most used action 10 min,
+  rotate explore direction, event `stuck`. Setback (death) resets the baseline. Free-text goals: item gain = progress,
+  unless the same action 8x. **Never fired live yet.**
+- New in bot.js/skills.js: reflex `surface up` (in water + oxygen < 12 -> hold jump); `explore up` (staircase to open sky,
+  swims if in water, digs path cells by hand when no pickaxe; hint uses it when the plan needs a surface block and the
+  bot is underground); `goto crafting_table|furnace` (remembered station within 64 m; hint when `place` is banned);
+  `--goals a,b,c` (queue up to 6 goals on the task stack); fix: no false "resuming" after restart with an empty stack.
+- Live (bot `--name LFM5`, separate memory): empty inventory -> iron_pickaxe 22 actions / 4.6 min; diamond_pickaxe 26 actions /
+  7 min; goal-queue run: place refused 3x -> banned -> goto crafting_table -> iron_helmet -> torches, killed (RAM) at ~6 min.
+- **NEXT (to tick B5)**: one bot, 1 h: `node bot.js --name LFM5 --goals "16 torch,shield,bucket,diamond_sword,golden_apple"`
+  (or `run-bot.ps1`). Check: no endless loop, watchdog `stuck` events if it blocks, `python stats.py` (source task vs llm).
+  For a session without the user in game: `node mcbot/longrun.js [minutes]` (bot restart loop + spectator "Tester" that sends
+  chat commands and kills the bot once). It runs bot.js from its own folder: to keep coding meanwhile, run it from a
+  `git worktree` copy (junction `mcbot/node_modules`, copy `mcbot/memory/LFM.json`).
+
+### B4 — closed
+- Long unattended session (30 min before RAM kill): `tasks`/`memory` chat, goal stack (`goal 3 torch` -> done -> resumes
+  iron_pickaxe), `sethome` + kill -> "back online" + home found, 20 LLM episode summaries, iron_pickaxe reached.
+  Not seen live: chest memory, `goto <ore>`.
+
+### Bugs seen (B3 execution, not fixed)
+- 2 sudden deaths (hp 20 -> 0 in one action) during `explore` underground: lava or fall. Check pathfinder Movements
+  (lava avoidance, maxDropDown) or add a lava check to explore.
+- B4 run: `collect coal_ore` -> "no reachable coal_ore found" while observe() shows coal 12 m away (bot underwater).
+  observe and gather disagree; not investigated.
+- `place crafting_table` refused by the server 3x on the same spot (-38,41,637); findPlaceSpot keeps the same bad cell.
+- Mining-in-water dig-time patch: still not checked on purpose.
+
+### Other
+- Server: difficulty peaceful, advance_time false, keep_inventory true. RCON gamerules snake_case on 1.21.11.
+  `spreadplayers` needs spreadDistance >= 1 (`spreadplayers 0 600 1 60 false <name>`).
+- **B21 closed: no.** `b21/eval.py compare()` = offline decision replay, reuse for B6/B15.
 - **Training plan agreed:** DeepSeek tool-calling examples for the LoRA decider (B12-B15), labelled on REAL logged
-  observations, after B3/B5 freeze the action format. Then DAgger loop.
-- `mcbot/last_obs_LFM2.txt` = debug leftover, can be deleted.
+  observations. B5 froze the action format (verbs above + `goto` stations + `explore up`). Then DAgger loop.
+- User feedback: keep iterations short, test live early, stop chasing flaky edge cases.
 
 ## Next: see ROADMAP.md
 Plan decided 2026-11-17 (blocks B1-B20): skills+recipe planner+memory, voice chat, LoRA training (option A: 1 base + 2 LoRA), teacher model, control app, Fabric mod.
