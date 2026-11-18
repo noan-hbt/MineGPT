@@ -39,6 +39,7 @@ function fmtCall(n) {
   for (const a of spec.args) {
     if (!(a.name in n.args)) continue
     if (a.type === 'stmt') tail = fmtStmt(n.args[a.name])
+    else if (a.type === 'cond') out.push(fmtCond(n.args[a.name]))
     else out.push(fmtValue(n.args[a.name]))
   }
   for (const [k, v] of Object.entries(n.args)) if (!pos.has(k)) out.push(`${k}=${fmtValue(v)}`)

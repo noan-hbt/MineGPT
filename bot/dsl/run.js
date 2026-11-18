@@ -18,7 +18,7 @@ const DEFAULT_TIMEOUT = 120
 // seconds; null = none (the verb ends by itself, by until() or by stop)
 const TIMEOUTS = { follow: 1800, avoid: null, wait: null, fight: 300, mine: 300, chop: 300, strip_mine: 600,
   branch_mine: 1200, dig: 600, break: 300, explore: 300, fish: 600, sleep: 60, descend: 300, ascend: 300, harvest: 300,
-  breed: 180, smelt: 900, blast: 900, smoke: 900, place: 300, collect: 120, shield: 60, flee: 120, give: 120 }
+  breed: 180, achieve: 3600, smelt: 900, blast: 900, smoke: 900, place: 300, collect: 120, shield: 60, flee: 120, give: 120 }
 
 class Scope {
   constructor(parent, onAbort) {

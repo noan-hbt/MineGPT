@@ -1,11 +1,18 @@
 // Live harness: connect a mineflayer bot, build the full structured state every call tick, render the sheet,
 // log everything to data/own/<date>/<session>.jsonl. Actions run through the DSL interpreter (dsl/run.js, H3).
-// No model yet: turns come from a script file (turns.md format, turns separated by a line `---`) or chat.
+// Turns come from a script file (turns.md format, turns separated by a line `---`), chat test hooks, or --mind.
 //
 //   node harness.js [--name LFM] [--host 127.0.0.1] [--port 25565] [--hz 2] [--minutes 1] [--script turns.txt]
 //
 // Chat commands (test hooks, also logged as chat events): do <statement> [=> <expect>] | tool <call> | stop |
 //   goal <text> | done | note <text> | place <name> | plan a | b
+//
+// Live mind (H5 policy, sim/mind.js, on the real server, no lockstep):
+//   node harness.js --mind [--llm http://127.0.0.1:8080] [--model id] [--codex low|medium] [--max-tokens 512]
+//                   [--idle 30] [--minutes 0 (= no limit)]
+// The model decides whenever the bot is idle and something happened (chat, damage, action result...), it has a
+// goal, or every --idle s. A player chat line interrupts the running action so the model reads it right away.
+// Chat hooks in mind mode start with "!": !pause | !resume | !stop (stop the action). Other chat goes to the model.
 'use strict'
 const fs = require('fs')
 const path = require('path')
@@ -20,7 +27,9 @@ const { Turns } = require('./turns')
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? process.argv[i + 1] : d }
 const NAME = arg('name', 'LFM')
 const HZ = +arg('hz', 2)
-const MINUTES = +arg('minutes', 1)
+const MIND = process.argv.includes('--mind')
+const MINUTES = +arg('minutes', MIND ? 0 : 1)
+const IDLE_S = +arg('idle', 30)
 const SCRIPT = arg('script', null)
 const DATA = path.resolve(__dirname, '..', 'data', 'own')
 const FULL_EVERY = 10 // full re-render sent every N calls (else diff), as the mind loop will do
@@ -49,10 +58,15 @@ bot.once('spawn', () => {
   interp = new Interpreter(bot, senses, { log: write })
   turns = new Turns({ bot, senses, interp })
   write({ type: 'session', session, bot: NAME, version: bot.version, renderer: VERSION, hz: HZ, script: SCRIPT, start: new Date().toISOString() })
-  bot.on('chat', (from, msg) => { if (from !== bot.username) command(from, msg) })
-  timer = setInterval(tick, 1000 / HZ)
-  if (SCRIPT) runScript(SCRIPT)
-  setTimeout(stop, MINUTES * 60000)
+  if (MIND) {
+    bot.on('chat', (from, msg) => { if (from !== bot.username) mindChat(from, msg) })
+    mindLoop() // no tick(): build() drains the pending events, only the mind may consume them
+  } else {
+    bot.on('chat', (from, msg) => { if (from !== bot.username) command(from, msg) })
+    timer = setInterval(tick, 1000 / HZ)
+    if (SCRIPT) runScript(SCRIPT)
+  }
+  if (MINUTES > 0) setTimeout(stop, MINUTES * 60000)
 })
 
 function tick() {
@@ -105,6 +119,54 @@ async function doTurn(text, from) {
   const ev = r.done ? await r.done : null
   if (ev && from) bot.chat(`${ev.status}${ev.cause ? ' (' + ev.cause + ')' : ''}${ev.detail ? ': ' + ev.detail : ''}`.slice(0, 250))
   return { r, ev }
+}
+
+// ---- live mind ----
+let mindPaused = false
+const sleep = ms => new Promise(r => setTimeout(r, ms))
+// events worth a decision on their own (entity_appear/leave, sounds, time... only ride along)
+const WAKE = new Set(['chat', 'damage', 'death', 'respawn', 'result', 'tool_answer', 'invalid_output', 'interrupt'])
+
+function mindChat(from, msg) {
+  const m = msg.trim().match(/^!(\w+)/)
+  if (m) {
+    if (m[1] === 'pause') { mindPaused = true; interp.stop('paused by player'); bot.chat('mind paused') }
+    else if (m[1] === 'resume') { mindPaused = false; bot.chat('mind resumed') }
+    else if (m[1] === 'stop') interp.stop(`stopped by ${from}`)
+    return
+  }
+  // Senses already queued the chat event; stop the running action so the model reads the order now
+  if (!mindPaused && interp.running()) interp.stop(`${from} spoke`)
+}
+
+async function mindLoop() {
+  const { Mind } = require('./sim/mind')
+  const mind = new Mind({ url: arg('llm', 'http://127.0.0.1:8080'), model: arg('model', null), codex: arg('codex', null),
+    maxTokens: +arg('max-tokens', 512), temperature: +arg('temp', 0.3), write })
+  const ep = { id: 'live', seed: 0 }
+  let last = 0, n = 0
+  console.log(`mind on: ${arg('codex', null) ? 'codex ' + arg('codex') : arg('llm', 'http://127.0.0.1:8080')}; chat !pause !resume !stop`)
+  while (!stopping) {
+    if (mindPaused || !bot.entity || senses.dead || interp.running()) { await sleep(300); continue }
+    const wake = senses.pending.some(e => WAKE.has(e.kind)) || senses.memory.goals.stack.length > 0 || Date.now() - last > IDLE_S * 1000
+    if (!wake) { await sleep(300); continue }
+    last = Date.now(); n++
+    try {
+      const { r, done } = await mind.decide({ senses, interp, turns, bot, ep })
+      const t = r.turn || {}
+      console.log(`[${n}] ${t.act ? 'act: ' + require('./dsl/fmt').fmtStmt(t.act) : r.ok ? '(no act)' : 'INVALID ' + r.error}${t.say ? ' | say: ' + t.say : ''}`)
+      const ev = done ? await done : null
+      if (ev) console.log(`    -> ${ev.status}${ev.cause ? ' ' + ev.cause : ''}${ev.detail ? ': ' + String(ev.detail).slice(0, 160) : ''}`)
+      write({ type: 'mind_step', n, stmt: ev ? ev.stmt : null, result: ev })
+      if (!ev) await sleep(500)
+    } catch (e) {
+      console.error('mind error:', e.message)
+      write({ type: 'error', where: 'mind', error: String(e.stack) })
+      await sleep(5000)
+    }
+  }
+  write({ type: 'mind_stats', ...mind.stats })
+  console.log('mind stats', JSON.stringify(mind.stats))
 }
 
 async function runScript(file) {

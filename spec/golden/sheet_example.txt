@@ -1,4 +1,4 @@
-## MANUAL [62fa]
+## MANUAL [9be6]
 MineGPT harness r1. You read this sheet and answer with tagged lines (tag: content).
 decision turn: think:* then either 1-4 tool: lines (results come back, continue) or a final turn:
   plan:? act: <stmt> expect: <cond, cond in DUR> note:* say:? goal:? ask:?
@@ -10,14 +10,14 @@ goal: push <text> | replace <text> | done | fail <reason> ; plan: step | step | 
 verbs:
   movement: goto <target> [dist=] ; follow <target> [dist=] ; flee <from> [dist=] ; explore [dir=] [radius=] [prefer=] ; descend [to_y=] [mode=] ; ascend [to_y=] ; pillar <n> [block=] ; bridge <dir> <n> [block=] ; swim_up ; look <target> ; wander [radius=]
   gathering: mine <block> [n=] [near=] [tool=] ; chop [n=] [species=] ; strip_mine <dir> [len=] [y=] ; branch_mine [len=] [spacing=] [y=] ; dig <area> ; break <at> ; collect <item> [radius=] ; harvest <crop> [n=] [replant=] ; fish [n=] ; shear <target> ; milk <target>
-  craft: craft <item> [n=] ; smelt <input> [n=] [fuel=] ; blast <input> [n=] [fuel=] ; smoke <input> [n=] [fuel=] ; enchant <item> [level=] ; repair <item> [with=] ; brew <potion> [n=] ; stonecut <input> <output> [n=] ; smith <base> <addition> [template=] ; trade <with> <offer> [n=]
+  craft: craft <item> [n=] ; smelt <input> [n=] [fuel=] ; blast <input> [n=] [fuel=] ; smoke <input> [n=] [fuel=] ; enchant <item> [level=] ; repair <item> [with=] ; brew <potion> [n=] ; stonecut <input> <output> [n=] ; smith <base> <addition> [template=] ; trade <with> <offer> [n=] ; achieve <goal> [via=]
   build: place <block> [at=] [face=] ; use <item> [on=]
   combat: attack <target> ; fight <target> ; shoot <target> [n=] ; shield [dur=] ; retreat [to=] ; avoid <target> [radius=] ; eat <food> ; sleep [at=] ; equip_best [slot=] ; set_spawn [at=] ; water_bucket_save ; extinguish
   inventory: equip <item> [slot=] ; drop <item> [n=] ; store [chest=] [filter=] ; take <item> [n=] [chest=] ; sort ; toss_junk [keep=] ; keep <items>
   farm: plant <seed> [at=] ; bonemeal <target> ; breed <target> [n=] ; lead <target> ; tame <target> ; feed <target> <item>
   social: say <text> ; whisper <to> <text> ; give <to> <item> [n=] ; come_to <to> [dist=] ; obey ; refuse <reason>
   meta: wait <dur> ; note <text> [key=] ; forget <key> ; name_place <name> [at=] ; save_routine <name> <body> ; stop
-tools: recipe <item> ; uses <item> ; where <target> [n=] ; scan [radius=] [filter=] ; path_cost <target> ; inv ; chest <at> ; recall <query> ; wiki <query> ; mob_info <mob> ; loot <block> ; biome_info <biome> ; simulate <body>
+tools: recipe <item> ; plan <goal> ; uses <item> ; where <target> [n=] ; scan [radius=] [filter=] ; path_cost <target> ; inv ; chest <at> ; recall <query> ; wiki <query> ; mob_info <mob> ; loot <block> ; biome_info <biome> ; simulate <body>
 sheet: times are relative to now; dist in blocks; dir N=-z E=+x; slice rows go north->south, columns west->east.
 
 ## MEMORY [954e]

@@ -120,10 +120,99 @@ Strip a leading empty `<think></think>` from the content if present. Full workin
 - Bot does not talk (no LLM chat replies). Ideas: LLM chat replies, commands like "mine iron" / "build shelter",
   use RCON for scripted tests.
 
-## State 2026-11-17 session #20 (RESUME HERE) — mind policy works with gpt-6.2-sol; SFT trace generation running
+## State 2026-11-18 session #21b (RESUME HERE) — GOAP planner + `achieve`; Bonsai 5/6 with plan tool
+Branch `v2`, **nothing committed** (the session #20/#21 changes are uncommitted too). Design + results: `notes/goap.md`.
+
+**Built.** The user's idea: GOAP/BT with the LLM as "traducteur & arbitre". Decision: **default execution** (the
+executor runs the plan; the model steps in on a new plan, a failure, a surprise or chat).
+- `bot/plan/goap.js`: pure planner.
+  - Backward chaining over crafting, smelting, blasting and smoking, natural block drops (placed forms excluded),
+    random drops (flint from gravel) and items lying on the ground (`collect`).
+  - Handles harvest tools, stations (place crafting_table/furnace/...) and fuel. Inventory reservations,
+    backtracking, station cost measured by a trial sub-plan.
+  - 1-3 alternatives (`force` map), about 1 ms per plan.
+- `bot/plan/live.js`:
+  - live world: **one** findBlocks scan per plan. One scan per kind blocked the event loop 10 s and the server
+    dropped the bot with ECONNRESET.
+  - the `achieve <goal> [via=N]` verb: plan -> run first step -> replan; it fails back to the model after 2 failures
+    of the same step or when stuck. Places stations on a free spot (never on top of a table).
+  - `tool: plan <goal>`.
+- Wiring:
+  - `spec/catalog.json`: verb achieve, tool plan.
+  - `dsl/run.js`: achieve timeout 3600.
+  - `dsl/fmt.js`: cond arguments are now formatted.
+  - `skills/index.js`.
+  - `tools.js`.
+  - mind.js SYSTEM: plan/achieve example.
+  - golden sheet updated.
+  - `test/plan.js` (8 tests) added to `npm test`; everything passes.
+- `run_cards.js --policy achieve`: one `achieve have(X)>=N` per have-card, no model.
+  **Planner alone: 54/54** (27 have-cards x seeds 1,2, 277 s; `eval/results/goap_achieve_s12.txt`).
+- `dsl/gbnf.js`: goal/say/note capped at 150 chars, plan at 200, act/tool arguments restricted to DSL characters +
+  "quoted" text. LFM3 wrote paragraphs in goal:/say: and hit max_tokens.
+- `eval/bench_mind.ps1 -Suffix _x` (tag suffix).
+
+**Mind bench (6 easy episodes, lockstep sim 1, `-Grammar -Suffix _goap`):**
+- **Bonsai-2B Q2: 5/6** (was 2/6), 12/34 invalid, 0.6 s per call.
+  - It calls `tool: plan` 16 times and **never `achieve`**: it reads the plan and types the verbs itself.
+  - It ran with the NEW capped grammar, so grammar and GOAP are confounded.
+  - **User: we will probably keep Bonsai.**
+- LFM3: 0/6, not usable.
+  - It ran with the OLD grammar: 43/47 invalid, 10 s per call.
+  - Then llama-server crashed: `CUDA error: illegal memory access`. Likely VRAM contention with Gemini's job
+    (7.7/8.2 GB used).
+
+**Gemini** is running a weight-writing experiment on the 350M (GPU, should be finished around 11:30); maybe test it
+too (`serve_hf.py`).
+
+### Next (agreed with the user)
+1. `--no-goap` flag for run_cards/mind: remove plan/achieve from the MANUAL (render.js manual() from the catalog)
+   and from the grammar (gbnf verbs/tools).
+2. Bench with the same capped grammar, with and without GOAP: Bonsai x2 and LFM3 x2 (6 episodes each). The GPU
+   must be free of Gemini's job first.
+3. Then harder cards (d2, multi-step: iron_pickaxe, torches from nothing...), where the planner should matter.
+4. Why does Bonsai not use `achieve`? Maybe make the plan output point to it.
+
+### Gotchas
+- Killing a lockstep run leaves the sim frozen: `node sim/instance.js stop 1; start 1`.
+- run_cards log file names are stamped in UTC (local time = UTC+1).
+- The DeepSeek trace run on **sim 0** (`--cmdc deepseek ... --lang fr`) was still running all session: leave it
+  alone.
+- The first episode right after a sim start can lose a craft (planks seed 1 once: 3 logs lost, 0 planks), not
+  reproduced.
+
+## State 2026-11-17 session #20 — mind policy works with gpt-6.2-sol; SFT trace generation running
 Branch `v2`, nothing committed this session (bot/sim/mind.js, run_cards.js, export_sft.js, dsl/parse.js).
 
-### Running (detached from Claude Code, survives /clear)
+**UPDATE 22:2x: trace run STOPPED by user (ChatGPT 5h quota ~10% left).** d1_rest 31/36, d2 partial 36/36 pass
+(stopped ~1/3 into d2's 108 episodes; remaining d2 cards not traced). MineSim 0 restarted. Export done:
+88 episodes, 83 kept, **181 examples -> data/sft/mind_sft.jsonl**. Resume d2 later with a reduced ids_d2.txt.
+
+**Live mind (v2 playable, untested live yet):** `node bot/harness.js --mind [--llm URL | --codex medium] [--temp 0]`
+on the real server (no lockstep). Decides when idle + (wake event | goal on stack | every --idle 30 s); a player chat
+line interrupts the running action; `!pause/!resume/!stop` in chat. No tick() logger in mind mode (build() drains
+events). 350M fine-tunes (exp_350m/, user+Gemini: sol-exp 87% valid turns offline, sol-mega WIP) served by
+`python serve_hf.py --model models/LFM2.5-350M-sol-exp [--device cpu]` on :8081 (no GGUF converter in llama.cpp/).
+Idea (user agreed): **monitor-call traces** (continue/adjust/interrupt while an action runs) for the 350M; with a
+Q8 GGUF (~0.4 s/decision est., prompt cache ~0.15 s/monitor) the mind could monitor 2-3x/s. Prefer Q8 over Q4
+(tiny speed gain, likely validity loss on a 350M). Needs convert_hf_to_gguf.py + mind.js monitor loop.
+
+**2026-11-18 (session #21):** reboot fixed GPU 30 W cap (memory/gpu-power-cap.md). Mind bench, 6 easy episodes,
+lockstep sim 1 (`eval/bench_mind.ps1`, llama-server b256): **LFM3-1.7B-QAD 0/6 (65/68 invalid, ~5.4 s/call)**: think
+spills onto untagged prose lines; **Bonsai-2B Q2 1/6 (54/59 invalid, 1.5 s/call)**: writes `tag: plan`, invents expect
+conditions. Format = bottleneck -> SFT on sol traces or GBNF-constrained decoding. **GBNF grammar** (`bot/dsl/gbnf.js`, `run_cards.js
+--grammar`, `eval/bench_mind.ps1 -Grammar`, server reasoning off): Bonsai 2/6 (21/54 invalid, 0.5 s), LFM3 3/6 then 2/6
+with think capped at 300 chars (52/61 invalid: free-text act args with `?`/`.`, made-up targets). Grammar fixes the
+tags, not the content -> SFT needed; keep grammar as a safety net for fine-tuned models.
+**Teacher switched to DeepSeek v4.1 flash via Command Code** (`--cmdc deepseek/deepseek-v4.1-flash`, ~8 s/call, 6/6
+easy, 3/13 invalid) because Codex exec hung for minutes (also with --ignore-user-config). `--lang fr` = French free
+text. Traces: `data/sft/run_traces_ds.ps1` (35 d2 cards, `ids_d2_rest2.txt`) -> `traces_T_DS_d2.txt`, logs
+`*_T_DS_d2_cards.jsonl` (export glob must include T_DS_). Traces resumed: remaining 36 d2 cards
+(`data/sft/ids_d2_rest.txt`), gpt-6.2-sol LOW, sim 0, `data/sft/run_traces_d2rest.ps1` -> `traces_d2_rest.txt`, bot
+name `T_SOL_d2r_low` (MC names max 16 chars: longer = `Failed to decode packet 'serverbound/minecraft:hello'`).
+Occasional `LLM timeout (codex)` episode errors.
+
+### (was) Running (detached from Claude Code, survives /clear)
 `data/sft/run_traces.ps1` (PowerShell, hidden): gpt-6.2-sol medium via Codex as the mind policy on train cards,
 rest of d1 (18 cards) then d2 (51), seeds 1,2. Progress `data/sft/traces_d1_rest.txt`, `traces_d2.txt`; done marker
 `data/sft/traces_DONE.txt`. Episode logs `data/own/2026-11-17/*_T_SOL_*_cards.jsonl` (+ earlier `*_CODEX1_*`,

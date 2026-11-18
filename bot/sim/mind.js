@@ -32,10 +32,21 @@ expect: dist(@house)<3 in 60s
 think: I do not know how a lantern is crafted.
 tool: recipe lantern
 
+think: Noan wants an iron pickaxe; the planner lists the steps.
+tool: plan have(iron_pickaxe)>=1
+
+think: plan 1 uses the iron ore I saw; I follow it.
+goal: push iron pickaxe for Noan
+act: achieve have(iron_pickaxe)>=1 via=1
+expect: have(iron_pickaxe)>=1 in 10m
+
 think: the goal is done.
 goal: done
 say: done, here are your planks
 act: wait 2s`
+// --lang fr: free text (think/plan/note/say/goal) in that language whatever the chat language; DSL stays as is
+const LANG = { fr: '\n\nLanguage: write the text of think, plan, note, say and goal lines in French (even if the chat is in ' +
+  'English). act, expect and tool lines are DSL and stay exactly as specified (English verbs and ids).' }
 const MAX_TOOL_ROUNDS = 4
 
 // POST /v1/chat/completions with real-time timeouts (the bot clock may be virtual or held)
@@ -91,6 +102,37 @@ function codexChat(messages, { model = null, effort = 'low', timeoutMs = 300000,
   })
 }
 
+// Command Code CLI as the model (DeepSeek on the user's subscription): same flattening as codexChat, headless one-turn
+// run in an empty temp dir (no session saved), NDJSON output; the reply is the final result's finalText.
+function cmdcChat(messages, { model = 'deepseek/deepseek-v4.1-flash', effort = null, timeoutMs = 300000, setT = setTimeout } = {}) {
+  const { spawn } = require('child_process')
+  const fs = require('fs'), os = require('os'), path = require('path')
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'mind-cmdc-'))
+  const prompt = 'You are the decision model of a game bot, not a coding agent: do not use any tool, do not read any file. ' +
+    'Your whole final message is parsed by a program, so it must contain only the tagged lines asked for.\n\n' +
+    messages.map(m => `### ${m.role.toUpperCase()}\n${m.content}`).join('\n\n') + '\n\n### YOUR ANSWER (tagged lines only)'
+  const args = ['-p', '--no-session', '--max-turns', '1', '--output-format', 'json', '-m', model, ...(effort ? ['--effort', effort] : [])]
+  return new Promise((resolve, reject) => {
+    const p = spawn('commandcode', args, { shell: true, windowsHide: true, cwd: dir })
+    let out = '', err = ''
+    p.stdout.on('data', c => { out += c })
+    p.stderr.on('data', c => { err += c })
+    const t = setT(() => { p.kill(); reject(new Error('LLM timeout (cmdc)')) }, timeoutMs)
+    p.on('error', e => { clearTimeout(t); reject(e) })
+    p.on('close', code => {
+      clearTimeout(t)
+      fs.rmSync(dir, { recursive: true, force: true })
+      const line = out.split(/\r?\n/).reverse().find(l => l.startsWith('{"type":"result"'))
+      let r = null
+      try { r = JSON.parse(line) } catch {}
+      if (!r || r.subtype !== 'success') return reject(new Error(`cmdc failed (${code}): ${(r && r.error) || (err || out).slice(-300)}`))
+      const u = r.usage || {}
+      resolve({ choices: [{ message: { content: r.finalText || '' }, finish_reason: r.stopReason }], usage: { completion_tokens: u.outputTokens || 0, prompt_tokens: u.inputTokens || 0 } })
+    })
+    p.stdin.end(prompt)
+  })
+}
+
 class Mind {
   // opts: {url, model, maxTokens, temperature, hold(fn), setT, write}
   constructor(opts) { this.o = { maxTokens: 1024, temperature: 0.3, hold: fn => fn(), write: () => {}, ...opts }; this.stats = { calls: 0, tokens: 0, ms: 0, invalid: 0 } }
@@ -98,16 +140,18 @@ class Mind {
   async ask(messages) {
     const { url, model, maxTokens, temperature, hold, setT, key } = this.o
     // remote reasoning models take max_completion_tokens and only the default temperature
-    const body = key ? { messages, max_completion_tokens: maxTokens, model } : { messages, max_tokens: maxTokens, temperature, ...(model ? { model } : {}) }
-    const t0 = performance.now() // real time: Date.now() is the virtual clock in lockstep
-    const r = await hold(() => this.o.codex ? codexChat(messages, { model, effort: this.o.codex, setT })
+    const body = key ? { messages, max_completion_tokens: maxTokens, model }
+      : { messages, max_tokens: maxTokens, temperature, ...(model ? { model } : {}), ...(this.o.grammar ? { grammar: this.o.grammar } : {}) }
+    const t0 = process.hrtime.bigint() // real time: Date.now()/performance.now() are virtual in lockstep
+    const r = await hold(() => this.o.cmdc ? cmdcChat(messages, { model: this.o.cmdc, effort: this.o.effort, setT })
+      : this.o.codex ? codexChat(messages, { model, effort: this.o.codex, setT })
       : chat(url, body, { setT, key, timeoutMs: key ? 300000 : 120000 }))
     if (r.error) throw new Error(`LLM error: ${r.error.message || JSON.stringify(r.error)}`)
     const msg = (r.choices && r.choices[0] && r.choices[0].message) || {}
     const usage = r.usage || {}
     const rt = (usage.completion_tokens_details || {}).reasoning_tokens
     this.stats.calls++; this.stats.tokens += usage.completion_tokens || 0
-    const ms = r.timings ? Math.round((r.timings.prompt_ms || 0) + (r.timings.predicted_ms || 0)) : Math.round(performance.now() - t0)
+    const ms = r.timings ? Math.round((r.timings.prompt_ms || 0) + (r.timings.predicted_ms || 0)) : Number((process.hrtime.bigint() - t0) / 1000000n)
     this.stats.ms += ms
     // some templates leave <think> blocks in the content
     const text = String(msg.content || '').replace(/<think>[\s\S]*?<\/think>/g, '').replace(/^```\w*\n?|```$/gm, '').trim()
@@ -118,7 +162,7 @@ class Mind {
   async decide({ senses, interp, turns, bot, ep }) {
     const state = senses.build({ call: 'decision', running: null, expect: interp.expectInfo() })
     const sheet = render(state).text
-    const messages = [{ role: 'system', content: SYSTEM(bot.username) }, { role: 'user', content: sheet }]
+    const messages = [{ role: 'system', content: SYSTEM(bot.username) + (LANG[this.o.lang] || '') }, { role: 'user', content: sheet }]
     let retried = false
     for (let round = 0; ; round++) {
       if (round === MAX_TOOL_ROUNDS) messages.push({ role: 'user', content: 'No more tool rounds: give your final turn now (act: + expect:).' })

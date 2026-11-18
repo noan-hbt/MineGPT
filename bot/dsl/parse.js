@@ -432,4 +432,4 @@ function parseAdjust(src, verb) {
   }, catalog.verbs));
 }
 
-module.exports = {parseStmt, parseTool, parseCond, parseExpect, parseAdjust, catalog, names, lex};
+module.exports = {parseStmt, parseTool, parseCond, parseExpect, parseAdjust, catalog, names, lex, FLAGS, METRICS, ARG_METRICS, CMPS};

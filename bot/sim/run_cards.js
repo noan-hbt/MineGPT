@@ -1,8 +1,9 @@
 // H4 scenario-card runner (notes/scenario-cards.md). Runs cards x seeds on a MineSim instance with a policy:
-//   node sim/run_cards.js [--sim 0] [--lock] [--only id1,id2|area.] [--seeds 1,2] [--policy script|mind] [--name LFM]
+//   node sim/run_cards.js [--sim 0] [--lock] [--only id1,id2|area.] [--seeds 1,2] [--policy script|achieve|mind [--grammar | --codex low | --cmdc deepseek/deepseek-v4.1-flash [--effort low]]] [--name LFM]
 //     mind: [--llm http://127.0.0.1:8080] [--max-tokens 1024] [--model id] [--key-env OPENAI_API_KEY (remote API)]
 //       [--codex low|medium (Codex CLI as the model, --model optional)] (llama-server running; DBG_MIND=1 prints each turn)
 // policy script = the card's reference solution (validates that the card is solvable and the judge agrees).
+// policy achieve = one `achieve have(X)>=N` for have-cards (GOAP planner + executor alone, no model).
 // One `episode` record per run in data/own/<day>/<stamp>_<name>_cards.jsonl (+ the usual call/result records).
 'use strict'
 const LOCK = process.argv.includes('--lock')
@@ -101,7 +102,8 @@ async function main() {
   await connect()
   if (LOCK) await lock.start()
   const mind = POLICY === 'mind' ? new (require('./mind').Mind)({ url: arg('llm', 'http://127.0.0.1:8080'), maxTokens: +arg('max-tokens', 1024),
-    model: arg('model', null), key: arg('key-env', null) ? process.env[arg('key-env')] : null, codex: arg('codex', null),
+    model: arg('model', null), key: arg('key-env', null) ? process.env[arg('key-env')] : null, codex: arg('codex', null), cmdc: arg('cmdc', null), effort: arg('effort', null), lang: arg('lang', null),
+    grammar: process.argv.includes('--grammar') ? require('../dsl/gbnf').decisionGrammar() : null,
     hold: LOCK ? fn => lock.hold(fn) : fn => fn(), setT: LOCK ? clock.realSetTimeout : setTimeout, write }) : null
 
   // a fresh mind per episode (throwaway memory): same Senses listeners, new stores
@@ -208,7 +210,17 @@ async function main() {
             if (!ev && !outcome) await C.sleep(500)
             if (decisions >= (ep.limits.decisions ?? Infinity) && !outcome) { const o = await step(); outcome = outcome || o || 'timeout' }
           }
-        } else throw new Error(`unknown policy ${POLICY} (script | mind)`)
+        } else if (POLICY === 'achieve') {
+          // planner baseline: one `achieve` statement for the card's have-goal (no model at all)
+          const sc = ep.success
+          if (!sc.have) throw new Error('policy achieve needs a have+min success check')
+          const st = `achieve have(${ep.text(sc.have).replace(/^#(minecraft:)?/, 'tag:')})>=${ep.text(String(sc.min ?? 1))}`
+          decisions++
+          const ev = await interp.start(st)
+          write({ type: 'card_step', id: ep.id, seed, policy: 'achieve', stmt: st, result: ev })
+          console.log(`  -> ${ev.status}${ev.cause ? ' ' + ev.cause : ''} | ${(ev.detail || '').slice(0, 300)}`)
+          if (!outcome) { await C.sleep(2000); const o = await step(); outcome = outcome || o || 'fail' }
+        } else throw new Error(`unknown policy ${POLICY} (script | mind | achieve)`)
       } catch (e) { err = e.stack; outcome = 'error' }
       stop = true; await watcher
       const ticks = await tick()

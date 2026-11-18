@@ -157,6 +157,8 @@ const tools = {
     return `${b.name}: ${b.category || '?'}, ${b.dimension}, temperature ${b.temperature}, ${b.has_precipitation === false || b.precipitation === 'none' ? 'no rain' : 'rain/snow'}`
   },
 
+  plan(ctx, a) { return require('./plan/live').planTool(ctx, a) },
+
   simulate(ctx, a) {
     const issues = [], ok = []
     let secs = 0

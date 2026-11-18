@@ -58,6 +58,7 @@
     "stonecut":    {"family": "craft", "args": [{"name": "input", "type": "item"}, {"name": "output", "type": "item"}], "kw": {"n": "int"}, "doc": "stonecutter"},
     "smith":       {"family": "craft", "args": [{"name": "base", "type": "item"}, {"name": "addition", "type": "item"}], "kw": {"template": "item"}, "doc": "smithing table"},
     "trade":       {"family": "craft", "args": [{"name": "with", "type": "entity"}, {"name": "offer", "type": "int"}], "kw": {"n": "int"}, "doc": "villager trade, offer = index in the trade list"},
+    "achieve":     {"family": "craft", "args": [{"name": "goal", "type": "cond"}], "kw": {"via": "int"}, "doc": "get items: have(X)>=N goals joined by &; runs the planner's steps (tool plan), replanning after each; via = plan number"},
 
     "place":       {"family": "build", "args": [{"name": "block", "type": "block"}], "kw": {"at": "posset", "face": "dir"}, "doc": "place block(s); no predefined structures, builds are designed by the model"},
     "use":         {"family": "build", "args": [{"name": "item", "type": "item", "opt": true}], "kw": {"on": "target"}, "doc": "right-click: hold item (or empty hand) and use it on a block/entity (door, lever, bucket, flint_and_steel...)"},
@@ -106,6 +107,7 @@
   },
   "tools": {
     "recipe":      {"args": [{"name": "item", "type": "item"}], "kw": {}, "doc": "how to make it (all recipes, station, missing items now)"},
+    "plan":        {"args": [{"name": "goal", "type": "cond"}], "kw": {}, "doc": "1-3 step lists that reach have(X)>=N goals from the inventory and the known world (recipes, sources, tools, stations), with durations"},
     "uses":        {"args": [{"name": "item", "type": "item"}], "kw": {}, "doc": "what it is used for"},
     "where":       {"args": [{"name": "target", "type": "target"}], "kw": {"n": "int"}, "doc": "known locations (seen by the bot), nearest first"},
     "scan":        {"args": [], "kw": {"radius": "int", "filter": "query"}, "doc": "list visible blocks/entities around"},

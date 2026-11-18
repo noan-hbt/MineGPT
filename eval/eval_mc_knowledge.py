@@ -61,11 +61,17 @@ def enable_lfm3_compat():
 
 
 def kw_match(answer_norm: str, kw: str) -> bool:
-    k = kw.lower().replace("_", " ")
-    # Numeric token: match whole number boundary so "3" doesn't match "13"
-    if re.fullmatch(r"-?\d+(\.\d+)?", k):
-        return re.search(rf"(?<!\d){re.escape(k)}(?!\d)", answer_norm) is not None
-    return k in answer_norm
+    for alt in kw.split("|"):
+        k = alt.lower().replace("_", " ").strip()
+        if not k:
+            continue
+        # Numeric token: match whole number boundary so "3" doesn't match "13"
+        if re.fullmatch(r"-?\d+(\.\d+)?", k):
+            if re.search(rf"(?<!\d){re.escape(k)}(?!\d)", answer_norm) is not None:
+                return True
+        elif k in answer_norm:
+            return True
+    return False
 
 
 def check_answer(answer: str, expected_keywords: list[str], check_type: str) -> tuple[bool, list[str]]:
@@ -96,7 +102,8 @@ def main():
     ap.add_argument("--model", required=True)
     ap.add_argument("--tag", default=None)
     ap.add_argument("--limit", type=int, default=0)
-    ap.add_argument("--max-new-tokens", type=int, default=96)
+    ap.add_argument("--batch-size", type=int, default=16)
+    ap.add_argument("--max-new-tokens", type=int, default=80)
     args = ap.parse_args()
 
     model_path = (ROOT / args.model).resolve() if not Path(args.model).is_absolute() else Path(args.model)
@@ -108,6 +115,10 @@ def main():
     from transformers import AutoModelForCausalLM, AutoTokenizer
     t0 = time.time()
     tok = AutoTokenizer.from_pretrained(model_path, local_files_only=True, trust_remote_code=True)
+    if tok.pad_token_id is None:
+        tok.pad_token_id = tok.eos_token_id
+    tok.padding_side = "left"
+
     model = AutoModelForCausalLM.from_pretrained(
         model_path,
         local_files_only=True,
@@ -131,15 +142,21 @@ def main():
 
     use_cache = not is_lfm3
     template_kwargs = {"enable_thinking": False} if is_lfm3 else {}
+    bs = 1 if is_lfm3 else args.batch_size
 
-    for i, r in enumerate(rows):
-        enc = tok.apply_chat_template(
-            [{"role": "user", "content": r["user"]}],
-            tokenize=True,
-            add_generation_prompt=True,
-            return_tensors="pt",
-            **template_kwargs,
-        ).to("cuda")
+    for start in range(0, len(rows), bs):
+        batch = rows[start:start + bs]
+        prompts = [
+            tok.apply_chat_template(
+                [{"role": "user", "content": r["user"]}],
+                tokenize=False,
+                add_generation_prompt=True,
+                **template_kwargs,
+            )
+            for r in batch
+        ]
+        enc = tok(prompts, return_tensors="pt", padding=True, add_special_tokens=False).to("cuda")
+        prompt_len = enc["input_ids"].shape[1]
         with torch.no_grad():
             out = model.generate(
                 **enc,
@@ -148,15 +165,15 @@ def main():
                 use_cache=use_cache,
                 pad_token_id=tok.eos_token_id,
             )
-        ans = tok.decode(out[0][enc["input_ids"].shape[1]:], skip_special_tokens=True).strip()
-        ok, missing = check_answer(ans, r["expected_keywords"], r.get("check_type", "all_keywords"))
-        by_bucket[r["bucket"]][1] += 1
-        by_bucket[r["bucket"]][0] += int(ok)
-        by_cat[r["category"]][1] += 1
-        by_cat[r["category"]][0] += int(ok)
-        results.append({**r, "prediction": ans, "ok": ok, "missing": missing})
-        if (i + 1) % 40 == 0:
-            print(f"[{tag}] {i+1}/{len(rows)} evaluated...", flush=True)
+        for j, r in enumerate(batch):
+            ans = tok.decode(out[j][prompt_len:], skip_special_tokens=True).strip()
+            ok, missing = check_answer(ans, r["expected_keywords"], r.get("check_type", "all_keywords"))
+            by_bucket[r["bucket"]][1] += 1
+            by_bucket[r["bucket"]][0] += int(ok)
+            by_cat[r["category"]][1] += 1
+            by_cat[r["category"]][0] += int(ok)
+            results.append({**r, "prediction": ans, "ok": ok, "missing": missing})
+        print(f"[{tag}] {len(results)}/{len(rows)} evaluated ({time.time()-t0:.1f}s)", flush=True)
 
     ppl = compute_ppl(model, tok, GENERAL_PPL_TEXTS)
     elapsed = round(time.time() - t0, 1)

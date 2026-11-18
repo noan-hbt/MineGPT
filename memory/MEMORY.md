@@ -13,3 +13,5 @@
 - [RAM budget](ram-budget.md) — 16 GB tight: don't stack llama-server + card runs + Codex; jobs got killed
 - [Codex helper](codex-helper.md) — use Codex gpt-6.1-sol medium in parallel for bulk work (cards), brief + id lists
 - [LFM 350M experiments](lfm350m-experiments.md) — next track: improve LFM2.5-350M (SFT/distill/RL/DPO/compress); teachers DeepSeek/Claude/ChatGPT, not LFM3
+- [GPU power cap](gpu-power-cap.md) — 4070 stuck at 30 W fixed by reboot+update; check draw under load, not idle
+- [GOAP planner](goap-planner.md) — plan/achieve built 2026-11-18, planner alone 54/54; next mind bench with/without
