@@ -1,0 +1,121 @@
+{
+  "card": 1,
+  "id": "build.place_pattern",
+  "title": "Place exactly four blocks at the four specified corners",
+  "tags": [
+    "build",
+    "place",
+    "coordinates"
+  ],
+  "difficulty": 1,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "x": {
+      "int": [
+        2,
+        4
+      ]
+    },
+    "z": {
+      "int": [
+        -2,
+        2
+      ]
+    },
+    "material": {
+      "choice": [
+        "red_concrete",
+        "blue_concrete",
+        "yellow_concrete"
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "radius": 15,
+    "height": 14,
+    "depth": 15,
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "peaceful",
+    "gamerules": {
+      "advance_time": false,
+      "advance_weather": false
+    }
+  },
+  "player": {
+    "at": "<0,0,0>",
+    "spawn": "<0,0,0>",
+    "inventory": [
+      {
+        "item": "${material}",
+        "count": 4
+      }
+    ]
+  },
+  "fail": {
+    "died": true
+  },
+  "order": {
+    "from": "Noan",
+    "text": "pose tes 4 blocs de ${material} exactement en <${x},0,${z}>, <${x+2},0,${z}>, <${x+2},0,${z+2}>, <${x},0,${z+2}>"
+  },
+  "success": {
+    "all": [
+      {
+        "block": "<${x},0,${z}>",
+        "is": "${material}"
+      },
+      {
+        "block": "<${x+2},0,${z}>",
+        "is": "${material}"
+      },
+      {
+        "block": "<${x+2},0,${z+2}>",
+        "is": "${material}"
+      },
+      {
+        "block": "<${x},0,${z+2}>",
+        "is": "${material}"
+      }
+    ]
+  },
+  "milestones": [
+    {
+      "name": "first_corner",
+      "check": {
+        "block": "<${x},0,${z}>",
+        "is": "${material}"
+      }
+    },
+    {
+      "name": "two_corners",
+      "check": {
+        "all": [
+          {
+            "block": "<${x},0,${z}>",
+            "is": "${material}"
+          },
+          {
+            "block": "<${x+2},0,${z}>",
+            "is": "${material}"
+          }
+        ]
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 900,
+    "decisions": 8
+  },
+  "solution": [
+    "place ${material} at=[<${x},0,${z}>,<${x+2},0,${z}>,<${x+2},0,${z+2}>,<${x},0,${z+2}>]"
+  ],
+  "solution_ticks": 300
+}

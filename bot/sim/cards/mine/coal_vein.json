@@ -1,0 +1,11 @@
+{
+  "card": 1, "id": "mine.coal_vein", "title": "Mine an exposed coal vein with a wooden pickaxe", "tags": ["mine", "vein", "drops"],
+  "difficulty": 1, "split": "train", "seeds": [1, 2, 3, 4],
+  "params": {"dx": {"int": [3, 7]}, "dz": {"int": [-4, 2]}, "n": {"int": [3, 5]}},
+  "world": {"template": "arena", "gamerules": {"advance_time": false, "block_drops": true}},
+  "build": [{"fill": ["<${dx},0,${dz}>", "<${dx},0,${dz + n - 1}>"], "block": "coal_ore"}],
+  "player": {"inventory": [{"item": "wooden_pickaxe"}]}, "order": {"from": "Noan", "text": "mine le petit filon et ramène-moi ${n} charbons"},
+  "success": {"have": "coal", "min": "${n}"}, "fail": {"died": true},
+  "milestones": [{"name": "first_coal", "check": {"have": "coal", "min": 1}}, {"name": "half_vein", "check": {"have": "coal", "min": "${ceil(n/2)}"}}],
+  "limits": {"ticks": 1800, "decisions": 8}, "solution": ["mine coal_ore n=${n}"], "solution_ticks": 600
+}

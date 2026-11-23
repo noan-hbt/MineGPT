@@ -1,0 +1,26 @@
+{
+  "card": 1,
+  "id": "survive.creeper",
+  "title": "A creeper comes at you: survive 30 s without losing half your health",
+  "tags": ["survive", "danger", "combat"],
+  "difficulty": 3,
+  "split": "train",
+  "seeds": [1, 2, 3],
+  "params": { "dx": { "int": [5, 8] }, "dz": { "int": [-4, 4] } },
+  "world": { "template": "arena", "time": 18000 },
+  "entities": [ { "type": "creeper", "at": "<${dx},0,${dz}>", "tag": "foe", "nbt": "{PersistenceRequired:1b}" } ],
+  "player": {
+    "inventory": [
+      { "item": "iron_sword", "slot": 0 },
+      { "item": "bow", "slot": 1 },
+      { "item": "arrow", "count": 16 },
+      { "item": "dirt", "count": 16 }
+    ]
+  },
+  "success_when": "end",
+  "success": { "all": [ { "not": { "died": true } }, { "health": { "min": 10 } } ] },
+  "fail": { "died": true },
+  "milestones": [ { "name": "creeper_dead", "check": { "entity": "creeper", "tag": "foe", "max": 0 } } ],
+  "limits": { "ticks": 600, "decisions": 6 },
+  "solution": ["pillar 4 block=dirt", "shoot #creeper n=8"]
+}

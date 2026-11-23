@@ -1,0 +1,135 @@
+{"kind":"stmt","src":"goto @home","ok":true,"ast":{"op":"call","verb":"goto","args":{"target":{"place":"home"}}}}
+{"kind":"stmt","src":"goto (-40,12,88) dist=2","ok":true,"ast":{"op":"call","verb":"goto","args":{"target":{"pos":[-40,12,88]},"dist":2}}}
+{"kind":"stmt","src":"goto #player.Noan dist=3","ok":true,"ast":{"op":"call","verb":"goto","args":{"target":{"entity":"player","ref":"Noan"},"dist":3}}}
+{"kind":"stmt","src":"goto crafting_table","ok":true,"ast":{"op":"call","verb":"goto","args":{"target":{"name":"crafting_table"}}}}
+{"kind":"stmt","src":"follow #player.Noan dist=4","ok":true,"ast":{"op":"call","verb":"follow","args":{"target":{"entity":"player","ref":"Noan"},"dist":4}}}
+{"kind":"stmt","src":"flee #creeper dist=12","ok":true,"ast":{"op":"call","verb":"flee","args":{"from":{"entity":"creeper"},"dist":12}}}
+{"kind":"stmt","src":"explore","ok":true,"ast":{"op":"call","verb":"explore","args":{}}}
+{"kind":"stmt","src":"explore dir=north radius=64 prefer=unexplored","ok":true,"ast":{"op":"call","verb":"explore","args":{"dir":{"name":"north"},"radius":64,"prefer":{"name":"unexplored"}}}}
+{"kind":"stmt","src":"explore prefer=biome:dark_forest","ok":true,"ast":{"op":"call","verb":"explore","args":{"prefer":{"name":"biome:dark_forest"}}}}
+{"kind":"stmt","src":"explore prefer=tag:iron_ores","ok":true,"ast":{"op":"call","verb":"explore","args":{"prefer":{"tag":"iron_ores"}}}}
+{"kind":"stmt","src":"descend to_y=-54 mode=stairs","ok":true,"ast":{"op":"call","verb":"descend","args":{"to_y":-54,"mode":{"name":"stairs"}}}}
+{"kind":"stmt","src":"ascend","ok":true,"ast":{"op":"call","verb":"ascend","args":{}}}
+{"kind":"stmt","src":"pillar 5 block=dirt","ok":true,"ast":{"op":"call","verb":"pillar","args":{"n":5,"block":{"name":"dirt"}}}}
+{"kind":"stmt","src":"bridge east 12 block=cobblestone","ok":true,"ast":{"op":"call","verb":"bridge","args":{"dir":{"name":"east"},"n":12,"block":{"name":"cobblestone"}}}}
+{"kind":"stmt","src":"swim_up","ok":true,"ast":{"op":"call","verb":"swim_up","args":{}}}
+{"kind":"stmt","src":"look #cow","ok":true,"ast":{"op":"call","verb":"look","args":{"target":{"entity":"cow"}}}}
+{"kind":"stmt","src":"mine iron_ore n=3","ok":true,"ast":{"op":"call","verb":"mine","args":{"block":{"name":"iron_ore"},"n":3}}}
+{"kind":"stmt","src":"mine tag:logs n=4 near=@forest_1","ok":true,"ast":{"op":"call","verb":"mine","args":{"block":{"tag":"logs"},"n":4,"near":{"place":"forest_1"}}}}
+{"kind":"stmt","src":"mine diamond_ore tool=iron_pickaxe until(hp<8 | night)","ok":true,"ast":{"op":"call","verb":"mine","args":{"block":{"name":"diamond_ore"},"tool":{"name":"iron_pickaxe"}},"until":{"or":[{"metric":"hp","cmp":"<","value":8},{"flag":"night"}]}}}
+{"kind":"stmt","src":"chop n=2 species=birch_log","ok":true,"ast":{"op":"call","verb":"chop","args":{"n":2,"species":{"name":"birch_log"}}}}
+{"kind":"stmt","src":"strip_mine west len=32 y=-58","ok":true,"ast":{"op":"call","verb":"strip_mine","args":{"dir":{"name":"west"},"len":32,"y":-58}}}
+{"kind":"stmt","src":"branch_mine len=40 spacing=3","ok":true,"ast":{"op":"call","verb":"branch_mine","args":{"len":40,"spacing":3}}}
+{"kind":"stmt","src":"dig ((10,63,-5),(14,66,-1))","ok":true,"ast":{"op":"call","verb":"dig","args":{"area":{"box":[{"pos":[10,63,-5]},{"pos":[14,66,-1]}]}}}}
+{"kind":"stmt","src":"break at=[(10,64,-3),(10,65,-3)]","ok":true,"ast":{"op":"call","verb":"break","args":{"at":{"list":[{"pos":[10,64,-3]},{"pos":[10,65,-3]}]}}}}
+{"kind":"stmt","src":"collect","ok":true,"ast":{"op":"call","verb":"collect","args":{}}}
+{"kind":"stmt","src":"collect oak_sapling radius=8","ok":true,"ast":{"op":"call","verb":"collect","args":{"item":{"name":"oak_sapling"},"radius":8}}}
+{"kind":"stmt","src":"harvest wheat n=20 replant=yes","ok":true,"ast":{"op":"call","verb":"harvest","args":{"crop":{"name":"wheat"},"n":20,"replant":{"name":"yes"}}}}
+{"kind":"stmt","src":"fish n=5 timeout=3m","ok":true,"ast":{"op":"call","verb":"fish","args":{"n":5,"timeout":{"dur":180}}}}
+{"kind":"stmt","src":"shear #sheep.88","ok":true,"ast":{"op":"call","verb":"shear","args":{"target":{"entity":"sheep","ref":"88"}}}}
+{"kind":"stmt","src":"milk cow","ok":true,"ast":{"op":"call","verb":"milk","args":{"target":{"name":"cow"}}}}
+{"kind":"stmt","src":"craft oak_planks n=16","ok":true,"ast":{"op":"call","verb":"craft","args":{"item":{"name":"oak_planks"},"n":16}}}
+{"kind":"stmt","src":"craft iron_pickaxe","ok":true,"ast":{"op":"call","verb":"craft","args":{"item":{"name":"iron_pickaxe"}}}}
+{"kind":"stmt","src":"smelt raw_iron n=8 fuel=coal","ok":true,"ast":{"op":"call","verb":"smelt","args":{"input":{"name":"raw_iron"},"n":8,"fuel":{"name":"coal"}}}}
+{"kind":"stmt","src":"smoke beef n=4","ok":true,"ast":{"op":"call","verb":"smoke","args":{"input":{"name":"beef"},"n":4}}}
+{"kind":"stmt","src":"stonecut cobblestone cobblestone_stairs n=8","ok":true,"ast":{"op":"call","verb":"stonecut","args":{"input":{"name":"cobblestone"},"output":{"name":"cobblestone_stairs"},"n":8}}}
+{"kind":"stmt","src":"smith diamond_sword netherite_ingot template=netherite_upgrade_smithing_template","ok":true,"ast":{"op":"call","verb":"smith","args":{"base":{"name":"diamond_sword"},"addition":{"name":"netherite_ingot"},"template":{"name":"netherite_upgrade_smithing_template"}}}}
+{"kind":"stmt","src":"trade #villager.203 2 n=3","ok":true,"ast":{"op":"call","verb":"trade","args":{"with":{"entity":"villager","ref":"203"},"offer":2,"n":3}}}
+{"kind":"stmt","src":"enchant diamond_pickaxe level=3","ok":true,"ast":{"op":"call","verb":"enchant","args":{"item":{"name":"diamond_pickaxe"},"level":3}}}
+{"kind":"stmt","src":"brew healing n=3","ok":true,"ast":{"op":"call","verb":"brew","args":{"potion":{"name":"healing"},"n":3}}}
+{"kind":"stmt","src":"place cobblestone at=(~1,~,~)","ok":true,"ast":{"op":"call","verb":"place","args":{"block":{"name":"cobblestone"},"at":{"pos":["~1","~","~"]}}}}
+{"kind":"stmt","src":"place torch at=front","ok":true,"ast":{"op":"call","verb":"place","args":{"block":{"name":"torch"},"at":{"name":"front"}}}}
+{"kind":"stmt","src":"place oak_planks at=[(10,64,-3),(11,64,-3),(12,64,-3)] face=up","ok":true,"ast":{"op":"call","verb":"place","args":{"block":{"name":"oak_planks"},"at":{"list":[{"pos":[10,64,-3]},{"pos":[11,64,-3]},{"pos":[12,64,-3]}]},"face":{"name":"up"}}}}
+{"kind":"stmt","src":"place cobblestone at=((0,64,0),(4,64,4))","ok":true,"ast":{"op":"call","verb":"place","args":{"block":{"name":"cobblestone"},"at":{"box":[{"pos":[0,64,0]},{"pos":[4,64,4]}]}}}}
+{"kind":"stmt","src":"use oak_door on=(5,64,2)","ok":true,"ast":{"op":"call","verb":"use","args":{"item":{"name":"oak_door"},"on":{"pos":[5,64,2]}}}}
+{"kind":"stmt","src":"use on=(3,65,1)","ok":true,"ast":{"op":"call","verb":"use","args":{"on":{"pos":[3,65,1]}}}}
+{"kind":"stmt","src":"use flint_and_steel on=(0,64,7)","ok":true,"ast":{"op":"call","verb":"use","args":{"item":{"name":"flint_and_steel"},"on":{"pos":[0,64,7]}}}}
+{"kind":"stmt","src":"fight #zombie.417 until(hp<6)","ok":true,"ast":{"op":"call","verb":"fight","args":{"target":{"entity":"zombie","ref":"417"}},"until":{"metric":"hp","cmp":"<","value":6}}}
+{"kind":"stmt","src":"attack #skeleton","ok":true,"ast":{"op":"call","verb":"attack","args":{"target":{"entity":"skeleton"}}}}
+{"kind":"stmt","src":"shoot #creeper n=3","ok":true,"ast":{"op":"call","verb":"shoot","args":{"target":{"entity":"creeper"},"n":3}}}
+{"kind":"stmt","src":"shield dur=5s","ok":true,"ast":{"op":"call","verb":"shield","args":{"dur":{"dur":5}}}}
+{"kind":"stmt","src":"retreat to=@home","ok":true,"ast":{"op":"call","verb":"retreat","args":{"to":{"place":"home"}}}}
+{"kind":"stmt","src":"avoid #creeper radius=8","ok":true,"ast":{"op":"call","verb":"avoid","args":{"target":{"entity":"creeper"},"radius":8}}}
+{"kind":"stmt","src":"eat","ok":true,"ast":{"op":"call","verb":"eat","args":{}}}
+{"kind":"stmt","src":"eat cooked_beef until(food>=18) timeout=10s","ok":true,"ast":{"op":"call","verb":"eat","args":{"food":{"name":"cooked_beef"},"timeout":{"dur":10}},"until":{"metric":"food","cmp":">=","value":18}}}
+{"kind":"stmt","src":"sleep","ok":true,"ast":{"op":"call","verb":"sleep","args":{}}}
+{"kind":"stmt","src":"equip_best slot=armor","ok":true,"ast":{"op":"call","verb":"equip_best","args":{"slot":{"name":"armor"}}}}
+{"kind":"stmt","src":"water_bucket_save","ok":true,"ast":{"op":"call","verb":"water_bucket_save","args":{}}}
+{"kind":"stmt","src":"equip shield slot=offhand","ok":true,"ast":{"op":"call","verb":"equip","args":{"item":{"name":"shield"},"slot":{"name":"offhand"}}}}
+{"kind":"stmt","src":"drop dirt n=32","ok":true,"ast":{"op":"call","verb":"drop","args":{"item":{"name":"dirt"},"n":32}}}
+{"kind":"stmt","src":"store chest=@base_chest filter=[cobblestone,dirt,tag:logs]","ok":true,"ast":{"op":"call","verb":"store","args":{"chest":{"place":"base_chest"},"filter":{"list":[{"name":"cobblestone"},{"name":"dirt"},{"tag":"logs"}]}}}}
+{"kind":"stmt","src":"take iron_ingot n=5 chest=(3,64,9)","ok":true,"ast":{"op":"call","verb":"take","args":{"item":{"name":"iron_ingot"},"n":5,"chest":{"pos":[3,64,9]}}}}
+{"kind":"stmt","src":"toss_junk keep=[tag:logs,iron_ingot,diamond]","ok":true,"ast":{"op":"call","verb":"toss_junk","args":{"keep":{"list":[{"tag":"logs"},{"name":"iron_ingot"},{"name":"diamond"}]}}}}
+{"kind":"stmt","src":"keep [diamond,iron_ingot]","ok":true,"ast":{"op":"call","verb":"keep","args":{"items":{"list":[{"name":"diamond"},{"name":"iron_ingot"}]}}}}
+{"kind":"stmt","src":"plant wheat_seeds at=((0,64,0),(8,64,8))","ok":true,"ast":{"op":"call","verb":"plant","args":{"seed":{"name":"wheat_seeds"},"at":{"box":[{"pos":[0,64,0]},{"pos":[8,64,8]}]}}}}
+{"kind":"stmt","src":"breed cow n=2","ok":true,"ast":{"op":"call","verb":"breed","args":{"target":{"name":"cow"},"n":2}}}
+{"kind":"stmt","src":"feed #wolf.12 bone","ok":true,"ast":{"op":"call","verb":"feed","args":{"target":{"entity":"wolf","ref":"12"},"item":{"name":"bone"}}}}
+{"kind":"stmt","src":"say \"j'arrive, 2 minutes\"","ok":true,"ast":{"op":"call","verb":"say","args":{"text":{"text":"j'arrive, 2 minutes"}}}}
+{"kind":"stmt","src":"whisper #player.Noan \"j'ai 3 diamants\"","ok":true,"ast":{"op":"call","verb":"whisper","args":{"to":{"entity":"player","ref":"Noan"},"text":{"text":"j'ai 3 diamants"}}}}
+{"kind":"stmt","src":"give #player.Noan bread n=4","ok":true,"ast":{"op":"call","verb":"give","args":{"to":{"entity":"player","ref":"Noan"},"item":{"name":"bread"},"n":4}}}
+{"kind":"stmt","src":"come_to #player.Noan","ok":true,"ast":{"op":"call","verb":"come_to","args":{"to":{"entity":"player","ref":"Noan"}}}}
+{"kind":"stmt","src":"obey","ok":true,"ast":{"op":"call","verb":"obey","args":{}}}
+{"kind":"stmt","src":"refuse \"il fait nuit et je n'ai pas d'armure\"","ok":true,"ast":{"op":"call","verb":"refuse","args":{"reason":{"text":"il fait nuit et je n'ai pas d'armure"}}}}
+{"kind":"stmt","src":"wait 5s","ok":true,"ast":{"op":"call","verb":"wait","args":{"dur":{"dur":5}}}}
+{"kind":"stmt","src":"note \"creepers spawn near @home at night\" key=home_danger","ok":true,"ast":{"op":"call","verb":"note","args":{"text":{"text":"creepers spawn near @home at night"},"key":{"name":"home_danger"}}}}
+{"kind":"stmt","src":"forget home_danger","ok":true,"ast":{"op":"call","verb":"forget","args":{"key":{"name":"home_danger"}}}}
+{"kind":"stmt","src":"name_place iron_vein_1 at=(-40,12,88)","ok":true,"ast":{"op":"call","verb":"name_place","args":{"name":{"name":"iron_vein_1"},"at":{"pos":[-40,12,88]}}}}
+{"kind":"stmt","src":"name_place base","ok":true,"ast":{"op":"call","verb":"name_place","args":{"name":{"name":"base"}}}}
+{"kind":"stmt","src":"stop","ok":true,"ast":{"op":"call","verb":"stop","args":{}}}
+{"kind":"stmt","src":"seq[chop n=4; craft oak_planks n=16; craft crafting_table; craft wooden_pickaxe]","ok":true,"ast":{"op":"seq","body":[{"op":"call","verb":"chop","args":{"n":4}},{"op":"call","verb":"craft","args":{"item":{"name":"oak_planks"},"n":16}},{"op":"call","verb":"craft","args":{"item":{"name":"crafting_table"}}},{"op":"call","verb":"craft","args":{"item":{"name":"wooden_pickaxe"}}}]}}
+{"kind":"stmt","src":"seq[mine stone n=8; craft furnace] until(night)","ok":true,"ast":{"op":"seq","body":[{"op":"call","verb":"mine","args":{"block":{"name":"stone"},"n":8}},{"op":"call","verb":"craft","args":{"item":{"name":"furnace"}}}],"until":{"flag":"night"}}}
+{"kind":"stmt","src":"if(night & !sky) sleep else explore dir=north","ok":true,"ast":{"op":"if","cond":{"and":[{"flag":"night"},{"not":{"flag":"sky"}}]},"then":{"op":"call","verb":"sleep","args":{}},"else":{"op":"call","verb":"explore","args":{"dir":{"name":"north"}}}}}
+{"kind":"stmt","src":"if(have(coal)<1) mine tag:coal_ores n=4","ok":true,"ast":{"op":"if","cond":{"metric":"have","arg":{"name":"coal"},"cmp":"<","value":1},"then":{"op":"call","verb":"mine","args":{"block":{"tag":"coal_ores"},"n":4}}}}
+{"kind":"stmt","src":"repeat(4) seq[place cobblestone at=front; bridge north 1]","ok":true,"ast":{"op":"repeat","n":4,"body":{"op":"seq","body":[{"op":"call","verb":"place","args":{"block":{"name":"cobblestone"},"at":{"name":"front"}}},{"op":"call","verb":"bridge","args":{"dir":{"name":"north"},"n":1}}]}}}
+{"kind":"stmt","src":"save_routine wood seq[chop n=4; craft oak_planks n=16]","ok":true,"ast":{"op":"call","verb":"save_routine","args":{"name":{"name":"wood"},"body":{"op":"seq","body":[{"op":"call","verb":"chop","args":{"n":4}},{"op":"call","verb":"craft","args":{"item":{"name":"oak_planks"},"n":16}}]}}}}
+{"kind":"stmt","src":"routine wood","ok":true,"ast":{"op":"routine","name":"wood"}}
+{"kind":"stmt","src":"seq[if(hp<10) eat; goto @home]","ok":true,"ast":{"op":"seq","body":[{"op":"if","cond":{"metric":"hp","cmp":"<","value":10},"then":{"op":"call","verb":"eat","args":{}}},{"op":"call","verb":"goto","args":{"target":{"place":"home"}}}]}}
+{"kind":"stmt","src":"mine oak_plank","ok":false,"error_contains":"did you mean oak_planks","error":"mine block: unknown block 'oak_plank' (did you mean oak_planks, dark_oak_planks, pale_oak_planks?)"}
+{"kind":"stmt","src":"mine Iron_ore","ok":false,"error_contains":"lowercase","error":"unexpected 'Iron_ore' (ids are lowercase; player names go in #player.Name)"}
+{"kind":"stmt","src":"craft iron_pickaxe x=2","ok":false,"error_contains":"no parameter 'x'","error":"craft has no parameter 'x' (parameters: timeout, max, n, item)"}
+{"kind":"stmt","src":"goto","ok":false,"error_contains":"missing 'target'","error":"goto is missing 'target' (usage: goto target)"}
+{"kind":"stmt","src":"mine tag:log","ok":false,"error_contains":"unknown block tag","error":"mine block: unknown block tag 'tag:log' (did you mean logs, oak_logs?)"}
+{"kind":"stmt","src":"recipe iron_pickaxe","ok":false,"error_contains":"is a tool","error":"unknown verb 'recipe' ('recipe' is a tool, use it in tool:)"}
+{"kind":"stmt","src":"chop 3","ok":false,"error_contains":"too many arguments","error":"too many arguments for chop at '3' (usage: chop n= species=)"}
+{"kind":"stmt","src":"fight #zombi","ok":false,"error_contains":"did you mean zombie","error":"fight target: unknown entity '#zombi' (did you mean zombie?); or expected a mob kind"}
+{"kind":"stmt","src":"whisper #player \"hi\"","ok":false,"error_contains":"#player.Name","error":"whisper to: a player is #player.Name"}
+{"kind":"stmt","src":"explore dir=northeast","ok":false,"error_contains":"expected a direction","error":"explore dir: expected a direction: north, south, east, west, up, down"}
+{"kind":"stmt","src":"say hello","ok":false,"error_contains":"quoted text","error":"say text: expected a \"quoted text\""}
+{"kind":"stmt","src":"wait 5","ok":false,"error_contains":"duration","error":"wait dur: expected a duration like 30s or 2m"}
+{"kind":"stmt","src":"seq[chop n=4; craft oak_planks","ok":false,"error_contains":"expected","error":"expected ']' but got end of line"}
+{"kind":"stmt","src":"repeat(0) chop","ok":false,"error_contains":"positive integer","error":"repeat needs a positive integer, got '0'"}
+{"kind":"stmt","src":"mine iron_ore until(hp<8) until(night)","ok":false,"error_contains":"twice","error":"until(...) given twice"}
+{"kind":"stmt","src":"mine iron_ore n=3 tool=iron_pickaxe n=4","ok":false,"error_contains":"given twice","error":"parameter 'n' given twice"}
+{"kind":"stmt","src":"build shelter","ok":false,"error_contains":"unknown verb 'build'","error":"unknown verb 'build'"}
+{"kind":"stmt","src":"place stone at=north","ok":false,"error_contains":"expected (x,y,z)","error":"place at: expected (x,y,z), [(x,y,z),...], a box, front, below or above"}
+{"kind":"stmt","src":"mine iron_ore until(health<8)","ok":false,"error_contains":"unknown condition 'health'","error":"unknown condition 'health'"}
+{"kind":"stmt","src":"goto (1,2)","ok":false,"error_contains":"expected ','","error":"expected ',' but got ')'"}
+{"kind":"tool","src":"recipe iron_pickaxe","ok":true,"ast":{"op":"call","verb":"recipe","args":{"item":{"name":"iron_pickaxe"}}}}
+{"kind":"tool","src":"uses blaze_rod","ok":true,"ast":{"op":"call","verb":"uses","args":{"item":{"name":"blaze_rod"}}}}
+{"kind":"tool","src":"where iron_ore n=3","ok":true,"ast":{"op":"call","verb":"where","args":{"target":{"name":"iron_ore"},"n":3}}}
+{"kind":"tool","src":"where tag:logs","ok":true,"ast":{"op":"call","verb":"where","args":{"target":{"tag":"logs"}}}}
+{"kind":"tool","src":"scan radius=16 filter=ores","ok":true,"ast":{"op":"call","verb":"scan","args":{"radius":16,"filter":{"name":"ores"}}}}
+{"kind":"tool","src":"path_cost @home","ok":true,"ast":{"op":"call","verb":"path_cost","args":{"target":{"place":"home"}}}}
+{"kind":"tool","src":"inv","ok":true,"ast":{"op":"call","verb":"inv","args":{}}}
+{"kind":"tool","src":"chest @base_chest","ok":true,"ast":{"op":"call","verb":"chest","args":{"at":{"place":"base_chest"}}}}
+{"kind":"tool","src":"recall \"where did I die\"","ok":true,"ast":{"op":"call","verb":"recall","args":{"query":{"text":"where did I die"}}}}
+{"kind":"tool","src":"wiki \"how to find diamonds\"","ok":true,"ast":{"op":"call","verb":"wiki","args":{"query":{"text":"how to find diamonds"}}}}
+{"kind":"tool","src":"mob_info creeper","ok":true,"ast":{"op":"call","verb":"mob_info","args":{"mob":{"name":"creeper"}}}}
+{"kind":"tool","src":"loot diamond_ore","ok":true,"ast":{"op":"call","verb":"loot","args":{"block":{"name":"diamond_ore"}}}}
+{"kind":"tool","src":"biome_info dark_forest","ok":true,"ast":{"op":"call","verb":"biome_info","args":{"biome":{"name":"dark_forest"}}}}
+{"kind":"tool","src":"simulate seq[craft stick n=4; craft wooden_pickaxe]","ok":true,"ast":{"op":"call","verb":"simulate","args":{"body":{"op":"seq","body":[{"op":"call","verb":"craft","args":{"item":{"name":"stick"},"n":4}},{"op":"call","verb":"craft","args":{"item":{"name":"wooden_pickaxe"}}}]}}}}
+{"kind":"tool","src":"craft stick","ok":false,"error_contains":"is a verb","error":"unknown tool 'craft' ('craft' is a verb, use it in act:)"}
+{"kind":"tool","src":"loot diamond","ok":false,"error_contains":"unknown block","error":"loot block: unknown block 'diamond' (did you mean diamond_ore?)"}
+{"kind":"cond","src":"dist(@home)<5","ok":true,"ast":{"metric":"dist","arg":{"place":"home"},"cmp":"<","value":5}}
+{"kind":"cond","src":"!(night | rain) & food>=10","ok":true,"ast":{"and":[{"not":{"or":[{"flag":"night"},{"flag":"rain"}]}},{"metric":"food","cmp":">=","value":10}]}}
+{"kind":"cond","src":"y<-30","ok":true,"ast":{"metric":"y","cmp":"<","value":-30}}
+{"kind":"cond","src":"have(tag:planks)>=8","ok":true,"ast":{"metric":"have","arg":{"tag":"planks"},"cmp":">=","value":8}}
+{"kind":"cond","src":"hostile<6 & hp<=10","ok":true,"ast":{"and":[{"metric":"hostile","cmp":"<","value":6},{"metric":"hp","cmp":"<=","value":10}]}}
+{"kind":"cond","src":"hp<","ok":false,"error_contains":"expected a number","error":"expected a number after < but got end of line"}
+{"kind":"cond","src":"have(diamonds)>2","ok":false,"error_contains":"did you mean diamond","error":"have(): unknown item 'diamonds' (did you mean diamond?)"}
+{"kind":"expect","src":"have(tag:logs)>=+4, hp>=~-2 in 40s","ok":true,"ast":{"conds":[{"metric":"have","arg":{"tag":"logs"},"cmp":">=","value":4,"rel":true},{"metric":"hp","cmp":">=","value":-2,"rel":true}],"within":40}}
+{"kind":"expect","src":"have(iron_pickaxe)>=1 in 2m","ok":true,"ast":{"conds":[{"metric":"have","arg":{"name":"iron_pickaxe"},"cmp":">=","value":1}],"within":120}}
+{"kind":"expect","src":"dist(@home)<3 in 90s","ok":true,"ast":{"conds":[{"metric":"dist","arg":{"place":"home"},"cmp":"<","value":3}],"within":90}}
+{"kind":"expect","src":"y<=-50 in 3m","ok":true,"ast":{"conds":[{"metric":"y","cmp":"<=","value":-50}],"within":180}}
+{"kind":"expect","src":"have(oak_log)>=4","ok":false,"error_contains":"in <duration>","error":"expect ends with 'in <duration>', got end of line"}
+{"kind":"expect","src":"have(oak_log)>=4 in 30","ok":false,"error_contains":"duration","error":"expected a duration like 30s after 'in', got '30'"}

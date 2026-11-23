@@ -1,0 +1,32 @@
+=== K2-Horizon-4B-Q4_K_M (load 3.1s)
+  arith0  ok         OK  got=131 want=131 tok=250 3.6s
+  arith1  ok         OK  got=103 want=103 tok=254 3.7s
+  grid0   truncated  --  got=None want=15 tok=1024 15.0s
+  grid1   truncated  --  got=None want=18 tok=1024 15.1s
+  plan0   ok         OK  got=12 want=12 tok=111 1.8s
+  plan1   ok         OK  got=20 want=20 tok=106 1.6s
+  state0  ok         OK  got=44 want=44 tok=286 4.2s
+  state1  ok         OK  got=4 want=4 tok=233 3.5s
+=== LFM3-1.7B-Uncensored-AD-Q4_K_M (load 2.0s)
+  arith0  ok         OK  got=131 want=131 tok=821 5.4s
+  arith1  ok         OK  got=103 want=103 tok=647 4.2s
+  grid0   truncated  --  got=None want=15 tok=1024 6.7s
+  grid1   truncated  --  got=None want=18 tok=1024 6.6s
+  plan0   truncated  --  got=None want=12 tok=1024 6.7s
+  plan1   truncated  --  got=None want=20 tok=1024 6.7s
+  state0  ok         OK  got=44 want=44 tok=654 4.3s
+  state1  ok         OK  got=4 want=4 tok=1004 6.5s
+=== NVIDIA-Nemotron3-Nano-4B-Q4_K_M (load 3.6s)
+  arith0  ok         OK  got=131 want=131 tok=295 4.1s
+  arith1  ok         OK  got=103 want=103 tok=292 4.1s
+  grid0   truncated  --  got=None want=15 tok=1024 13.6s
+  grid1   truncated  --  got=None want=18 tok=1024 13.7s
+  plan0   ok         OK  got=12 want=12 tok=246 3.6s
+  plan1   ok         OK  got=20 want=20 tok=179 2.7s
+  state0  ok         OK  got=44 want=44 tok=199 3.0s
+  state1  ok         OK  got=4 want=4 tok=310 4.3s
+=== Sharp-Spark-X2.6-4B-Q4_K_XL (load 3.6s)
+  arith0  ok         OK  got=131 want=131 tok=432 6.1s
+  arith1  ok         OK  got=103 want=103 tok=451 6.3s
+  grid0   truncated  --  got=None want=15 tok=1024 14.2s
+  grid1   truncated  --  got=None want=18 tok=1024 14.3s

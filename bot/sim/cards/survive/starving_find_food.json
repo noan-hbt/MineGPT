@@ -1,0 +1,137 @@
+{
+  "card": 1,
+  "id": "survive.starving_find_food",
+  "title": "Find bread in a known chest before starvation becomes dangerous",
+  "tags": [
+    "survive",
+    "food",
+    "containers",
+    "memory"
+  ],
+  "difficulty": 2,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "cx": {
+      "int": [
+        5,
+        9
+      ]
+    },
+    "cz": {
+      "int": [
+        -4,
+        4
+      ]
+    },
+    "n": {
+      "int": [
+        4,
+        6
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "radius": 15,
+    "height": 12,
+    "depth": 15,
+    "floor": "stone",
+    "dimension": "overworld",
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "hard",
+    "gamerules": {
+      "spawn_monsters": false,
+      "advance_time": false,
+      "advance_weather": false,
+      "natural_health_regeneration": false
+    }
+  },
+  "build": [
+    {
+      "container": "<${cx},0,${cz}>",
+      "block": "chest[facing=west]",
+      "items": [
+        {
+          "item": "bread",
+          "count": "${n}",
+          "slot": 0
+        }
+      ]
+    }
+  ],
+  "player": {
+    "food": 2,
+    "health": 20,
+    "inventory": []
+  },
+  "mind": {
+    "places": {
+      "reserve": "<${cx},0,${cz}>"
+    },
+    "notes": [
+      "Le coffre à @reserve contient du pain."
+    ]
+  },
+  "success_when": "end",
+  "success": {
+    "all": [
+      {
+        "not": {
+          "died": true
+        }
+      },
+      {
+        "food": {
+          "min": 12
+        }
+      },
+      {
+        "have": "bread",
+        "min": 1
+      },
+      {
+        "container": "<${cx},0,${cz}>",
+        "item": "bread",
+        "max": "${n - 3}"
+      }
+    ]
+  },
+  "fail": {
+    "died": true
+  },
+  "milestones": [
+    {
+      "name": "found_bread",
+      "check": {
+        "have": "bread",
+        "min": 1
+      }
+    },
+    {
+      "name": "ate",
+      "check": {
+        "food": {
+          "min": 7
+        }
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 600,
+    "decisions": 20
+  },
+  "solution": [
+    "take bread n=${n} chest=@reserve",
+    "eat bread",
+    "eat bread",
+    "eat bread"
+  ],
+  "solution_ticks": 220
+}

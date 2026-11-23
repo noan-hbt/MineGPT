@@ -1,0 +1,215 @@
+{
+  "card": 1,
+  "id": "combat.two_skeletons",
+  "title": "Survive two armed skeletons and defeat both with a bow",
+  "tags": [
+    "combat",
+    "two_skeletons"
+  ],
+  "difficulty": 4,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "spread": {
+      "int": [
+        3,
+        5
+      ]
+    },
+    "z": {
+      "int": [
+        9,
+        11
+      ]
+    },
+    "arrows": {
+      "int": [
+        32,
+        40
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "radius": 18,
+    "height": 8,
+    "depth": 6,
+    "floor": "stone",
+    "dimension": "overworld",
+    "time": 18000,
+    "weather": "clear",
+    "difficulty": "easy",
+    "gamerules": {
+      "advance_time": false,
+      "advance_weather": false,
+      "spawn_monsters": false,
+      "natural_health_regeneration": false,
+      "mob_griefing": false
+    }
+  },
+  "build": [
+    {
+      "fill": [
+        "<-18,0,-18>",
+        "<-18,4,18>"
+      ],
+      "block": "bedrock"
+    },
+    {
+      "fill": [
+        "<18,0,-18>",
+        "<18,4,18>"
+      ],
+      "block": "bedrock"
+    },
+    {
+      "fill": [
+        "<-17,0,-18>",
+        "<17,4,-18>"
+      ],
+      "block": "bedrock"
+    },
+    {
+      "fill": [
+        "<-17,0,18>",
+        "<17,4,18>"
+      ],
+      "block": "bedrock"
+    }
+  ],
+  "entities": [],
+  "player": {
+    "at": "<0,0,0>",
+    "spawn": "<0,0,-12>",
+    "health": 20,
+    "food": 20,
+    "saturation": 5,
+    "xp_levels": 0,
+    "yaw": 0,
+    "pitch": 0,
+    "held": 0,
+    "inventory": [
+      {
+        "item": "bow",
+        "slot": 0,
+        "enchant": {
+          "power": 2
+        }
+      },
+      {
+        "item": "arrow",
+        "slot": 1,
+        "count": "${arrows}"
+      },
+      {
+        "item": "iron_sword",
+        "slot": 2
+      }
+    ],
+    "armor": {
+      "head": {
+        "item": "iron_helmet"
+      },
+      "chest": {
+        "item": "iron_chestplate"
+      },
+      "legs": {
+        "item": "iron_leggings"
+      },
+      "feet": {
+        "item": "iron_boots"
+      }
+    },
+    "offhand": {
+      "item": "shield"
+    },
+    "effects": []
+  },
+  "timeline": [
+    {
+      "at_tick": 0,
+      "summon": {
+        "type": "skeleton",
+        "at": "<${-spread},0,${z}>",
+        "tag": "combat_two_skeletons_foe",
+        "nbt": "{PersistenceRequired:1b,CanPickUpLoot:0b}"
+      }
+    },
+    {
+      "at_tick": 0,
+      "summon": {
+        "type": "skeleton",
+        "at": "<${spread},0,${z}>",
+        "tag": "combat_two_skeletons_foe",
+        "nbt": "{PersistenceRequired:1b,CanPickUpLoot:0b}"
+      }
+    },
+    {
+      "at_tick": 0,
+      "rcon": "execute as @e[type=minecraft:skeleton,tag=combat_two_skeletons_foe] run item replace entity @s weapon.mainhand with minecraft:bow"
+    }
+  ],
+  "fail": {
+    "died": true
+  },
+  "milestones": [
+    {
+      "name": "first_skeleton_down",
+      "check": {
+        "entity": "skeleton",
+        "tag": "combat_two_skeletons_foe",
+        "min": 1,
+        "max": 1
+      }
+    },
+    {
+      "name": "first_arrow_fired",
+      "check": {
+        "have": "arrow",
+        "max": "${arrows-1}"
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 1600,
+    "decisions": 20
+  },
+  "solution": [
+    "wait 1s",
+    "shoot #skeleton n=8",
+    "shoot #skeleton n=8",
+    "wait 2s"
+  ],
+  "order": {
+    "from": "Noan",
+    "text": "Il y a deux squelettes ! Abats-les tous les deux à l'arc et reste en vie.",
+    "at_tick": 0
+  },
+  "success": {
+    "all": [
+      {
+        "entity": "skeleton",
+        "tag": "combat_two_skeletons_foe",
+        "max": 0
+      },
+      {
+        "have": "arrow",
+        "max": "${arrows-1}"
+      },
+      {
+        "health": {
+          "min": 6
+        }
+      }
+    ]
+  },
+  "solution_ticks": 550,
+  "notes": [
+    "Normal skeleton AI permits crossfire; both mobs must die. Power II and full iron armor give the sequential bow solution margin without freezing either mob. The shield is available for alternative sword policies; shooting does not raise it."
+  ]
+}

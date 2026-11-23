@@ -1,0 +1,305 @@
+{
+  "card": 1,
+  "id": "logistics.toss_junk_full_inv",
+  "title": "Free inventory space and recover a valuable dropped stack",
+  "tags": [
+    "logistics",
+    "inventory_full",
+    "collect",
+    "priorities"
+  ],
+  "difficulty": 3,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "x": {
+      "int": [
+        5,
+        8
+      ]
+    },
+    "z": {
+      "int": [
+        -3,
+        3
+      ]
+    },
+    "n": {
+      "int": [
+        1,
+        4
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "easy",
+    "gamerules": {
+      "advance_time": false,
+      "advance_weather": false,
+      "keep_inventory": false,
+      "mob_griefing": false
+    }
+  },
+  "player": {
+    "at": "<0,0,0>",
+    "spawn": "<0,0,0>",
+    "inventory": [
+      {
+        "item": "iron_pickaxe",
+        "count": 1,
+        "slot": 0
+      },
+      {
+        "item": "bread",
+        "count": 16,
+        "slot": 1
+      },
+      {
+        "item": "cobblestone",
+        "count": 64,
+        "slot": 2
+      },
+      {
+        "item": "cobblestone",
+        "count": 64,
+        "slot": 3
+      },
+      {
+        "item": "cobblestone",
+        "count": 64,
+        "slot": 4
+      },
+      {
+        "item": "cobblestone",
+        "count": 64,
+        "slot": 5
+      },
+      {
+        "item": "cobblestone",
+        "count": 64,
+        "slot": 6
+      },
+      {
+        "item": "cobblestone",
+        "count": 64,
+        "slot": 7
+      },
+      {
+        "item": "cobblestone",
+        "count": 64,
+        "slot": 8
+      },
+      {
+        "item": "cobblestone",
+        "count": 64,
+        "slot": 9
+      },
+      {
+        "item": "cobblestone",
+        "count": 64,
+        "slot": 10
+      },
+      {
+        "item": "cobblestone",
+        "count": 64,
+        "slot": 11
+      },
+      {
+        "item": "cobblestone",
+        "count": 64,
+        "slot": 12
+      },
+      {
+        "item": "cobblestone",
+        "count": 64,
+        "slot": 13
+      },
+      {
+        "item": "cobblestone",
+        "count": 64,
+        "slot": 14
+      },
+      {
+        "item": "cobblestone",
+        "count": 64,
+        "slot": 15
+      },
+      {
+        "item": "cobblestone",
+        "count": 64,
+        "slot": 16
+      },
+      {
+        "item": "cobblestone",
+        "count": 64,
+        "slot": 17
+      },
+      {
+        "item": "cobblestone",
+        "count": 64,
+        "slot": 18
+      },
+      {
+        "item": "cobblestone",
+        "count": 64,
+        "slot": 19
+      },
+      {
+        "item": "cobblestone",
+        "count": 64,
+        "slot": 20
+      },
+      {
+        "item": "cobblestone",
+        "count": 64,
+        "slot": 21
+      },
+      {
+        "item": "cobblestone",
+        "count": 64,
+        "slot": 22
+      },
+      {
+        "item": "cobblestone",
+        "count": 64,
+        "slot": 23
+      },
+      {
+        "item": "cobblestone",
+        "count": 64,
+        "slot": 24
+      },
+      {
+        "item": "cobblestone",
+        "count": 64,
+        "slot": 25
+      },
+      {
+        "item": "cobblestone",
+        "count": 64,
+        "slot": 26
+      },
+      {
+        "item": "cobblestone",
+        "count": 64,
+        "slot": 27
+      },
+      {
+        "item": "cobblestone",
+        "count": 64,
+        "slot": 28
+      },
+      {
+        "item": "cobblestone",
+        "count": 64,
+        "slot": 29
+      },
+      {
+        "item": "cobblestone",
+        "count": 64,
+        "slot": 30
+      },
+      {
+        "item": "cobblestone",
+        "count": 64,
+        "slot": 31
+      },
+      {
+        "item": "cobblestone",
+        "count": 64,
+        "slot": 32
+      },
+      {
+        "item": "cobblestone",
+        "count": 64,
+        "slot": 33
+      },
+      {
+        "item": "cobblestone",
+        "count": 64,
+        "slot": 34
+      },
+      {
+        "item": "cobblestone",
+        "count": 64,
+        "slot": 35
+      }
+    ]
+  },
+  "order": {
+    "from": "Noan",
+    "text": "Ton inventaire est plein : jette la cobblestone, garde ta pioche et ton pain, et récupère les diamants à @diamants."
+  },
+  "success": {
+    "all": [
+      {
+        "have": "diamond",
+        "min": "${n}",
+        "max": "${n}"
+      },
+      {
+        "have": "iron_pickaxe",
+        "min": 1,
+        "max": 1
+      },
+      {
+        "have": "bread",
+        "min": 16,
+        "max": 16
+      }
+    ]
+  },
+  "fail": {
+    "died": true
+  },
+  "milestones": [
+    {
+      "name": "made_room",
+      "check": {
+        "have": "cobblestone",
+        "min": 0,
+        "max": 2175
+      }
+    },
+    {
+      "name": "diamonds_recovered",
+      "check": {
+        "have": "diamond",
+        "min": "${n}"
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 1400,
+    "decisions": 20
+  },
+  "solution": [
+    "goto @recul dist=0",
+    "look <-8,0,0>",
+    "toss_junk keep=[iron_pickaxe,bread]",
+    "collect diamond radius=20"
+  ],
+  "solution_ticks": 450,
+  "entities": [
+    {
+      "item": "diamond",
+      "count": "${n}",
+      "at": "<${x},0,${z}>"
+    }
+  ],
+  "mind": {
+    "places": {
+      "diamants": "<${x},0,${z}>",
+      "recul": "<-4,0,0>"
+    }
+  },
+  "notes": "All 36 slots are filled; identical full cobblestone stacks cannot compact. Junk is tossed away from the diamond route to reduce immediate recollection."
+}

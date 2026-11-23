@@ -1,0 +1,100 @@
+{
+  "meta": {"t": 412300, "session": "2026-11-17_14-02_LFM", "bot": "LFM", "version": "2.0", "mc_version": "1.21.11", "source": "live"},
+  "memory": {
+    "notes": [
+      {"key": "home_danger", "text": "creepers come out of the cave west of @home at night", "t": 120400},
+      {"text": "oak forest 20 m east of spawn", "t": 30100}
+    ],
+    "places": [
+      {"name": "home", "pos": [12, 70, -8], "dimension": "overworld", "what": "dirt hut, crafting_table, furnace", "seen_t": 300200},
+      {"name": "iron_vein_1", "pos": [-40, 12, 88], "dimension": "overworld", "what": "6 iron_ore seen in a cave wall", "seen_t": 390000}
+    ],
+    "routines": [{"name": "wood", "src": "seq[chop n=4; craft oak_planks n=16]", "runs": 2, "ok": 2}]
+  },
+  "map": {
+    "cell": 16,
+    "cells": [
+      {"cx": 0, "cz": -1, "biome": "plains", "visited": true, "seen_t": 300200, "surface_y": 70, "resources": {"oak_log": 40}, "structures": [], "dangers": []},
+      {"cx": -3, "cz": 5, "biome": "plains", "visited": true, "seen_t": 390000, "surface_y": 68, "resources": {"iron_ore": 6, "coal_ore": 11}, "structures": ["cave"], "dangers": ["lava"]},
+      {"cx": 2, "cz": 0, "biome": "forest", "visited": false, "seen_t": 200000, "resources": {"birch_log": 25}, "structures": [], "dangers": []}
+    ],
+    "frontier": [{"dir": "north", "dist": 30}, {"dir": "east", "dist": 45}],
+    "costs": [{"to": "@home", "dist": 98, "eta_s": 35}, {"to": "@iron_vein_1", "dist": 6, "eta_s": 4}]
+  },
+  "episode": {
+    "summary": "Spawned in plains, made wooden then stone tools, built a dirt hut at @home. Went down the cave at (-40,60,80) for iron, mined 3 iron_ore. One death at night 1 (creeper near @home).",
+    "summary_t": 360000,
+    "deaths": [{"t": 251000, "pos": [8, 70, -10], "cause": "blown up by Creeper"}],
+    "goals_done": [{"text": "stone tools", "t": 180000, "status": "done"}]
+  },
+  "goals": {
+    "stack": [
+      {"text": "iron pickaxe", "source": "self", "t": 190000},
+      {"text": "bring me 4 bread", "source": "player", "from": "Noan", "t": 400100}
+    ],
+    "plan": [
+      {"step": "mine 3 iron_ore at @iron_vein_1", "done": false},
+      {"step": "smelt at @home", "done": false},
+      {"step": "craft iron_pickaxe", "done": false}
+    ]
+  },
+  "ledger": {
+    "agg": [
+      {"key": "mine iron_ore", "ok": 1, "partial": 1, "failed": 2, "interrupted": 0, "causes": {"no_path": 2}, "last_t": 405000},
+      {"key": "chop", "ok": 3, "partial": 0, "failed": 0, "interrupted": 1, "causes": {}, "last_t": 150000}
+    ],
+    "recent": [
+      {"t": 405000, "kind": "result", "status": "failed", "stmt": "mine iron_ore n=3", "dur_s": 12.4, "cause": "no_path", "detail": "water between the bot and (-41,11,90)"},
+      {"t": 409800, "kind": "result", "status": "partial", "stmt": "mine iron_ore n=3", "dur_s": 4.8, "gained": {"raw_iron": 1}, "cause": "interrupted_until", "detail": "until(hp<8) became true"}
+    ]
+  },
+  "body": {
+    "hp": 7, "food": 14, "sat": 2.5, "xp": 3, "armor": 0, "air": 300, "effects": [],
+    "held": "stone_pickaxe", "offhand": null,
+    "worn": {"head": null, "chest": null, "legs": null, "feet": null},
+    "tools": [{"name": "stone_pickaxe", "dur": 40, "max": 131}, {"name": "stone_sword", "dur": 110, "max": 131}, {"name": "wooden_axe", "dur": 51, "max": 59}]
+  },
+  "inventory": {
+    "items": {"raw_iron": 4, "cobblestone": 52, "coal": 9, "oak_planks": 6, "stick": 5, "torch": 7, "bread": 6, "dirt": 14},
+    "free_slots": 25,
+    "chests": []
+  },
+  "affordances": {
+    "craftable": [{"item": "furnace", "max": 6, "station": "crafting_table"}, {"item": "stone_pickaxe", "max": 3, "station": "crafting_table"}, {"item": "torch", "max": 20}, {"item": "crafting_table", "max": 1}],
+    "craftable_soon": [{"item": "iron_pickaxe", "missing": {"iron_ingot": 3}, "steps": 2}, {"item": "bucket", "missing": {"iron_ingot": 3}, "steps": 2}],
+    "smeltable": ["raw_iron", "cobblestone"],
+    "edible": ["bread"],
+    "placeable": ["cobblestone", "dirt", "oak_planks", "torch"],
+    "stations": [{"kind": "crafting_table", "pos": [13, 70, -8], "dist": 98}, {"kind": "furnace", "pos": [11, 70, -8], "dist": 98}]
+  },
+  "surroundings": {
+    "pos": [-38, 12, 86], "facing": "south", "dimension": "overworld", "biome": "plains", "time": 12950, "day": 2,
+    "light": 4, "sky": false, "weather": "clear", "flags": ["on_ground"],
+    "slice": {
+      "origin": [-38, 12, 86], "size": [9, 3, 9],
+      "legend": {"#": "stone", "I": "iron_ore", "~": "water", ".": "air", "@": "bot", "c": "coal_ore"},
+      "layers": [
+        ["#########", "#####I###", "####.I###", "###...###", "##..@..##", "###..~~##", "####~~~##", "#########", "#########"],
+        ["#########", "#####I###", "####..###", "###...###", "##.....##", "###..~~##", "####~~~##", "#########", "#########"],
+        ["#########", "#########", "####c####", "###...###", "##.....##", "###....##", "#########", "#########", "#########"]
+      ]
+    },
+    "blocks": [
+      {"name": "iron_ore", "pos": [-37, 12, 89], "n": 3, "dist": 3.2, "dir": "south", "visible": true},
+      {"name": "water", "pos": [-37, 12, 87], "n": 7, "dist": 1.4, "dir": "south", "visible": true},
+      {"name": "lava", "pos": [-30, 9, 95], "n": 12, "dist": 12.4, "dir": "south_east", "visible": false}
+    ],
+    "entities": [
+      {"ref": "#zombie.417", "dist": 5.1, "dir": "north_west", "dy": 0, "hostile": true, "approaching": true, "hp": 20},
+      {"ref": "#bat.52", "dist": 9.0, "dir": "east", "dy": 2, "hostile": false, "approaching": false}
+    ],
+    "players": []
+  },
+  "events": [
+    {"t": 409800, "kind": "result", "status": "partial", "stmt": "mine iron_ore n=3", "dur_s": 4.8, "gained": {"raw_iron": 1}, "cause": "interrupted_until", "detail": "until(hp<8) became true"},
+    {"t": 409100, "kind": "damage", "amount": 3, "hp": 7, "source": "#zombie.417"},
+    {"t": 409900, "kind": "surprise", "expect": "have(raw_iron)>=+3, hp>=~-2 in 60s", "unmet": [{"cond": "hp>=~-2", "actual": -6}]},
+    {"t": 400100, "kind": "chat", "from": "Noan", "text": "ramène moi 4 pains quand tu peux"}
+  ],
+  "now": {"running": null, "expect": null, "since_last_ms": 320, "call": "decision"}
+}

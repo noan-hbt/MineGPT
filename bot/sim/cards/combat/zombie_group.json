@@ -1,0 +1,25 @@
+{
+  "card": 1,
+  "id": "combat.zombie_group",
+  "title": "Several zombies at night: kill them all without dying",
+  "tags": ["combat", "danger", "multi_target"],
+  "difficulty": 3,
+  "split": "train",
+  "seeds": [1, 2, 3],
+  "params": { "dx": { "int": [6, 10] }, "dz": { "int": [-5, 5] } },
+  "world": { "template": "arena", "time": 18000, "difficulty": "easy" },
+  "entities": [
+    { "type": "zombie", "at": "<${dx},0,${dz}>", "tag": "foe", "nbt": "{PersistenceRequired:1b,CanPickUpLoot:0b}" },
+    { "type": "zombie", "at": "<${-dx},0,${dz}>", "tag": "foe", "nbt": "{PersistenceRequired:1b,CanPickUpLoot:0b}" },
+    { "type": "zombie", "at": "<${dz},0,${dx}>", "tag": "foe", "nbt": "{PersistenceRequired:1b,CanPickUpLoot:0b}" }
+  ],
+  "player": {
+    "inventory": [ { "item": "iron_sword", "slot": 0 } ],
+    "armor": { "head": { "item": "iron_helmet" }, "chest": { "item": "iron_chestplate" } }
+  },
+  "success": { "entity": "zombie", "tag": "foe", "max": 0 },
+  "fail": { "died": true },
+  "milestones": [ { "name": "first_kill", "check": { "entity": "zombie", "tag": "foe", "max": 2 } } ],
+  "limits": { "ticks": 2400, "decisions": 8 },
+  "solution": ["equip iron_sword", "fight #zombie", "fight #zombie", "fight #zombie"]
+}

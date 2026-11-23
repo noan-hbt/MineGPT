@@ -1,0 +1,33 @@
+{
+  "card": 1,
+  "id": "mine.strip_mine_find_iron",
+  "title": "Strip mine a corridor to expose iron hidden in its wall",
+  "tags": ["mine", "strip_mine", "exploration", "drops"],
+  "difficulty": 3,
+  "split": "train",
+  "seeds": [1, 2, 3, 4],
+  "params": {"dx": {"int": [3, 5]}, "z": {"int": [-3, 3]}, "n": {"int": [1, 2]}},
+  "let": {"len": "${dx + n}"},
+  "world": {"template": "arena", "gamerules": {"advance_time": false, "block_drops": true}},
+  "build": [
+    {"fill": ["<1,0,${z - 2}>", "<${len + 1},3,${z + 2}>"], "block": "stone"},
+    {"fill": ["<${dx},0,${z + 1}>", "<${dx + n - 1},0,${z + 1}>"], "block": "iron_ore"}
+  ],
+  "player": {"at": "<0,0,${z}>", "spawn": "<-3,0,${z}>", "inventory": [{"item": "iron_pickaxe", "slot": 0}]},
+  "order": {"from": "Noan", "text": "creuse un tunnel de ${len} blocs vers l'est depuis ici, puis mine le fer caché dans sa paroi et récupère ${n} fers bruts", "at_tick": 0},
+  "success": {"all": [
+    {"have": "raw_iron", "min": "${n}"},
+    {"block": "<${len},0,${z}>", "is": "air"},
+    {"block": "<${len},1,${z}>", "is": "air"}
+  ]},
+  "fail": {"died": true},
+  "milestones": [
+    {"name": "tunnel_started", "check": {"block": "<2,0,${z}>", "is": "air"}},
+    {"name": "corridor_dug", "check": {"block": "<${len},0,${z}>", "is": "air"}},
+    {"name": "first_raw_iron", "check": {"have": "raw_iron", "min": 1}}
+  ],
+  "limits": {"ticks": 2700, "decisions": 10},
+  "solution": ["strip_mine east len=${len}", "mine iron_ore n=${n}"],
+  "solution_ticks": 900,
+  "notes": "The vein is enclosed by stone on all sides at setup. The eastward 1x2 tunnel exposes its north face. All tunnel floors are solid stone; no fluids or falling blocks."
+}

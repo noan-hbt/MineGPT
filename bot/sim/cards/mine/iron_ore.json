@@ -1,0 +1,20 @@
+{
+  "card": 1,
+  "id": "mine.iron_ore",
+  "title": "Mine visible iron ore with the right tool",
+  "tags": ["mine", "tools"],
+  "difficulty": 1,
+  "split": "train",
+  "seeds": [1, 2, 3],
+  "params": { "dx": { "int": [3, 9] }, "dz": { "int": [-6, 6] }, "n": { "int": [1, 3] } },
+  "world": { "template": "arena" },
+  "build": [ { "fill": ["<${dx},0,${dz}>", "<${dx},0,${dz + n - 1}>"], "block": "iron_ore" } ],
+  "player": { "inventory": [ { "item": "stone_pickaxe", "slot": 0 }, { "item": "bread", "count": 2 } ] },
+  "order": { "from": "Noan", "text": "ramène ${n} fer brut" },
+  "success": { "have": "raw_iron", "min": "${n}" },
+  "fail": { "died": true },
+  "milestones": [ { "name": "first_raw_iron", "check": { "have": "raw_iron", "min": 1 } } ],
+  "limits": { "ticks": 1200, "decisions": 8 },
+  "solution": ["mine iron_ore n=${n}"],
+  "solution_ticks": 150
+}

@@ -1,0 +1,138 @@
+{
+  "card": 1,
+  "id": "farm.trade_villager",
+  "title": "Buy the fixed villager offer using supplied emeralds",
+  "tags": [
+    "farm"
+  ],
+  "difficulty": 3,
+  "split": "heldout",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "x": {
+      "int": [
+        3,
+        6
+      ]
+    },
+    "z": {
+      "int": [
+        -3,
+        3
+      ]
+    },
+    "n": {
+      "int": [
+        1,
+        3
+      ]
+    },
+    "price": {
+      "int": [
+        2,
+        4
+      ]
+    },
+    "item": {
+      "choice": [
+        "bread",
+        "apple",
+        "carrot"
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "easy",
+    "gamerules": {
+      "advance_time": false,
+      "advance_weather": false,
+      "keep_inventory": false,
+      "mob_griefing": false
+    }
+  },
+  "player": {
+    "at": "<0,0,0>",
+    "spawn": "<0,0,0>",
+    "inventory": [
+      {
+        "item": "emerald",
+        "count": "${emeralds}",
+        "slot": 0
+      }
+    ]
+  },
+  "order": {
+    "from": "Noan",
+    "text": "Achète ${n} ${item} au villageois avec les émeraudes. Son offre coûte ${price} émeraudes par objet."
+  },
+  "success": {
+    "all": [
+      {
+        "have": "${item}",
+        "min": "${n}",
+        "max": "${n}"
+      },
+      {
+        "have": "emerald",
+        "min": 3,
+        "max": 3
+      },
+      {
+        "entity": "villager",
+        "tag": "fixed_merchant",
+        "near": "<${x},0,${z}>",
+        "radius": 3,
+        "min": 1
+      }
+    ]
+  },
+  "fail": {
+    "died": true
+  },
+  "milestones": [
+    {
+      "name": "reached_merchant",
+      "check": {
+        "at": "<${x},0,${z}>",
+        "radius": 3
+      }
+    },
+    {
+      "name": "purchase_received",
+      "check": {
+        "have": "${item}",
+        "min": "${n}"
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 800,
+    "decisions": 20
+  },
+  "solution": [
+    "trade #villager 1 n=${n}"
+  ],
+  "solution_ticks": 250,
+  "let": {
+    "cost": "${n * price}",
+    "emeralds": "${n * price + 3}"
+  },
+  "entities": [
+    {
+      "type": "villager",
+      "at": "<${x},0,${z}>",
+      "tag": "fixed_merchant",
+      "no_ai": true,
+      "nbt": "{Age:0,PersistenceRequired:1b,VillagerData:{profession:\"minecraft:farmer\",level:2,type:\"minecraft:plains\"},Offers:{Recipes:[{buy:{id:\"minecraft:emerald\",count:${price}},sell:{id:\"minecraft:${item}\",count:1},uses:0,maxUses:64,rewardExp:0b,xp:0,priceMultiplier:0.0f,specialPrice:0,demand:0}]}}"
+    }
+  ],
+  "notes": "Single explicit one-based offer; zero priceMultiplier and demand prevent price drift. Purchased items have no other source, and the exact emerald remainder proves payment."
+}

@@ -1,0 +1,25 @@
+{
+  "card": 1,
+  "id": "craft.planks",
+  "title": "Craft planks from the logs in the inventory",
+  "tags": ["craft", "inventory"],
+  "difficulty": 1,
+  "split": "train",
+  "seeds": [1, 2, 3],
+  "params": {
+    "wood": { "choice": ["oak", "birch", "spruce", "acacia"] },
+    "n": { "int": [4, 16] }
+  },
+  "let": { "logs": "${ceil(n/4)}" },
+  "world": { "template": "arena", "time": 1000 },
+  "player": {
+    "inventory": [ { "item": "${wood}_log", "count": "${logs}" } ]
+  },
+  "order": { "from": "Noan", "text": "fais-moi ${n} planches de ${wood}" },
+  "success": { "have": "${wood}_planks", "min": "${n}" },
+  "fail": { "died": true },
+  "milestones": [ { "name": "first_planks", "check": { "have": "${wood}_planks", "min": 1 } } ],
+  "limits": { "ticks": 600, "decisions": 5 },
+  "solution": ["craft ${wood}_planks n=${n}"],
+  "solution_ticks": 40
+}

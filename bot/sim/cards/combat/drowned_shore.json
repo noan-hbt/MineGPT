@@ -1,0 +1,203 @@
+{
+  "card": 1,
+  "id": "combat.drowned_shore",
+  "title": "Wait on the dry bank for an unarmed drowned and fight it on land",
+  "tags": [
+    "combat",
+    "drowned_shore"
+  ],
+  "difficulty": 3,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "x": {
+      "int": [
+        -1,
+        1
+      ]
+    },
+    "z": {
+      "int": [
+        6,
+        8
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "radius": 18,
+    "height": 8,
+    "depth": 6,
+    "floor": "stone",
+    "dimension": "overworld",
+    "time": 18000,
+    "weather": "clear",
+    "difficulty": "easy",
+    "gamerules": {
+      "advance_time": false,
+      "advance_weather": false,
+      "spawn_monsters": false,
+      "natural_health_regeneration": false,
+      "mob_griefing": false
+    }
+  },
+  "build": [
+    {
+      "fill": [
+        "<-18,0,-18>",
+        "<-18,4,18>"
+      ],
+      "block": "bedrock"
+    },
+    {
+      "fill": [
+        "<18,0,-18>",
+        "<18,4,18>"
+      ],
+      "block": "bedrock"
+    },
+    {
+      "fill": [
+        "<-17,0,-18>",
+        "<17,4,-18>"
+      ],
+      "block": "bedrock"
+    },
+    {
+      "fill": [
+        "<-17,0,18>",
+        "<17,4,18>"
+      ],
+      "block": "bedrock"
+    },
+    {
+      "fill": [
+        "<-4,-1,5>",
+        "<4,-1,10>"
+      ],
+      "block": "water"
+    },
+    {
+      "set": "<15,-2,15>",
+      "block": "obsidian"
+    }
+  ],
+  "entities": [],
+  "player": {
+    "at": "<0,0,0>",
+    "spawn": "<0,0,-12>",
+    "health": 20,
+    "food": 20,
+    "saturation": 5,
+    "xp_levels": 0,
+    "yaw": 0,
+    "pitch": 0,
+    "held": 0,
+    "inventory": [
+      {
+        "item": "iron_sword",
+        "slot": 0
+      }
+    ],
+    "armor": {
+      "head": {
+        "item": "iron_helmet"
+      },
+      "chest": {
+        "item": "iron_chestplate"
+      },
+      "legs": {
+        "item": "iron_leggings"
+      },
+      "feet": {
+        "item": "iron_boots"
+      }
+    },
+    "offhand": null,
+    "effects": []
+  },
+  "timeline": [
+    {
+      "at_tick": 0,
+      "summon": {
+        "type": "drowned",
+        "at": "<${x},-1,${z}>",
+        "tag": "combat_drowned_shore_foe",
+        "nbt": "{PersistenceRequired:1b,CanPickUpLoot:0b,IsBaby:0b}"
+      }
+    },
+    {
+      "at_tick": 0,
+      "rcon": "item replace entity @e[type=minecraft:drowned,tag=combat_drowned_shore_foe,limit=1] weapon.mainhand with minecraft:air"
+    },
+    {
+      "when": {
+        "entity": "drowned",
+        "tag": "combat_drowned_shore_foe",
+        "min": 1
+      },
+      "once": false,
+      "rcon": "execute positioned <-4,0,-3> if entity @e[type=minecraft:drowned,tag=combat_drowned_shore_foe,dx=8,dy=2,dz=6] run setblock <15,-2,15> minecraft:gold_block"
+    }
+  ],
+  "fail": {
+    "died": true
+  },
+  "milestones": [
+    {
+      "name": "drowned_reached_dry_bank",
+      "check": {
+        "block": "<15,-2,15>",
+        "is": "gold_block"
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 1800,
+    "decisions": 20
+  },
+  "solution": [
+    "wait 1s",
+    "equip iron_sword",
+    "wait 25s until(dist(#drowned)<3)",
+    "fight #drowned",
+    "goto <0,0,0> dist=1"
+  ],
+  "order": {
+    "from": "Noan",
+    "text": "Reste sur la berge, laisse sortir le noyé du bassin, puis tue-le à l'épée sur la terre ferme.",
+    "at_tick": 0
+  },
+  "success": {
+    "all": [
+      {
+        "entity": "drowned",
+        "tag": "combat_drowned_shore_foe",
+        "max": 0
+      },
+      {
+        "block": "<15,-2,15>",
+        "is": "gold_block"
+      },
+      {
+        "y": {
+          "min": 0
+        }
+      },
+      {
+        "health": {
+          "min": 8
+        }
+      }
+    ]
+  },
+  "solution_ticks": 650,
+  "notes": [
+    "The one-block-deep source pool is inset in the stone floor, with a single-block climb to the dry bank. Night allows drowned land pursuit. The land latch is sampled while the drowned is alive."
+  ]
+}

@@ -1,0 +1,57 @@
+﻿MineSim 1 port 25601; 27 card(s), policy achieve, lockstep
+  -> ok | goal reached in 1 step(s): craft white_bed n=1
+PASS craft.bed_from_wool#1              success    52 ticks 1.4s {"tx":1,"wood":"acacia","color":"white"}
+  -> ok | goal reached in 1 step(s): blast raw_iron n=4 fuel=coal
+PASS craft.blast_iron#1                 success   449 ticks 3.3s {"sx":-2,"n":4,"fuel":"coal"}
+  -> ok | goal reached in 4 step(s): craft acacia_planks n=4; smelt acacia_log n=3 fuel=acacia_planks; craft stick n=4; craft torch n=12
+PASS craft.charcoal_torches#1           success   674 ticks 4.3s {"wood":"acacia","n":3,"fx":2}
+  -> ok | goal reached in 4 step(s): craft birch_planks n=20; craft crafting_table n=1; place crafting_table; craft chest n=2
+PASS craft.chest_from_logs#1            success    78 ticks 2.8s {"wood":"birch","n":2,"tx":1}
+  -> ok | goal reached in 1 step(s): craft compass n=1
+PASS craft.compass#1                    success    53 ticks 1s {"tx":2,"extra":1}
+  -> partial unreachable | 4/6 done, then step `place furnace` failed after 4 step(s) (craft oak_planks n=4; craft crafting_table n=1; place crafting_table; craft furnace n=1): (3000,200,3001) is occupied by crafting_table; rest of plan: smelt beef n=2 fuel=oak_log
+FAIL craft.cook_beef#1                  fail       70 ticks 5.6s {"n":2,"wood":"oak"} judge {"{\"have\":\"cooked_beef\",\"min\":2}":0}
+  -> ok | goal reached in 1 step(s): craft flint_and_steel n=1
+PASS craft.flint_and_steel#1            success    44 ticks 0.8s {"px":0,"extra":3}
+  -> ok | goal reached in 1 step(s): smelt raw_iron n=3 fuel=birch_planks
+PASS craft.furnace_fuel_choice#1        success   648 ticks 3.5s {"n":3,"wood":"birch","fuel":"stick","fx":1}
+  -> ok | goal reached in 1 step(s): craft iron_pickaxe n=1
+PASS craft.iron_pickaxe#1               success    51 ticks 1s {"tx":-1,"extra":3}
+  -> ok | goal reached in 1 step(s): craft iron_sword n=1
+PASS craft.iron_sword#1                 success    52 ticks 1s {"tx":-1,"extra":2}
+  -> ok | goal reached in 1 step(s): craft acacia_planks n=12
+PASS craft.planks#1                     success    48 ticks 0.8s {"wood":"acacia","n":9,"logs":3}
+  -> ok | goal reached in 1 step(s): craft shield n=1
+PASS craft.shield#1                     success    54 ticks 0.9s {"tx":1,"wood":"birch"}
+  -> ok | goal reached in 1 step(s): smelt raw_iron n=4 fuel=coal
+PASS craft.smelt_iron#1                 success   850 ticks 3.5s {"n":4,"fuel":"coal"}
+  -> ok | goal reached in 1 step(s): smoke porkchop n=2 fuel=coal
+PASS craft.smoke_porkchop#1             success   266 ticks 1.7s {"sx":1,"n":2,"fuel":"coal"}
+  -> ok | goal reached in 8 step(s): craft spruce_planks n=8; craft stick n=4; craft spruce_planks n=4; craft crafting_table n=1; place crafting_table; craft wooden_pickaxe n=1; mine stone n=3; craft stone_pickaxe n=1
+PASS craft.stone_pickaxe#1              success   188 ticks 4.7s {"wood":"spruce"}
+  -> ok | goal reached in 2 step(s): craft stick n=4; craft torch n=8
+PASS craft.torches#1                    success    48 ticks 1.2s {"coal":2,"fuel":"coal"}
+  -> ok | goal reached in 6 step(s): craft oak_planks n=8; craft stick n=4; craft oak_planks n=4; craft crafting_table n=1; place crafting_table; craft wooden_pickaxe n=1
+PASS craft.wooden_pickaxe#1             success    66 ticks 3.4s {"extra":0,"logs":3}
+  -> interrupted interrupted_by_model | episode_end
+PASS gather.chop_n_logs_mixed_trees#1   success   159 ticks 2.8s {"wood":"birch","n":6,"dz":4}
+  -> failed invalid | unexpected ':logs)>=3'
+FAIL gather.chop_tree#1                 fail       44 ticks 0s {"wood":"birch","dx":6,"dz":5} judge {"{\"have\":\"#minecraft:logs\",\"min\":3}":0}
+  -> failed missing_items | no plan before any step: no way to get any of flint
+FAIL gather.collect_drops#1             fail       46 ticks 0.4s {"loot":"flint","n":2,"dx":4,"dz":7} judge {"{\"have\":\"flint\",\"min\":6}":0}
+  -> failed missing_items | no plan before any step: no way to get any of flint
+FAIL gather.flint_from_gravel#1         fail       44 ticks 0.4s {"n":3,"dx":4,"dz":4} judge {"{\"have\":\"flint\",\"min\":3}":0}
+  -> ok | goal reached in 2 step(s): mine sand n=2; smelt sand n=2 fuel=charcoal
+PASS gather.sand_glass#1                success   524 ticks 2.5s {"n":2,"dx":5,"dz":4,"fuel":"charcoal"}
+  -> ok | goal reached in 1 step(s): mine sugar_cane n=4
+PASS gather.sugar_cane#1                success   195 ticks 5.8s {"n":4,"dx":2,"dz":5,"soil":"dirt"}
+  -> ok | goal reached in 1 step(s): mine coal_ore n=4
+PASS mine.coal_vein#1                   success   306 ticks 2.5s {"dx":7,"dz":-3,"n":4}
+  -> ok | goal reached in 1 step(s): mine iron_ore n=2
+PASS mine.iron_ore#1                    success   268 ticks 1.3s {"dx":4,"dz":-5,"n":2}
+  -> interrupted interrupted_by_model | episode_end
+PASS mine.lapis#1                       success   357 ticks 2.6s {"dx":7,"dz":-4,"n":4}
+  -> ok | goal reached in 1 step(s): mine redstone_ore n=16
+PASS mine.redstone_ore#1                success   480 ticks 3.3s {"dx":5,"dz":1,"n":4}
+
+23/27 episodes succeeded; log C:\Users\noanh\Desktop\Dev\localai\data\own\2026-11-18\2026-11-18-09-56_GOAP_all_cards.jsonl; real 73.8 s, 6878 ticks (93 tps)

@@ -1,0 +1,17 @@
+{
+  "card": 1, "id": "gather.plant_seeds", "title": "Plant a complete row of hydrated farmland", "tags": ["gather", "plant", "farmland"],
+  "difficulty": 2, "split": "train", "seeds": [1, 2, 3, 4],
+  "params": {"dx": {"int": [2, 4]}, "dz": {"int": [2, 5]}, "seed": {"choice": ["wheat_seeds", "beetroot_seeds"]}},
+  "world": {"template": "arena", "gamerules": {"advance_time": false, "random_tick_speed": 0, "block_drops": true}},
+  "build": [{"fill": ["<${dx},-1,${dz}>", "<${dx + 3},-1,${dz}>"], "block": "farmland[moisture=7]"}, {"fill": ["<${dx},-1,${dz + 1}>", "<${dx + 3},-1,${dz + 1}>"], "block": "water"}],
+  "player": {"inventory": [{"item": "${seed}", "count": 4}]},
+  "order": {"from": "Noan", "text": "plante tes quatre graines (${seed}) sur toute la rangée de terre labourée"},
+  "success": {"all": [
+    {"any": [{"block": "<${dx},0,${dz}>", "is": "wheat"}, {"block": "<${dx},0,${dz}>", "is": "beetroots"}]},
+    {"any": [{"block": "<${dx + 1},0,${dz}>", "is": "wheat"}, {"block": "<${dx + 1},0,${dz}>", "is": "beetroots"}]},
+    {"any": [{"block": "<${dx + 2},0,${dz}>", "is": "wheat"}, {"block": "<${dx + 2},0,${dz}>", "is": "beetroots"}]},
+    {"any": [{"block": "<${dx + 3},0,${dz}>", "is": "wheat"}, {"block": "<${dx + 3},0,${dz}>", "is": "beetroots"}]}, {"have": "${seed}", "max": 0}
+  ]},
+  "fail": {"died": true}, "milestones": [{"name": "first_seed_planted", "check": {"any": [{"block": "<${dx},0,${dz}>", "is": "wheat"}, {"block": "<${dx},0,${dz}>", "is": "beetroots"}]}}],
+  "limits": {"ticks": 1800, "decisions": 8}, "solution": ["plant ${seed} at=(<${dx},0,${dz}>,<${dx + 3},0,${dz}>)"], "solution_ticks": 600
+}

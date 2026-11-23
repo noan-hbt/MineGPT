@@ -10,12 +10,25 @@ node_modules/
 
 # runtime output
 *.log
-mcbot/logs/
-mcbot/last_obs*.txt
 __pycache__/
+.venv/
+
+# v2 datasets and run outputs (big, regenerable or private logs)
+data/
+archive/
+bot/logs/
+bot/memory/
 
 # remote access credentials
 remote/guac/user-mapping.xml
 remote/Caddyfile
 remote/*.pem
-mcbot/memory/
+remote/
+.commandcode/
+mcbot/
+
+# private memory (remote access details, repo is public)
+memory/remote-access.md
+
+# MineSim instances (bot/sim/instance.js)
+mcserver-sim/

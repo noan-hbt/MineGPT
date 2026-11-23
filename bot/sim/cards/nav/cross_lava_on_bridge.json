@@ -1,0 +1,228 @@
+{
+  "card": 1,
+  "id": "nav.cross_lava_on_bridge",
+  "title": "Cross a lava lake on an existing one-block-wide stone bridge without falling",
+  "tags": [
+    "nav",
+    "pathfinding",
+    "lava",
+    "bridge"
+  ],
+  "difficulty": 3,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "x": {
+      "int": [
+        -5,
+        5
+      ]
+    },
+    "length": {
+      "int": [
+        7,
+        10
+      ]
+    },
+    "material": {
+      "choice": [
+        "stone_bricks",
+        "polished_andesite",
+        "cobblestone"
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "radius": 15,
+    "height": 12,
+    "depth": 15,
+    "floor": "bedrock",
+    "dimension": "overworld",
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "normal",
+    "gamerules": {
+      "spawn_monsters": false,
+      "advance_time": false,
+      "advance_weather": false
+    }
+  },
+  "build": [
+    {
+      "fill": [
+        "<-14,-4,2>",
+        "<14,-1,${length+1}>"
+      ],
+      "block": "lava"
+    },
+    {
+      "fill": [
+        "<${x},-1,2>",
+        "<${x},-1,${length+1}>"
+      ],
+      "block": "${material}"
+    },
+    {
+      "set": "<${x},-1,${length+4}>",
+      "block": "gold_block"
+    },
+    {
+      "fill": [
+        "<-15,0,-15>",
+        "<-15,4,15>"
+      ],
+      "block": "bedrock"
+    },
+    {
+      "fill": [
+        "<15,0,-15>",
+        "<15,4,15>"
+      ],
+      "block": "bedrock"
+    },
+    {
+      "fill": [
+        "<-15,0,-15>",
+        "<15,4,-15>"
+      ],
+      "block": "bedrock"
+    },
+    {
+      "fill": [
+        "<-15,0,15>",
+        "<15,4,15>"
+      ],
+      "block": "bedrock"
+    }
+  ],
+  "player": {
+    "at": "<${x},0,-2>",
+    "spawn": "<${x},0,-2>",
+    "health": 20,
+    "food": 20,
+    "saturation": 5,
+    "inventory": []
+  },
+  "fail": {
+    "any": [
+      {
+        "died": true
+      },
+      {
+        "y": {
+          "max": -1
+        }
+      },
+      {
+        "not": {
+          "damage_taken": {
+            "max": 0
+          }
+        }
+      }
+    ]
+  },
+  "milestones": [
+    {
+      "name": "bridge_entrance",
+      "check": {
+        "at": "<${x},0,1>",
+        "radius": 1
+      }
+    },
+    {
+      "name": "bridge_middle",
+      "check": {
+        "at": "<${x},0,${2+floor(length/2)}>",
+        "radius": 1.2
+      }
+    },
+    {
+      "name": "far_bank",
+      "check": {
+        "at": "<${x},0,${length+2}>",
+        "radius": 1
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 1200,
+    "decisions": 8
+  },
+  "solution": [
+    "goto <${x},0,1> dist=0",
+    "goto <${x},0,${2+floor(length/2)}> dist=0",
+    "goto <${x},0,${length+2}> dist=0",
+    "goto @rive dist=0"
+  ],
+  "solution_ticks": 400,
+  "mind": {
+    "places": {
+      "rive": "<${x},0,${length+4}>"
+    }
+  },
+  "order": {
+    "from": "Noan",
+    "text": "traverse le lac de lave sur le pont déjà construit, large d'un seul bloc, et rejoins @rive sans tomber ni prendre de dégâts"
+  },
+  "success": {
+    "all": [
+      {
+        "at": "<${x},0,${length+4}>",
+        "radius": 1.2
+      },
+      {
+        "damage_taken": {
+          "max": 0
+        }
+      },
+      {
+        "block": "<${x},-1,${min(2,length+1)}>",
+        "is": "${material}"
+      },
+      {
+        "block": "<${x},-1,${min(3,length+1)}>",
+        "is": "${material}"
+      },
+      {
+        "block": "<${x},-1,${min(4,length+1)}>",
+        "is": "${material}"
+      },
+      {
+        "block": "<${x},-1,${min(5,length+1)}>",
+        "is": "${material}"
+      },
+      {
+        "block": "<${x},-1,${min(6,length+1)}>",
+        "is": "${material}"
+      },
+      {
+        "block": "<${x},-1,${min(7,length+1)}>",
+        "is": "${material}"
+      },
+      {
+        "block": "<${x},-1,${min(8,length+1)}>",
+        "is": "${material}"
+      },
+      {
+        "block": "<${x},-1,${min(9,length+1)}>",
+        "is": "${material}"
+      },
+      {
+        "block": "<${x},-1,${min(10,length+1)}>",
+        "is": "${material}"
+      },
+      {
+        "block": "<${x},-1,${min(11,length+1)}>",
+        "is": "${material}"
+      }
+    ]
+  },
+  "notes": "The bot starts on the dry near bank. A bedrock-bottomed lava channel spans the enclosed arena; its single nonflammable bridge is supplied in full. Falling below bridge level or taking any damage fails. There is no dangerous setup teleport."
+}

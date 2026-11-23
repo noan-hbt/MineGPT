@@ -1,0 +1,29 @@
+{
+  "card": 1,
+  "id": "craft.wooden_pickaxe",
+  "title": "From logs only: planks, sticks, crafting table, place it, wooden pickaxe",
+  "tags": ["craft", "place", "planning"],
+  "difficulty": 2,
+  "split": "train",
+  "seeds": [1, 2],
+  "params": { "extra": { "int": [0, 2] } },
+  "let": { "logs": "${3 + extra}" },
+  "world": { "template": "arena" },
+  "player": { "inventory": [ { "item": "oak_log", "count": "${logs}" } ] },
+  "order": { "from": "Noan", "text": "fabrique-toi une pioche en bois" },
+  "success": { "have": "wooden_pickaxe", "min": 1 },
+  "fail": { "died": true },
+  "milestones": [
+    { "name": "planks", "check": { "have": "oak_planks", "min": 4 } },
+    { "name": "table", "check": { "have": "crafting_table", "min": 1 } }
+  ],
+  "limits": { "ticks": 1800, "decisions": 12 },
+  "solution": [
+    "craft oak_planks n=12",
+    "craft stick n=4",
+    "craft crafting_table",
+    "place crafting_table at=<2,0,2>",
+    "craft wooden_pickaxe"
+  ],
+  "solution_ticks": 200
+}

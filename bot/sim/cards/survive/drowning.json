@@ -1,0 +1,21 @@
+{
+  "card": 1,
+  "id": "survive.drowning",
+  "title": "A dry pit floods while the bot is at the bottom: get out before drowning",
+  "tags": ["survive", "danger", "water", "nav"],
+  "difficulty": 2,
+  "split": "train",
+  "seeds": [1, 2, 3],
+  "params": { "d": { "int": [5, 9] }, "ex": { "int": [3, 6] } },
+  "world": { "template": "arena" },
+  "build": [ { "fill": ["<-1,-${d},-1>", "<1,-1,1>"], "block": "air" } ],
+  "player": { "at": "<0,-${d},0>", "spawn": "<${ex},0,0>", "inventory": [] },
+  "notes": "The bot must not be underwater during setup: player-side timers (air) run off the game clock while the runner sets up, so the pit is flooded at tick 0.",
+  "timeline": [ { "at_tick": 0, "rcon": "fill <-1,-${d},-1> <1,-1,1> water" } ],
+  "order": { "from": "Noan", "text": "sors de l'eau" },
+  "success": { "all": [ { "y": { "min": 0 } }, { "at": "<${ex},0,0>", "radius": 2 } ] },
+  "fail": { "any": [ { "died": true }, { "damage_taken": { "min": 40 } } ] },
+  "milestones": [ { "name": "surfaced", "check": { "y": { "min": -2 } } } ],
+  "limits": { "ticks": 1200, "decisions": 4 },
+  "solution": ["wait 1s", "swim_up", "goto <${ex},0,0>"]
+}

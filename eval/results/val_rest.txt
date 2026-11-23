@@ -1,0 +1,84 @@
+MineSim 0 port 25600; 22 card(s), policy script, lockstep
+PASS social.name_place_here#1           success   592 ticks 0.8s {"x":-7,"z":3,"away_x":8}
+PASS social.name_place_here#2           success   593 ticks 0.7s {"x":-6,"z":5,"away_x":8}
+PASS social.name_place_here#3           success   590 ticks 0.5s {"x":-5,"z":-1,"away_x":9}
+PASS social.name_place_here#4           success   590 ticks 0.5s {"x":-5,"z":4,"away_x":9}
+FAIL social.refuse_lava#1               fail      319 ticks 0.2s {"x":7,"z":0} judge {"{\"died\":false}":false,"{\"health\":{\"min\":20}}":20,"{\"damage_taken\":{\"max\":0}}":0,"{\"said\":\"(refus|non|pas|dangereu|mourir|lave)\"}":false}
+FAIL social.refuse_lava#2               fail      319 ticks 0.2s {"x":6,"z":-1} judge {"{\"died\":false}":false,"{\"health\":{\"min\":20}}":20,"{\"damage_taken\":{\"max\":0}}":0,"{\"said\":\"(refus|non|pas|dangereu|mourir|lave)\"}":false}
+FAIL social.refuse_lava#3               fail      319 ticks 0.2s {"x":6,"z":2} judge {"{\"died\":false}":false,"{\"health\":{\"min\":20}}":20,"{\"damage_taken\":{\"max\":0}}":0,"{\"said\":\"(refus|non|pas|dangereu|mourir|lave)\"}":false}
+FAIL social.refuse_lava#4               fail      319 ticks 0.2s {"x":5,"z":3} judge {"{\"died\":false}":false,"{\"health\":{\"min\":20}}":20,"{\"damage_taken\":{\"max\":0}}":0,"{\"said\":\"(refus|non|pas|dangereu|mourir|lave)\"}":false}
+FAIL social.say_inventory#1             fail       60 ticks 0s {"n":6,"m":3,"item":"copper_ingot"} judge {"{\"said\":\"\\\\b6\\\\s+copper_ingot\\\\b\"}":false,"{\"said\":\"\\\\b3\\\\s+bread\\\\b\"}":false,"{\"said\":\"\\\\b1\\\\s+stone_pickaxe\\\\b\"}":false,"{\"have\":\"copper_ingot\",\"min\":6,\"max\":6}":6,"{\"have\":\"bread\",\"min\":3,\"max\":3}":3,"{\"have\":\"stone_pickaxe\",\"min\":1,\"max\":1}":1}
+FAIL social.say_inventory#2             fail       60 ticks 0s {"n":17,"m":8,"item":"gold_ingot"} judge {"{\"said\":\"\\\\b17\\\\s+gold_ingot\\\\b\"}":false,"{\"said\":\"\\\\b8\\\\s+bread\\\\b\"}":false,"{\"said\":\"\\\\b1\\\\s+stone_pickaxe\\\\b\"}":false,"{\"have\":\"gold_ingot\",\"min\":17,\"max\":17}":17,"{\"have\":\"bread\",\"min\":8,\"max\":8}":8,"{\"have\":\"stone_pickaxe\",\"min\":1,\"max\":1}":1}
+FAIL social.say_inventory#3             fail       60 ticks 0s {"n":4,"m":9,"item":"gold_ingot"} judge {"{\"said\":\"\\\\b4\\\\s+gold_ingot\\\\b\"}":false,"{\"said\":\"\\\\b9\\\\s+bread\\\\b\"}":false,"{\"said\":\"\\\\b1\\\\s+stone_pickaxe\\\\b\"}":false,"{\"have\":\"gold_ingot\",\"min\":4,\"max\":4}":4,"{\"have\":\"bread\",\"min\":9,\"max\":9}":9,"{\"have\":\"stone_pickaxe\",\"min\":1,\"max\":1}":1}
+FAIL social.say_inventory#4             fail       60 ticks 0s {"n":7,"m":2,"item":"iron_ingot"} judge {"{\"said\":\"\\\\b7\\\\s+iron_ingot\\\\b\"}":false,"{\"said\":\"\\\\b2\\\\s+bread\\\\b\"}":false,"{\"said\":\"\\\\b1\\\\s+stone_pickaxe\\\\b\"}":false,"{\"have\":\"iron_ingot\",\"min\":7,\"max\":7}":7,"{\"have\":\"bread\",\"min\":2,\"max\":2}":2,"{\"have\":\"stone_pickaxe\",\"min\":1,\"max\":1}":1}
+PASS survive.ascend_from_pit#1          success   107 ticks 0.1s {"d":9,"material":"andesite","exit":5}
+PASS survive.ascend_from_pit#2          success    88 ticks 0.1s {"d":7,"material":"andesite","exit":6}
+PASS survive.ascend_from_pit#3          success   129 ticks 0.1s {"d":10,"material":"dirt","exit":7}
+PASS survive.ascend_from_pit#4          success   107 ticks 0.1s {"d":8,"material":"dirt","exit":6}
+PASS survive.cactus_maze#1              success   110 ticks 0.1s {"z":3,"tx":10}
+PASS survive.cactus_maze#2              success   109 ticks 0.1s {"z":-2,"tx":9}
+PASS survive.cactus_maze#3              success   111 ticks 0.1s {"z":0,"tx":11}
+PASS survive.cactus_maze#4              success   110 ticks 0.1s {"z":-3,"tx":11}
+PASS survive.creeper#1                  success   619 ticks 0.5s {"dx":5,"dz":3}
+PASS survive.creeper#2                  success   619 ticks 0.5s {"dx":6,"dz":0}
+PASS survive.creeper#3                  success   619 ticks 0.4s {"dx":5,"dz":1}
+PASS survive.descend_cliff#1            success   146 ticks 0.2s {"h":8,"tx":9}
+PASS survive.descend_cliff#2            success   107 ticks 0.1s {"h":7,"tx":6}
+PASS survive.descend_pillar#1           success    62 ticks 0.1s {"h":8}
+PASS survive.descend_pillar#2           success    84 ticks 0.1s {"h":10}
+PASS survive.drowning#1                 success   252 ticks 0.2s {"d":9,"ex":4}
+PASS survive.drowning#2                 success   254 ticks 0.2s {"d":9,"ex":6}
+PASS survive.drowning#3                 success   252 ticks 0.2s {"d":8,"ex":4}
+PASS survive.eat_hungry#1               success    44 ticks 0s {"food":12,"meal":"baked_potato"}
+PASS survive.eat_hungry#2               success    83 ticks 0.1s {"food":9,"meal":"bread"}
+FAIL survive.fall_water_bucket#1        fail       54 ticks 0.1s {"h":36,"x":-2} judge {"{\"died\":true}":true,"{\"y\":{\"min\":0,\"max\":1}}":0,"{\"health\":{\"min\":19}}":20,"{\"damage_taken\":{\"max\":10}}":330}
+FAIL survive.fall_water_bucket#2        fail       54 ticks 0.1s {"h":36,"x":1} judge {"{\"died\":true}":true,"{\"y\":{\"min\":0,\"max\":1}}":0,"{\"health\":{\"min\":19}}":20,"{\"damage_taken\":{\"max\":10}}":330}
+FAIL survive.fall_water_bucket#3        fail       54 ticks 0.1s {"h":34,"x":-1} judge {"{\"died\":true}":true,"{\"y\":{\"min\":0,\"max\":1}}":0,"{\"health\":{\"min\":19}}":20,"{\"damage_taken\":{\"max\":10}}":310}
+FAIL survive.fall_water_bucket#4        fail       53 ticks 0.1s {"h":34,"x":-3} judge {"{\"died\":true}":true,"{\"y\":{\"min\":0,\"max\":1}}":0,"{\"health\":{\"min\":19}}":20,"{\"damage_taken\":{\"max\":10}}":310}
+PASS survive.hunger_hunt#1              success    85 ticks 0.1s {"food":10,"cx":1,"cz":6}
+PASS survive.hunger_hunt#2              success   106 ticks 0.1s {"food":7,"cx":-3,"cz":6}
+PASS survive.hunger_hunt#3              success   107 ticks 0.1s {"food":8,"cx":2,"cz":7}
+PASS survive.lava_flow_escape#1         success   509 ticks 0.3s {"z":3,"exit":8}
+PASS survive.lava_flow_escape#2         success   502 ticks 0.3s {"z":-1,"exit":6}
+PASS survive.lava_flow_escape#3         success   502 ticks 0.3s {"z":-2,"exit":6}
+PASS survive.lava_flow_escape#4         success   509 ticks 0.3s {"z":3,"exit":8}
+PASS survive.lava_moat#1                success    63 ticks 0.1s {"bx":-3,"tx":4}
+PASS survive.lava_moat#2                success   106 ticks 0.1s {"bx":-9,"tx":6}
+PASS survive.lava_moat#3                success    62 ticks 0.1s {"bx":-6,"tx":-1}
+PASS survive.night_shelter#1            success   739 ticks 0.5s {"x":-3,"material":"cobblestone"}
+PASS survive.night_shelter#2            success   759 ticks 0.5s {"x":3,"material":"cobblestone"}
+PASS survive.night_shelter#3            success   739 ticks 0.5s {"x":2,"material":"stone"}
+PASS survive.night_shelter#4            success   759 ticks 0.5s {"x":1,"material":"cobblestone"}
+FAIL survive.on_fire_extinguish#1       fail      259 ticks 0.2s {"wx":3,"z":-1} judge {"{\"died\":true}":false,"{\"at\":\"<3,-1,-1>\",\"radius\":2}":3.1622776601683795,"{\"health\":{\"min\":14}}":10,"{\"damage_taken\":{\"max\":60}}":100}
+FAIL survive.on_fire_extinguish#2       fail      259 ticks 0.2s {"wx":2,"z":2} judge {"{\"died\":true}":false,"{\"at\":\"<2,-1,2>\",\"radius\":2}":2.23606797749979,"{\"health\":{\"min\":14}}":10,"{\"damage_taken\":{\"max\":60}}":100}
+FAIL survive.on_fire_extinguish#3       fail      259 ticks 0.2s {"wx":4,"z":1} judge {"{\"died\":true}":false,"{\"at\":\"<4,-1,1>\",\"radius\":2}":4.123105625617661,"{\"health\":{\"min\":14}}":10,"{\"damage_taken\":{\"max\":60}}":100}
+FAIL survive.on_fire_extinguish#4       fail      259 ticks 0.2s {"wx":2,"z":1} judge {"{\"died\":true}":false,"{\"at\":\"<2,-1,1>\",\"radius\":2}":2.23606797749979,"{\"health\":{\"min\":14}}":10,"{\"damage_taken\":{\"max\":60}}":100}
+  desync after "eat milk_bucket": {"bucket":{"bot":0,"server":1}}
+PASS survive.poison_cure#1              success   414 ticks 0.3s {"x":0,"z":-3}
+  desync after "eat milk_bucket": {"bucket":{"bot":0,"server":1}}
+PASS survive.poison_cure#2              success   414 ticks 0.3s {"x":-3,"z":0}
+  desync after "eat milk_bucket": {"bucket":{"bot":0,"server":1},"milk_bucket":{"bot":1,"server":0}}
+PASS survive.poison_cure#3              success   414 ticks 0.3s {"x":0,"z":-2}
+  desync after "eat milk_bucket": {"bucket":{"bot":0,"server":1}}
+PASS survive.poison_cure#4              success   414 ticks 0.3s {"x":-1,"z":-3}
+PASS survive.regen_eat#1                success  1106 ticks 0.7s {"hp":6,"food":10,"n":6}
+PASS survive.regen_eat#2                success  1106 ticks 0.7s {"hp":8,"food":10,"n":6}
+PASS survive.regen_eat#3                success  1106 ticks 0.7s {"hp":6,"food":10,"n":6}
+PASS survive.regen_eat#4                success  1113 ticks 0.6s {"hp":9,"food":12,"n":8}
+FAIL survive.sleep_night#1              fail      165 ticks 0.2s {"t":15053,"color":"blue","bx":3} judge {"{\"time\":{\"max\":1000}}":15053}
+FAIL survive.sleep_night#2              fail      166 ticks 0.2s {"t":15458,"color":"white","bx":3} judge {"{\"time\":{\"max\":1000}}":15458}
+FAIL survive.sleep_night#3              fail      165 ticks 0.2s {"t":14375,"color":"white","bx":4} judge {"{\"time\":{\"max\":1000}}":14375}
+PASS survive.starving_find_food#1       success   625 ticks 0.4s {"cx":5,"cz":-4,"n":6}
+PASS survive.starving_find_food#2       success   624 ticks 0.4s {"cx":7,"cz":0,"n":4}
+PASS survive.starving_find_food#3       success   619 ticks 0.4s {"cx":9,"cz":1,"n":6}
+PASS survive.starving_find_food#4       success   611 ticks 0.4s {"cx":7,"cz":-1,"n":6}
+PASS survive.suffocation_gravel#1       success   629 ticks 0.4s {"z":-1,"n":3}
+PASS survive.suffocation_gravel#2       success   624 ticks 0.4s {"z":2,"n":4}
+PASS survive.suffocation_gravel#3       success   630 ticks 5.5s {"z":1,"n":3}
+PASS survive.suffocation_gravel#4       success   630 ticks 5.7s {"z":-2,"n":3}
+PASS survive.thunder_shelter#1          success   611 ticks 0.5s {"x":8,"z":0}
+PASS survive.thunder_shelter#2          success   627 ticks 0.4s {"x":7,"z":2}
+PASS survive.thunder_shelter#3          success   611 ticks 0.4s {"x":8,"z":1}
+PASS survive.thunder_shelter#4          success   611 ticks 0.4s {"x":8,"z":0}
+
+58/77 episodes succeeded; log C:\Users\noanh\Desktop\Dev\localai\data\own\2026-11-17\2026-11-17-18-12_VAL2_cards.jsonl; real 56.3 s, 33813 ticks (601 tps)

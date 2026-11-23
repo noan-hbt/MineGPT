@@ -1,0 +1,18 @@
+{
+  "card": 1,
+  "id": "survive.descend_pillar",
+  "title": "Stuck on top of a tall pillar: get down without dying or jumping",
+  "tags": ["survive", "danger", "nav", "dig"],
+  "difficulty": 2,
+  "split": "train",
+  "seeds": [1, 2],
+  "params": { "h": { "int": [6, 10] } },
+  "world": { "template": "arena", "height": 14 },
+  "build": [ { "fill": ["<0,0,0>", "<0,${h - 1},0>"], "block": "dirt" } ],
+  "player": { "at": "<0,${h},0>", "inventory": [ { "item": "stone_shovel", "slot": 0 } ] },
+  "order": { "from": "Noan", "text": "descends de là" },
+  "success": { "all": [ { "y": { "max": 0 } }, { "damage_taken": { "max": 40 } } ] },
+  "fail": { "any": [ { "died": true }, { "damage_taken": { "min": 60 } } ] },
+  "limits": { "ticks": 1200, "decisions": 6 },
+  "solution": ["goto <3,0,0>"]
+}

@@ -1,0 +1,253 @@
+{
+  "card": 1,
+  "id": "logistics.keep_list_toss",
+  "title": "Apply a keep list and discard every other carried item",
+  "tags": [
+    "logistics",
+    "inventory",
+    "keep",
+    "toss_junk"
+  ],
+  "difficulty": 2,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "wood": {
+      "choice": [
+        "oak",
+        "birch",
+        "spruce"
+      ]
+    },
+    "logs": {
+      "int": [
+        3,
+        10
+      ]
+    },
+    "gravel": {
+      "int": [
+        4,
+        12
+      ]
+    },
+    "flesh": {
+      "int": [
+        2,
+        7
+      ]
+    },
+    "torches": {
+      "int": [
+        8,
+        20
+      ]
+    },
+    "back": {
+      "int": [
+        5,
+        8
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "radius": 15,
+    "height": 12,
+    "depth": 15,
+    "floor": "stone",
+    "dimension": "overworld",
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "peaceful",
+    "gamerules": {
+      "advance_time": false,
+      "advance_weather": false,
+      "keep_inventory": false
+    }
+  },
+  "player": {
+    "at": "<0,0,0>",
+    "spawn": "<0,0,0>",
+    "health": 20,
+    "food": 20,
+    "saturation": 5,
+    "inventory": [
+      {
+        "item": "${wood}_log",
+        "count": "${logs}",
+        "slot": 0
+      },
+      {
+        "item": "iron_pickaxe",
+        "count": 1,
+        "slot": 1
+      },
+      {
+        "item": "bread",
+        "count": 5,
+        "slot": 2
+      },
+      {
+        "item": "torch",
+        "count": "${torches}",
+        "slot": 9
+      },
+      {
+        "item": "gravel",
+        "count": "${gravel}",
+        "slot": 10
+      },
+      {
+        "item": "rotten_flesh",
+        "count": "${flesh}",
+        "slot": 11
+      }
+    ],
+    "held": 0
+  },
+  "fail": {
+    "died": true
+  },
+  "mind": {
+    "places": {
+      "recul": "<0,0,${back}>"
+    }
+  },
+  "order": {
+    "from": "Noan",
+    "text": "Garde uniquement ta pioche en fer, les 5 pains et toutes les torches. Jette tout le reste, même les bûches dans ta main, puis recule à @recul pour ne rien ramasser.",
+    "at_tick": 0
+  },
+  "timeline": [
+    {
+      "at_tick": 0,
+      "once": false,
+      "rcon": "execute as @e[type=minecraft:item,nbt={Item:{id:\"minecraft:${wood}_log\",count:${logs}}}] positioned <0,0,0> if entity @s[distance=..6] run tag @s add discarded_logs"
+    },
+    {
+      "at_tick": 0,
+      "once": false,
+      "rcon": "execute as @e[type=minecraft:item,nbt={Item:{id:\"minecraft:gravel\",count:${gravel}}}] positioned <0,0,0> if entity @s[distance=..6] run tag @s add discarded_gravel"
+    },
+    {
+      "at_tick": 0,
+      "once": false,
+      "rcon": "execute as @e[type=minecraft:item,nbt={Item:{id:\"minecraft:rotten_flesh\",count:${flesh}}}] positioned <0,0,0> if entity @s[distance=..6] run tag @s add discarded_flesh"
+    }
+  ],
+  "success": {
+    "all": [
+      {
+        "have": "iron_pickaxe",
+        "min": 1,
+        "max": 1
+      },
+      {
+        "have": "bread",
+        "min": 5,
+        "max": 5
+      },
+      {
+        "have": "torch",
+        "min": "${torches}",
+        "max": "${torches}"
+      },
+      {
+        "have": "${wood}_log",
+        "min": 0,
+        "max": 0
+      },
+      {
+        "have": "gravel",
+        "min": 0,
+        "max": 0
+      },
+      {
+        "have": "rotten_flesh",
+        "min": 0,
+        "max": 0
+      },
+      {
+        "entity": "item",
+        "tag": "discarded_logs",
+        "near": "<0,0,0>",
+        "radius": 6,
+        "min": 1,
+        "max": 1
+      },
+      {
+        "entity": "item",
+        "tag": "discarded_gravel",
+        "near": "<0,0,0>",
+        "radius": 6,
+        "min": 1,
+        "max": 1
+      },
+      {
+        "entity": "item",
+        "tag": "discarded_flesh",
+        "near": "<0,0,0>",
+        "radius": 6,
+        "min": 1,
+        "max": 1
+      },
+      {
+        "at": "<0,0,${back}>",
+        "radius": 1.2
+      }
+    ]
+  },
+  "milestones": [
+    {
+      "name": "held_logs_discarded",
+      "check": {
+        "entity": "item",
+        "tag": "discarded_logs",
+        "near": "<0,0,0>",
+        "radius": 6,
+        "min": 1,
+        "max": 1
+      }
+    },
+    {
+      "name": "all_junk_removed",
+      "check": {
+        "all": [
+          {
+            "have": "${wood}_log",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "have": "gravel",
+            "min": 0,
+            "max": 0
+          },
+          {
+            "have": "rotten_flesh",
+            "min": 0,
+            "max": 0
+          }
+        ]
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 900,
+    "decisions": 10
+  },
+  "solution_ticks": 300,
+  "solution": [
+    "keep [iron_pickaxe,bread,torch]",
+    "look <0,1,-6>",
+    "toss_junk",
+    "goto @recul dist=0"
+  ],
+  "notes": "The keep list is set in one statement and used by toss_junk in the next. Three different junk items include the held stack. Repeated server commands tag drops only when both item ID and exact original stack count match; retreat is away from the toss direction."
+}

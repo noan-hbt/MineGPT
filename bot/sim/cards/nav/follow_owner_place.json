@@ -1,0 +1,112 @@
+{
+  "card": 1,
+  "id": "nav.follow_owner_place",
+  "title": "Resolve an informal named destination from memory among decoys",
+  "tags": [
+    "nav",
+    "memory",
+    "orders"
+  ],
+  "difficulty": 1,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "place": {
+      "choice": [
+        "verger",
+        "atelier",
+        "puits"
+      ]
+    },
+    "x": {
+      "int": [
+        7,
+        11
+      ]
+    },
+    "z": {
+      "int": [
+        -10,
+        -6
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "radius": 15,
+    "height": 14,
+    "depth": 15,
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "peaceful",
+    "gamerules": {
+      "advance_time": false,
+      "advance_weather": false
+    }
+  },
+  "player": {
+    "at": "<0,0,0>",
+    "spawn": "<0,0,0>",
+    "inventory": []
+  },
+  "fail": {
+    "died": true
+  },
+  "build": [
+    {
+      "set": "<${x},-1,${z}>",
+      "block": "gold_block"
+    },
+    {
+      "set": "<-8,-1,8>",
+      "block": "iron_block"
+    },
+    {
+      "set": "<8,-1,8>",
+      "block": "copper_block"
+    }
+  ],
+  "mind": {
+    "places": {
+      "depot": "<-8,0,8>",
+      "maison": "<8,0,8>"
+    },
+    "notes": [
+      "Noan appelle le lieu marqué en or \"${place}\". Le dépôt et la maison sont ailleurs."
+    ],
+    "dsl": [
+      "name_place ${place} at=<${x},0,${z}>"
+    ]
+  },
+  "order": {
+    "from": "Noan",
+    "text": "va au ${place}, tu sais où c'est, je t'ai déjà montré"
+  },
+  "success": {
+    "at": "<${x},0,${z}>",
+    "radius": 1.2
+  },
+  "milestones": [
+    {
+      "name": "approaching_destination",
+      "check": {
+        "at": "<${x},0,${z}>",
+        "radius": 4
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 600,
+    "decisions": 4
+  },
+  "solution": [
+    "goto @${place} dist=0"
+  ],
+  "solution_ticks": 200,
+  "notes": "No owner actor is required: the order names a remembered place, not a moving player. The informal name varies with the seed."
+}

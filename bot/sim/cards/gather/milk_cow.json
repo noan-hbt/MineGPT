@@ -1,0 +1,11 @@
+{
+  "card": 1, "id": "gather.milk_cow", "title": "Fill an empty bucket with cow milk", "tags": ["gather", "milk", "mob_interaction"],
+  "difficulty": 1, "split": "train", "seeds": [1, 2, 3, 4],
+  "params": {"dx": {"int": [3, 7]}, "dz": {"int": [-4, 4]}},
+  "world": {"template": "arena", "gamerules": {"advance_time": false}},
+  "entities": [{"type": "cow", "at": "<${dx},0,${dz}>", "tag": "milk_source", "no_ai": true, "nbt": "{Age:0,PersistenceRequired:1b}"}],
+  "player": {"inventory": [{"item": "bucket"}]}, "order": {"from": "Noan", "text": "remplis ton seau de lait avec la vache"},
+  "success": {"all": [{"have": "milk_bucket", "min": 1}, {"entity": "cow", "tag": "milk_source", "min": 1}]}, "fail": {"died": true},
+  "milestones": [{"name": "reached_cow", "check": {"at": "<${dx},0,${dz}>", "radius": 3}}],
+  "limits": {"ticks": 900, "decisions": 6}, "solution": ["milk #cow"], "solution_ticks": 300
+}

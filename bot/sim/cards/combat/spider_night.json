@@ -1,0 +1,164 @@
+{
+  "card": 1,
+  "id": "combat.spider_night",
+  "title": "Fight an aggressive spider in a dark night arena",
+  "tags": [
+    "combat",
+    "spider_night"
+  ],
+  "difficulty": 2,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "dx": {
+      "int": [
+        -2,
+        2
+      ]
+    },
+    "dz": {
+      "int": [
+        6,
+        9
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "radius": 15,
+    "height": 8,
+    "depth": 8,
+    "floor": "stone",
+    "dimension": "overworld",
+    "time": 18000,
+    "weather": "clear",
+    "difficulty": "easy",
+    "gamerules": {
+      "advance_time": false,
+      "advance_weather": false,
+      "spawn_monsters": false,
+      "natural_health_regeneration": false,
+      "mob_griefing": false
+    }
+  },
+  "build": [
+    {
+      "fill": [
+        "<-14,0,-14>",
+        "<-14,4,14>"
+      ],
+      "block": "stone_bricks"
+    },
+    {
+      "fill": [
+        "<14,0,-14>",
+        "<14,4,14>"
+      ],
+      "block": "stone_bricks"
+    },
+    {
+      "fill": [
+        "<-13,0,-14>",
+        "<13,4,-14>"
+      ],
+      "block": "stone_bricks"
+    },
+    {
+      "fill": [
+        "<-13,0,14>",
+        "<13,4,14>"
+      ],
+      "block": "stone_bricks"
+    },
+    {
+      "fill": [
+        "<-14,5,-14>",
+        "<14,5,14>"
+      ],
+      "block": "stone_bricks"
+    }
+  ],
+  "entities": [],
+  "player": {
+    "at": "<0,0,0>",
+    "spawn": "<0,0,-10>",
+    "yaw": 0,
+    "pitch": 0,
+    "health": 20,
+    "food": 20,
+    "saturation": 5,
+    "inventory": [
+      {
+        "item": "iron_sword",
+        "slot": 0
+      }
+    ],
+    "armor": {
+      "chest": {
+        "item": "leather_chestplate"
+      }
+    },
+    "held": 0
+  },
+  "order": {
+    "from": "Noan",
+    "text": "Tue l'araignée avant qu'elle te saute dessus.",
+    "at_tick": 0
+  },
+  "timeline": [
+    {
+      "at_tick": 0,
+      "summon": {
+        "type": "spider",
+        "at": "<${dx},0,${dz}>",
+        "tag": "combat_spider_night_foe",
+        "nbt": "{PersistenceRequired:1b,CanPickUpLoot:0b}"
+      }
+    }
+  ],
+  "fail": {
+    "died": true
+  },
+  "milestones": [
+    {
+      "name": "engaged_spider",
+      "check": {
+        "all": [
+          {
+            "at": "<${dx},0,${dz}>",
+            "radius": 4
+          },
+          {
+            "entity": "spider",
+            "tag": "combat_spider_night_foe",
+            "min": 1,
+            "near": "<0,0,0>",
+            "radius": 25
+          }
+        ]
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 900,
+    "decisions": 20
+  },
+  "solution": [
+    "wait 1s",
+    "equip iron_sword",
+    "fight #spider"
+  ],
+  "solution_ticks": 320,
+  "success": {
+    "entity": "spider",
+    "tag": "combat_spider_night_foe",
+    "max": 0,
+    "near": "<0,0,0>",
+    "radius": 25
+  }
+}

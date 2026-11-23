@@ -1,0 +1,174 @@
+{
+  "card": 1,
+  "id": "combat.baby_zombie",
+  "title": "Track and kill a fast baby zombie with a sword",
+  "tags": [
+    "combat",
+    "baby_zombie"
+  ],
+  "difficulty": 3,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "x": {
+      "int": [
+        -3,
+        3
+      ]
+    },
+    "z": {
+      "int": [
+        7,
+        10
+      ]
+    },
+    "sword": {
+      "choice": [
+        "iron_sword",
+        "diamond_sword"
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "radius": 18,
+    "height": 8,
+    "depth": 6,
+    "floor": "stone",
+    "dimension": "overworld",
+    "time": 18000,
+    "weather": "clear",
+    "difficulty": "easy",
+    "gamerules": {
+      "advance_time": false,
+      "advance_weather": false,
+      "spawn_monsters": false,
+      "natural_health_regeneration": false,
+      "mob_griefing": false
+    }
+  },
+  "build": [
+    {
+      "fill": [
+        "<-18,0,-18>",
+        "<-18,4,18>"
+      ],
+      "block": "bedrock"
+    },
+    {
+      "fill": [
+        "<18,0,-18>",
+        "<18,4,18>"
+      ],
+      "block": "bedrock"
+    },
+    {
+      "fill": [
+        "<-17,0,-18>",
+        "<17,4,-18>"
+      ],
+      "block": "bedrock"
+    },
+    {
+      "fill": [
+        "<-17,0,18>",
+        "<17,4,18>"
+      ],
+      "block": "bedrock"
+    }
+  ],
+  "entities": [],
+  "player": {
+    "at": "<0,0,0>",
+    "spawn": "<0,0,-12>",
+    "health": 20,
+    "food": 20,
+    "saturation": 5,
+    "xp_levels": 0,
+    "yaw": 0,
+    "pitch": 0,
+    "held": 0,
+    "inventory": [
+      {
+        "item": "${sword}",
+        "slot": 0
+      }
+    ],
+    "armor": {
+      "head": {
+        "item": "iron_helmet"
+      },
+      "chest": {
+        "item": "iron_chestplate"
+      },
+      "legs": {
+        "item": "iron_leggings"
+      },
+      "feet": {
+        "item": "iron_boots"
+      }
+    },
+    "offhand": null,
+    "effects": []
+  },
+  "timeline": [
+    {
+      "at_tick": 0,
+      "summon": {
+        "type": "zombie",
+        "at": "<${x},0,${z}>",
+        "tag": "combat_baby_zombie_foe",
+        "nbt": "{PersistenceRequired:1b,CanPickUpLoot:0b,IsBaby:1b}"
+      }
+    }
+  ],
+  "fail": {
+    "died": true
+  },
+  "milestones": [
+    {
+      "name": "baby_in_melee_range",
+      "check": {
+        "entity": "zombie",
+        "tag": "combat_baby_zombie_foe",
+        "near": "<0,0,0>",
+        "radius": 4,
+        "min": 1
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 1200,
+    "decisions": 20
+  },
+  "solution": [
+    "wait 1s",
+    "equip ${sword}",
+    "fight #zombie"
+  ],
+  "order": {
+    "from": "Noan",
+    "text": "Attention au bébé zombie ! Tue-le à l'épée et reste en vie.",
+    "at_tick": 0
+  },
+  "success": {
+    "all": [
+      {
+        "entity": "zombie",
+        "tag": "combat_baby_zombie_foe",
+        "max": 0
+      },
+      {
+        "health": {
+          "min": 8
+        }
+      }
+    ]
+  },
+  "solution_ticks": 350
+}

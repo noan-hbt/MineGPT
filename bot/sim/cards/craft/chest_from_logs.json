@@ -1,0 +1,101 @@
+{
+  "card": 1,
+  "id": "craft.chest_from_logs",
+  "title": "Turn logs into planks, a table and the requested chests",
+  "tags": [
+    "craft",
+    "place",
+    "planning"
+  ],
+  "difficulty": 2,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "params": {
+    "wood": {
+      "choice": [
+        "oak",
+        "birch",
+        "spruce",
+        "acacia"
+      ]
+    },
+    "n": {
+      "int": [
+        1,
+        3
+      ]
+    },
+    "tx": {
+      "int": [
+        -2,
+        2
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "easy",
+    "gamerules": {
+      "advance_time": false,
+      "advance_weather": false
+    }
+  },
+  "build": [],
+  "player": {
+    "at": "<0,0,0>",
+    "spawn": "<0,0,0>",
+    "inventory": [
+      {
+        "item": "${wood}_log",
+        "count": "${2 * n + 1}"
+      }
+    ]
+  },
+  "order": {
+    "from": "Noan",
+    "text": "Avec tes bûches, fabrique un établi puis ${n} coffres. Garde les coffres.",
+    "at_tick": 0
+  },
+  "success": {
+    "have": "chest",
+    "min": "${n}"
+  },
+  "fail": {
+    "died": true
+  },
+  "milestones": [
+    {
+      "name": "planks",
+      "check": {
+        "have": "${wood}_planks",
+        "min": 8
+      }
+    },
+    {
+      "name": "table_placed",
+      "check": {
+        "block": "<${tx},0,2>",
+        "is": "crafting_table"
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 2400,
+    "decisions": 10
+  },
+  "solution": [
+    "craft ${wood}_planks n=${8 * n + 4}",
+    "craft crafting_table",
+    "place crafting_table at=<${tx},0,2>",
+    "craft chest n=${n}"
+  ],
+  "solution_ticks": 800
+}

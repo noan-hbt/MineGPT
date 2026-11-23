@@ -1,0 +1,101 @@
+{
+  "card": 1,
+  "id": "craft.bread",
+  "title": "Craft bread from wheat with a non-multiple remainder",
+  "tags": [
+    "craft"
+  ],
+  "difficulty": 1,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "params": {
+    "tx": {
+      "int": [
+        -2,
+        2
+      ]
+    },
+    "n": {
+      "int": [
+        2,
+        5
+      ]
+    },
+    "extra": {
+      "int": [
+        0,
+        2
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "easy",
+    "gamerules": {
+      "advance_time": false,
+      "advance_weather": false
+    }
+  },
+  "build": [
+    {
+      "set": "<${tx},0,2>",
+      "block": "crafting_table"
+    }
+  ],
+  "player": {
+    "at": "<0,0,0>",
+    "spawn": "<0,0,0>",
+    "inventory": [
+      {
+        "item": "wheat",
+        "count": "${3 * n + extra}"
+      }
+    ]
+  },
+  "order": {
+    "from": "Noan",
+    "text": "Transforme ton blé en autant de pains que possible, sans les manger.",
+    "at_tick": 0
+  },
+  "success": {
+    "all": [
+      {
+        "have": "bread",
+        "min": "${n}"
+      },
+      {
+        "have": "wheat",
+        "min": "${extra}",
+        "max": "${extra}"
+      }
+    ]
+  },
+  "fail": {
+    "died": true
+  },
+  "milestones": [
+    {
+      "name": "first_bread",
+      "check": {
+        "have": "bread",
+        "min": 1
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 1500,
+    "decisions": 4
+  },
+  "solution": [
+    "craft bread n=${n}"
+  ],
+  "solution_ticks": 500
+}

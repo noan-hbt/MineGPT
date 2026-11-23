@@ -1,0 +1,177 @@
+{
+  "card": 1,
+  "id": "logistics.take_and_bring",
+  "title": "Move a requested quantity from chest A into chest B",
+  "tags": [
+    "logistics"
+  ],
+  "difficulty": 3,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "z": {
+      "int": [
+        -5,
+        5
+      ]
+    },
+    "item": {
+      "choice": [
+        "iron_ingot",
+        "copper_ingot",
+        "oak_log"
+      ]
+    },
+    "n": {
+      "int": [
+        4,
+        16
+      ]
+    },
+    "left": {
+      "int": [
+        2,
+        7
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "easy",
+    "gamerules": {
+      "advance_time": false,
+      "advance_weather": false,
+      "keep_inventory": false,
+      "mob_griefing": false
+    }
+  },
+  "player": {
+    "at": "<0,0,0>",
+    "spawn": "<0,0,0>",
+    "inventory": [
+      {
+        "item": "stone_pickaxe",
+        "count": 1,
+        "slot": 0
+      }
+    ]
+  },
+  "order": {
+    "from": "Noan",
+    "text": "Prends ${n} ${item} dans le coffre @a et range-les dans le coffre @b. Ne touche pas au reste."
+  },
+  "success": {
+    "all": [
+      {
+        "container": "<-6,0,${z}>",
+        "item": "${item}",
+        "min": "${left}",
+        "max": "${left}"
+      },
+      {
+        "container": "<6,0,${z}>",
+        "item": "${item}",
+        "min": "${n}",
+        "max": "${n}"
+      },
+      {
+        "container": "<-6,0,${z}>",
+        "item": "apple",
+        "min": 5,
+        "max": 5
+      },
+      {
+        "container": "<6,0,${z}>",
+        "item": "bread",
+        "min": 3,
+        "max": 3
+      },
+      {
+        "have": "${item}",
+        "min": 0,
+        "max": 0
+      },
+      {
+        "have": "stone_pickaxe",
+        "min": 1,
+        "max": 1
+      }
+    ]
+  },
+  "fail": {
+    "died": true
+  },
+  "milestones": [
+    {
+      "name": "taken_from_a",
+      "check": {
+        "have": "${item}",
+        "min": "${n}",
+        "max": "${n}"
+      }
+    },
+    {
+      "name": "delivered_to_b",
+      "check": {
+        "container": "<6,0,${z}>",
+        "item": "${item}",
+        "min": "${n}",
+        "max": "${n}"
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 1400,
+    "decisions": 20
+  },
+  "solution": [
+    "take ${item} n=${n} chest=<-6,0,${z}>",
+    "store chest=<6,0,${z}> filter=[${item}]"
+  ],
+  "solution_ticks": 450,
+  "let": {
+    "total": "${n + left}"
+  },
+  "build": [
+    {
+      "container": "<-6,0,${z}>",
+      "block": "chest[facing=south]",
+      "items": [
+        {
+          "item": "${item}",
+          "count": "${total}",
+          "slot": 0
+        },
+        {
+          "item": "apple",
+          "count": 5,
+          "slot": 1
+        }
+      ]
+    },
+    {
+      "container": "<6,0,${z}>",
+      "block": "chest[facing=south]",
+      "items": [
+        {
+          "item": "bread",
+          "count": 3,
+          "slot": 0
+        }
+      ]
+    }
+  ],
+  "mind": {
+    "places": {
+      "a": "<-6,0,${z}>",
+      "b": "<6,0,${z}>"
+    }
+  }
+}

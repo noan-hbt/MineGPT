@@ -1,0 +1,13 @@
+{
+  "card": 1, "id": "mine.dig_down_to_y", "title": "Dig a staircase down to a target relative Y safely", "tags": ["mine", "descend", "dig", "safety"],
+  "difficulty": 3, "split": "train", "seeds": [1, 2, 3, 4, 5],
+  "params": {"drop": {"int": [4, 7]}, "dx": {"int": [-2, 2]}, "dz": {"int": [-3, 0]}},
+  "world": {"template": "arena", "depth": 16, "gamerules": {"advance_time": false, "block_drops": true}},
+  "player": {"at": "<${dx},0,${dz}>", "spawn": "<-8,0,-8>", "yaw": 0, "inventory": [{"item": "iron_pickaxe"}]},
+  "order": {"from": "Noan", "text": "creuse un escalier pour descendre de ${drop} blocs depuis ici, sans te faire mal"},
+  "success": {"all": [{"y": {"min": "${-drop}", "max": "${-drop}"}}, {"damage_taken": {"max": 0}}]},
+  "fail": {"any": [{"died": true}, {"damage_taken": {"min": 1}}]},
+  "milestones": [{"name": "started_descent", "check": {"y": {"max": -1}}}, {"name": "halfway_down", "check": {"y": {"max": "${-ceil(drop/2)}"}}}],
+  "limits": {"ticks": 3600, "decisions": 10}, "solution": ["descend mode=stairs until(y<=~-${drop})"], "solution_ticks": 1200,
+  "notes": "Solid stone to depth 16 with no fluids, caves or falling blocks. Facing south, seven steps remain inside the arena. Relative-Y until works for any runner origin; descend defaults to ten blocks, beyond the stopping depth. Surface respawn is safe."
+}

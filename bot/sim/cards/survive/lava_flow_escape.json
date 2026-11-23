@@ -1,0 +1,143 @@
+{
+  "card": 1,
+  "id": "survive.lava_flow_escape",
+  "title": "Escape a channel when lava starts flowing toward the bot",
+  "tags": [
+    "survive",
+    "lava",
+    "nav",
+    "timing"
+  ],
+  "difficulty": 3,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "z": {
+      "int": [
+        -3,
+        3
+      ]
+    },
+    "exit": {
+      "int": [
+        5,
+        8
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "radius": 15,
+    "height": 12,
+    "depth": 15,
+    "floor": "stone",
+    "dimension": "overworld",
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "normal",
+    "gamerules": {
+      "spawn_monsters": false,
+      "advance_time": false,
+      "advance_weather": false,
+      "natural_health_regeneration": false
+    }
+  },
+  "build": [
+    {
+      "fill": [
+        "<-7,0,${z - 2}>",
+        "<1,2,${z - 2}>"
+      ],
+      "block": "stone"
+    },
+    {
+      "fill": [
+        "<-7,0,${z + 2}>",
+        "<1,2,${z + 2}>"
+      ],
+      "block": "stone"
+    },
+    {
+      "fill": [
+        "<-7,0,${z - 1}>",
+        "<-7,2,${z + 1}>"
+      ],
+      "block": "stone"
+    }
+  ],
+  "player": {
+    "at": "<0,0,${z}>",
+    "spawn": "<12,0,12>",
+    "inventory": []
+  },
+  "mind": {
+    "places": {
+      "refuge": "<${exit},0,${z}>"
+    },
+    "notes": [
+      "La lave arrive par l'ouest dans le couloir. @refuge est à l'est, hors de portée de la coulée."
+    ]
+  },
+  "timeline": [
+    {
+      "at_tick": 0,
+      "rcon": "setblock <-2,0,${z}> lava"
+    }
+  ],
+  "success_when": "end",
+  "success": {
+    "all": [
+      {
+        "not": {
+          "died": true
+        }
+      },
+      {
+        "at": "<${exit},0,${z}>",
+        "radius": 1.5
+      },
+      {
+        "damage_taken": {
+          "max": 0
+        }
+      },
+      {
+        "health": {
+          "min": 20
+        }
+      }
+    ]
+  },
+  "fail": {
+    "died": true
+  },
+  "milestones": [
+    {
+      "name": "out_of_channel",
+      "check": {
+        "at": "<3,0,${z}>",
+        "radius": 2
+      }
+    },
+    {
+      "name": "at_refuge",
+      "check": {
+        "at": "<${exit},0,${z}>",
+        "radius": 1.5
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 480,
+    "decisions": 20
+  },
+  "solution": [
+    "goto @refuge dist=0"
+  ],
+  "solution_ticks": 160
+}

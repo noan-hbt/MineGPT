@@ -1,0 +1,165 @@
+{
+  "card": 1,
+  "id": "logistics.store_in_chest",
+  "title": "Deposit every cobblestone stack while retaining tools",
+  "tags": [
+    "logistics",
+    "containers",
+    "inventory",
+    "keep_tools"
+  ],
+  "difficulty": 2,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "x": {
+      "int": [
+        3,
+        6
+      ]
+    },
+    "z": {
+      "int": [
+        -4,
+        4
+      ]
+    },
+    "n": {
+      "int": [
+        20,
+        64
+      ]
+    },
+    "extra": {
+      "int": [
+        4,
+        24
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "easy",
+    "gamerules": {
+      "advance_time": false,
+      "advance_weather": false,
+      "keep_inventory": false,
+      "mob_griefing": false
+    }
+  },
+  "player": {
+    "at": "<0,0,0>",
+    "spawn": "<0,0,0>",
+    "inventory": [
+      {
+        "item": "iron_pickaxe",
+        "count": 1,
+        "slot": 0
+      },
+      {
+        "item": "iron_axe",
+        "count": 1,
+        "slot": 1
+      },
+      {
+        "item": "cobblestone",
+        "count": "${n}",
+        "slot": 9
+      },
+      {
+        "item": "cobblestone",
+        "count": "${extra}",
+        "slot": 20
+      },
+      {
+        "item": "bread",
+        "count": 5,
+        "slot": 2
+      }
+    ]
+  },
+  "order": {
+    "from": "Noan",
+    "text": "Dépose toute ta cobblestone dans le coffre à @stock, garde tes outils et ton pain."
+  },
+  "success": {
+    "all": [
+      {
+        "container": "<${x},0,${z}>",
+        "item": "cobblestone",
+        "min": "${total}",
+        "max": "${total}"
+      },
+      {
+        "have": "cobblestone",
+        "min": 0,
+        "max": 0
+      },
+      {
+        "have": "iron_pickaxe",
+        "min": 1,
+        "max": 1
+      },
+      {
+        "have": "iron_axe",
+        "min": 1,
+        "max": 1
+      },
+      {
+        "have": "bread",
+        "min": 5,
+        "max": 5
+      }
+    ]
+  },
+  "fail": {
+    "died": true
+  },
+  "milestones": [
+    {
+      "name": "reached_chest",
+      "check": {
+        "at": "<${x},0,${z}>",
+        "radius": 3
+      }
+    },
+    {
+      "name": "cobblestone_deposited",
+      "check": {
+        "container": "<${x},0,${z}>",
+        "item": "cobblestone",
+        "min": "${total}"
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 800,
+    "decisions": 20
+  },
+  "solution": [
+    "store chest=<${x},0,${z}> filter=[cobblestone]"
+  ],
+  "solution_ticks": 250,
+  "let": {
+    "total": "${n + extra}"
+  },
+  "build": [
+    {
+      "container": "<${x},0,${z}>",
+      "block": "chest[facing=south]",
+      "items": []
+    }
+  ],
+  "mind": {
+    "places": {
+      "stock": "<${x},0,${z}>"
+    }
+  }
+}

@@ -1,0 +1,188 @@
+{
+  "card": 1,
+  "id": "nav.follow_moving_owner",
+  "title": "Follow a moving armor stand representing Noan until its final stop",
+  "tags": [
+    "nav",
+    "pathfinding",
+    "follow",
+    "moving_target"
+  ],
+  "difficulty": 3,
+  "split": "heldout",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "z": {
+      "int": [
+        -3,
+        0
+      ]
+    },
+    "stride": {
+      "int": [
+        4,
+        6
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "radius": 15,
+    "height": 12,
+    "depth": 15,
+    "floor": "bedrock",
+    "dimension": "overworld",
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "normal",
+    "gamerules": {
+      "spawn_monsters": false,
+      "advance_time": false,
+      "advance_weather": false
+    }
+  },
+  "build": [],
+  "player": {
+    "at": "<-11,0,${z}>",
+    "spawn": "<-11,0,${z}>",
+    "health": 20,
+    "food": 20,
+    "saturation": 5,
+    "inventory": []
+  },
+  "fail": {
+    "died": true
+  },
+  "milestones": [
+    {
+      "name": "caught_initial_owner",
+      "check": {
+        "at": "<-7,0,${z}>",
+        "radius": 2.5
+      }
+    },
+    {
+      "name": "first_turn",
+      "check": {
+        "at": "<-1,0,${z}>",
+        "radius": 2.5
+      }
+    },
+    {
+      "name": "second_turn",
+      "check": {
+        "at": "<-1,0,${z+8}>",
+        "radius": 2.5
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 1800,
+    "decisions": 8
+  },
+  "solution": [
+    "follow #armor_stand dist=1 until(dist(@arret)<=2)"
+  ],
+  "solution_ticks": 600,
+  "entities": [
+    {
+      "type": "armor_stand",
+      "at": "<-7,0,${z}>",
+      "name": "Noan",
+      "tag": "nav_follow_owner",
+      "nbt": "{NoGravity:1b,Invulnerable:1b}"
+    }
+  ],
+  "mind": {
+    "places": {
+      "arret": "<${stride},0,${z+8}>"
+    },
+    "notes": [
+      "Le porte-armure nommé Noan représente le propriétaire. Il avance quand tu le rejoins, tourne deux fois puis s'arrête à @arret."
+    ]
+  },
+  "order": {
+    "from": "Noan",
+    "text": "suis mon porte-armure Noan pendant tout le trajet, reste près de lui jusqu'à son arrêt"
+  },
+  "timeline": [
+    {
+      "when": {
+        "all": [
+          {
+            "at": "<-7,0,${z}>",
+            "radius": 2.5
+          },
+          {
+            "entity": "armor_stand",
+            "tag": "nav_follow_owner",
+            "near": "<-7,0,${z}>",
+            "radius": 1,
+            "min": 1
+          }
+        ]
+      },
+      "once": true,
+      "rcon": "tp @e[type=minecraft:armor_stand,tag=nav_follow_owner,limit=1] <-1,0,${z}>"
+    },
+    {
+      "when": {
+        "all": [
+          {
+            "at": "<-1,0,${z}>",
+            "radius": 2.5
+          },
+          {
+            "entity": "armor_stand",
+            "tag": "nav_follow_owner",
+            "near": "<-1,0,${z}>",
+            "radius": 1,
+            "min": 1
+          }
+        ]
+      },
+      "once": true,
+      "rcon": "tp @e[type=minecraft:armor_stand,tag=nav_follow_owner,limit=1] <-1,0,${z+8}>"
+    },
+    {
+      "when": {
+        "all": [
+          {
+            "at": "<-1,0,${z+8}>",
+            "radius": 2.5
+          },
+          {
+            "entity": "armor_stand",
+            "tag": "nav_follow_owner",
+            "near": "<-1,0,${z+8}>",
+            "radius": 1,
+            "min": 1
+          }
+        ]
+      },
+      "once": true,
+      "rcon": "tp @e[type=minecraft:armor_stand,tag=nav_follow_owner,limit=1] <${stride},0,${z+8}>"
+    }
+  ],
+  "success": {
+    "all": [
+      {
+        "at": "<${stride},0,${z+8}>",
+        "radius": 2.5
+      },
+      {
+        "entity": "armor_stand",
+        "tag": "nav_follow_owner",
+        "near": "<${stride},0,${z+8}>",
+        "radius": 1,
+        "min": 1
+      }
+    ]
+  },
+  "notes": "No player actor is needed. Exactly one armor stand is created. Each one-shot move requires both the bot and stand at the current stop, so the final stand location proves every preceding rendezvous occurred. The final position is stationary."
+}

@@ -1,0 +1,141 @@
+{
+  "card": 1,
+  "id": "social.name_place_here",
+  "title": "Remember the current location and return on a later order",
+  "tags": [
+    "social"
+  ],
+  "difficulty": 3,
+  "split": "heldout",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "x": {
+      "int": [
+        -7,
+        -4
+      ]
+    },
+    "z": {
+      "int": [
+        -5,
+        5
+      ]
+    },
+    "away_x": {
+      "int": [
+        5,
+        9
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "easy",
+    "gamerules": {
+      "advance_time": false,
+      "advance_weather": false,
+      "keep_inventory": false,
+      "mob_griefing": false
+    }
+  },
+  "player": {
+    "at": "<${x},0,${z}>",
+    "spawn": "<${x},0,${z}>",
+    "inventory": []
+  },
+  "order": {
+    "from": "Noan",
+    "text": "Retiens cet endroit ici sous le nom @halte."
+  },
+  "success": {
+    "all": [
+      {
+        "at": "<${x},0,${z}>",
+        "radius": 1.5
+      },
+      {
+        "block": "<0,8,0>",
+        "is": "emerald_block"
+      },
+      {
+        "block": "<0,8,1>",
+        "is": "gold_block"
+      }
+    ]
+  },
+  "fail": {
+    "died": true
+  },
+  "milestones": [
+    {
+      "name": "left_for_waiting_point",
+      "check": {
+        "block": "<0,8,0>",
+        "is": "emerald_block"
+      }
+    },
+    {
+      "name": "return_order_received",
+      "check": {
+        "block": "<0,8,1>",
+        "is": "gold_block"
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 1800,
+    "decisions": 20
+  },
+  "solution": [
+    "name_place halte",
+    "wait 4s",
+    "goto @attente dist=0",
+    "wait 20s",
+    "goto @halte dist=0"
+  ],
+  "solution_ticks": 650,
+  "mind": {
+    "places": {
+      "attente": "<${away_x},0,${z}>"
+    }
+  },
+  "build": [
+    {
+      "set": "<${x},-1,${z}>",
+      "block": "gold_block"
+    }
+  ],
+  "timeline": [
+    {
+      "at_tick": 60,
+      "chat": {
+        "from": "Noan",
+        "text": "Va à @attente et attends mon prochain ordre."
+      }
+    },
+    {
+      "when": {
+        "at": "<${away_x},0,${z}>",
+        "radius": 2
+      },
+      "once": true,
+      "rcon": "setblock <0,8,0> minecraft:emerald_block"
+    },
+    {
+      "at_tick": 400,
+      "chat": {
+        "from": "Noan",
+        "text": "Reviens à @halte, l’endroit que je t’ai demandé de retenir."
+      },
+      "rcon": "setblock <0,8,1> minecraft:gold_block"
+    }
+  ],
+  "notes": "Two server marker blocks gate success on having left and on the later return order. @halte is absent from initial memory; name_place must capture here."
+}

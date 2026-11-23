@@ -1,0 +1,17 @@
+{
+  "card": 1, "id": "gather.pumpkin_melon", "title": "Harvest a pumpkin and collect melon slices",
+  "tags": ["gather", "harvest", "multiple_crops", "drops"], "difficulty": 2, "split": "train", "seeds": [1, 2, 3, 4],
+  "params": {"dx": {"int": [2, 5]}, "dz": {"int": [3, 6]}, "side": {"choice": [-1, 1]}},
+  "world": {"template": "arena", "gamerules": {"advance_time": false, "random_tick_speed": 0, "block_drops": true}},
+  "build": [
+    {"fill": ["<${dx - 3},-1,${dz - 1}>", "<${dx + 3},-1,${dz + 1}>"], "block": "dirt"},
+    {"set": "<${dx},0,${dz}>", "block": "pumpkin"},
+    {"set": "<${dx + 3 * side},0,${dz}>", "block": "melon"}
+  ],
+  "player": {"inventory": [{"item": "stone_axe"}]},
+  "order": {"from": "Noan", "text": "récolte la citrouille et le melon, garde la citrouille et au moins trois tranches de pastèque"},
+  "success": {"all": [{"have": "pumpkin", "min": 1}, {"have": "melon_slice", "min": 3}]}, "fail": {"died": true},
+  "milestones": [{"name": "pumpkin_collected", "check": {"have": "pumpkin", "min": 1}}, {"name": "melon_collected", "check": {"have": "melon_slice", "min": 3}}],
+  "limits": {"ticks": 1800, "decisions": 8}, "solution": ["harvest pumpkin n=1 replant=no", "harvest melon n=1 replant=no"], "solution_ticks": 600,
+  "notes": "A normal axe without Silk Touch yields a pumpkin item and three to seven melon slices. No stems or growth are needed: both fruits are placed explicitly."
+}

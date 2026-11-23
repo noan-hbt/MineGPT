@@ -1,0 +1,127 @@
+{
+  "card": 1,
+  "id": "social.say_inventory",
+  "title": "Describe the actual seeded inventory with correct counts",
+  "tags": [
+    "social"
+  ],
+  "difficulty": 1,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "n": {
+      "int": [
+        3,
+        17
+      ]
+    },
+    "m": {
+      "int": [
+        2,
+        9
+      ]
+    },
+    "item": {
+      "choice": [
+        "iron_ingot",
+        "copper_ingot",
+        "gold_ingot"
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "easy",
+    "gamerules": {
+      "advance_time": false,
+      "advance_weather": false,
+      "keep_inventory": false,
+      "mob_griefing": false
+    }
+  },
+  "player": {
+    "at": "<0,0,0>",
+    "spawn": "<0,0,0>",
+    "inventory": [
+      {
+        "item": "stone_pickaxe",
+        "count": 1,
+        "slot": 0
+      },
+      {
+        "item": "${item}",
+        "count": "${n}",
+        "slot": 9
+      },
+      {
+        "item": "bread",
+        "count": "${m}",
+        "slot": 10
+      }
+    ]
+  },
+  "order": {
+    "from": "Noan",
+    "text": "Tu as quoi sur toi ? Dis-moi tout avec les quantités et les noms des items."
+  },
+  "success": {
+    "all": [
+      {
+        "said": "\\b${n}\\s+${item}\\b"
+      },
+      {
+        "said": "\\b${m}\\s+bread\\b"
+      },
+      {
+        "said": "\\b1\\s+stone_pickaxe\\b"
+      },
+      {
+        "have": "${item}",
+        "min": "${n}",
+        "max": "${n}"
+      },
+      {
+        "have": "bread",
+        "min": "${m}",
+        "max": "${m}"
+      },
+      {
+        "have": "stone_pickaxe",
+        "min": 1,
+        "max": 1
+      }
+    ]
+  },
+  "fail": {
+    "died": true
+  },
+  "milestones": [
+    {
+      "name": "reported_resources",
+      "check": {
+        "said": "\\b${n}\\s+${item}\\b"
+      }
+    },
+    {
+      "name": "reported_food",
+      "check": {
+        "said": "\\b${m}\\s+bread\\b"
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 200,
+    "decisions": 20
+  },
+  "solution": [
+    "say \"J’ai 1 stone_pickaxe, ${n} ${item} et ${m} bread.\""
+  ],
+  "solution_ticks": 40
+}

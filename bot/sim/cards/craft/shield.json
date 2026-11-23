@@ -1,0 +1,92 @@
+{
+  "card": 1,
+  "id": "craft.shield",
+  "title": "Craft a shield from planks and one iron ingot",
+  "tags": [
+    "craft"
+  ],
+  "difficulty": 1,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "params": {
+    "tx": {
+      "int": [
+        -2,
+        2
+      ]
+    },
+    "wood": {
+      "choice": [
+        "oak",
+        "birch",
+        "spruce",
+        "acacia"
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "easy",
+    "gamerules": {
+      "advance_time": false,
+      "advance_weather": false
+    }
+  },
+  "build": [
+    {
+      "set": "<${tx},0,2>",
+      "block": "crafting_table"
+    }
+  ],
+  "player": {
+    "at": "<0,0,0>",
+    "spawn": "<0,0,0>",
+    "inventory": [
+      {
+        "item": "${wood}_planks",
+        "count": 6
+      },
+      {
+        "item": "iron_ingot",
+        "count": 1
+      }
+    ]
+  },
+  "order": {
+    "from": "Noan",
+    "text": "Fabrique un bouclier avec tes six planches et ton lingot de fer.",
+    "at_tick": 0
+  },
+  "success": {
+    "have": "shield",
+    "min": 1
+  },
+  "fail": {
+    "died": true
+  },
+  "milestones": [
+    {
+      "name": "shield_ready",
+      "check": {
+        "have": "shield",
+        "min": 1
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 900,
+    "decisions": 4
+  },
+  "solution": [
+    "craft shield"
+  ],
+  "solution_ticks": 300
+}

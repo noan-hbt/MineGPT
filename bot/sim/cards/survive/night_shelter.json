@@ -1,0 +1,223 @@
+{
+  "card": 1,
+  "id": "survive.night_shelter",
+  "title": "Wall up without a bed before night-time zombies arrive",
+  "tags": [
+    "survive",
+    "night",
+    "build",
+    "timing"
+  ],
+  "difficulty": 3,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "x": {
+      "int": [
+        -3,
+        3
+      ]
+    },
+    "material": {
+      "choice": [
+        "cobblestone",
+        "dirt",
+        "stone"
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "radius": 15,
+    "height": 12,
+    "depth": 15,
+    "floor": "stone",
+    "dimension": "overworld",
+    "time": 12000,
+    "weather": "clear",
+    "difficulty": "normal",
+    "gamerules": {
+      "spawn_monsters": false,
+      "advance_time": false,
+      "advance_weather": false,
+      "natural_health_regeneration": false
+    }
+  },
+  "player": {
+    "at": "<${x},0,0>",
+    "spawn": "<12,0,12>",
+    "inventory": [
+      {
+        "item": "${material}",
+        "count": 16
+      }
+    ]
+  },
+  "mind": {
+    "notes": [
+      "Le soleil se couche. Pas de lit : ferme un abri avant l'arrivée des monstres."
+    ]
+  },
+  "timeline": [
+    {
+      "at_tick": 240,
+      "rcon": "time set 13000"
+    },
+    {
+      "at_tick": 300,
+      "summon": {
+        "type": "zombie",
+        "at": "<${x + 6},0,0>",
+        "tag": "night_foe",
+        "nbt": "{PersistenceRequired:1b}"
+      }
+    },
+    {
+      "at_tick": 340,
+      "summon": {
+        "type": "zombie",
+        "at": "<${x - 6},0,0>",
+        "tag": "night_foe",
+        "nbt": "{PersistenceRequired:1b}"
+      }
+    }
+  ],
+  "success_when": "end",
+  "success": {
+    "all": [
+      {
+        "not": {
+          "died": true
+        }
+      },
+      {
+        "at": "<${x},0,0>",
+        "radius": 0.9
+      },
+      {
+        "block": "<${x - 1},0,0>",
+        "is": "${material}"
+      },
+      {
+        "block": "<${x + 1},0,0>",
+        "is": "${material}"
+      },
+      {
+        "block": "<${x},0,-1>",
+        "is": "${material}"
+      },
+      {
+        "block": "<${x},0,1>",
+        "is": "${material}"
+      },
+      {
+        "block": "<${x - 1},1,0>",
+        "is": "${material}"
+      },
+      {
+        "block": "<${x + 1},1,0>",
+        "is": "${material}"
+      },
+      {
+        "block": "<${x},1,-1>",
+        "is": "${material}"
+      },
+      {
+        "block": "<${x},1,1>",
+        "is": "${material}"
+      },
+      {
+        "block": "<${x - 1},2,0>",
+        "is": "${material}"
+      },
+      {
+        "block": "<${x},2,0>",
+        "is": "${material}"
+      },
+      {
+        "time": {
+          "min": 13000,
+          "max": 13000
+        }
+      },
+      {
+        "health": {
+          "min": 18
+        }
+      }
+    ]
+  },
+  "fail": {
+    "died": true
+  },
+  "milestones": [
+    {
+      "name": "first_wall",
+      "check": {
+        "block": "<${x - 1},0,0>",
+        "is": "${material}"
+      }
+    },
+    {
+      "name": "walls_closed",
+      "check": {
+        "all": [
+          {
+            "block": "<${x - 1},0,0>",
+            "is": "${material}"
+          },
+          {
+            "block": "<${x + 1},0,0>",
+            "is": "${material}"
+          },
+          {
+            "block": "<${x},0,-1>",
+            "is": "${material}"
+          },
+          {
+            "block": "<${x},0,1>",
+            "is": "${material}"
+          },
+          {
+            "block": "<${x - 1},1,0>",
+            "is": "${material}"
+          },
+          {
+            "block": "<${x + 1},1,0>",
+            "is": "${material}"
+          },
+          {
+            "block": "<${x},1,-1>",
+            "is": "${material}"
+          },
+          {
+            "block": "<${x},1,1>",
+            "is": "${material}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "roof",
+      "check": {
+        "block": "<${x},2,0>",
+        "is": "${material}"
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 720,
+    "decisions": 20
+  },
+  "solution": [
+    "place ${material} at=[<${x - 1},0,0>,<${x + 1},0,0>,<${x},0,-1>,<${x},0,1>,<${x - 1},1,0>,<${x + 1},1,0>,<${x},1,-1>,<${x},1,1>]",
+    "place ${material} at=<${x - 1},2,0>",
+    "place ${material} at=<${x},2,0>"
+  ],
+  "solution_ticks": 240
+}

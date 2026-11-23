@@ -1,0 +1,130 @@
+{
+  "card": 1,
+  "id": "build.pillar_marker",
+  "title": "Build a vertical marker of the requested height at a named place",
+  "tags": [
+    "build",
+    "place",
+    "pillar",
+    "memory"
+  ],
+  "difficulty": 2,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "x": {
+      "int": [
+        3,
+        6
+      ]
+    },
+    "z": {
+      "int": [
+        -4,
+        4
+      ]
+    },
+    "n": {
+      "int": [
+        3,
+        5
+      ]
+    },
+    "material": {
+      "choice": [
+        "gold_block",
+        "red_concrete",
+        "blue_concrete"
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "radius": 15,
+    "height": 14,
+    "depth": 15,
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "peaceful",
+    "gamerules": {
+      "advance_time": false,
+      "advance_weather": false
+    }
+  },
+  "player": {
+    "at": "<0,0,0>",
+    "spawn": "<0,0,0>",
+    "inventory": [
+      {
+        "item": "${material}",
+        "count": "${n}"
+      }
+    ]
+  },
+  "fail": {
+    "died": true
+  },
+  "mind": {
+    "places": {
+      "repere": "<${x},0,${z}>"
+    }
+  },
+  "order": {
+    "from": "Noan",
+    "text": "construis un pilier de ${n} blocs de ${material} à @repere, de <${x},0,${z}> à <${x},${n-1},${z}>"
+  },
+  "success": {
+    "all": [
+      {
+        "block": "<${x},${min(1,n)-1},${z}>",
+        "is": "${material}"
+      },
+      {
+        "block": "<${x},${min(2,n)-1},${z}>",
+        "is": "${material}"
+      },
+      {
+        "block": "<${x},${min(3,n)-1},${z}>",
+        "is": "${material}"
+      },
+      {
+        "block": "<${x},${min(4,n)-1},${z}>",
+        "is": "${material}"
+      },
+      {
+        "block": "<${x},${min(5,n)-1},${z}>",
+        "is": "${material}"
+      }
+    ]
+  },
+  "milestones": [
+    {
+      "name": "marker_base",
+      "check": {
+        "block": "<${x},0,${z}>",
+        "is": "${material}"
+      }
+    },
+    {
+      "name": "marker_middle",
+      "check": {
+        "block": "<${x},1,${z}>",
+        "is": "${material}"
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 1200,
+    "decisions": 8
+  },
+  "solution": [
+    "goto <${x-2},0,${z}> dist=0",
+    "place ${material} at=(<${x},0,${z}>,<${x},${n-1},${z}>)"
+  ],
+  "solution_ticks": 400
+}

@@ -1,0 +1,231 @@
+{
+  "card": 1,
+  "id": "combat.skeleton_behind_cover",
+  "title": "Retreat behind a wall and draw a skeleton closer before melee",
+  "tags": [
+    "combat",
+    "skeleton_behind_cover"
+  ],
+  "difficulty": 4,
+  "split": "heldout",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "x": {
+      "int": [
+        -1,
+        1
+      ]
+    },
+    "z": {
+      "int": [
+        8,
+        10
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "radius": 18,
+    "height": 8,
+    "depth": 6,
+    "floor": "stone",
+    "dimension": "overworld",
+    "time": 18000,
+    "weather": "clear",
+    "difficulty": "easy",
+    "gamerules": {
+      "advance_time": false,
+      "advance_weather": false,
+      "spawn_monsters": false,
+      "natural_health_regeneration": false,
+      "mob_griefing": false
+    }
+  },
+  "build": [
+    {
+      "fill": [
+        "<-18,0,-18>",
+        "<-18,4,18>"
+      ],
+      "block": "bedrock"
+    },
+    {
+      "fill": [
+        "<18,0,-18>",
+        "<18,4,18>"
+      ],
+      "block": "bedrock"
+    },
+    {
+      "fill": [
+        "<-17,0,-18>",
+        "<17,4,-18>"
+      ],
+      "block": "bedrock"
+    },
+    {
+      "fill": [
+        "<-17,0,18>",
+        "<17,4,18>"
+      ],
+      "block": "bedrock"
+    },
+    {
+      "fill": [
+        "<-2,0,-2>",
+        "<2,3,-2>"
+      ],
+      "block": "bedrock"
+    },
+    {
+      "set": "<15,-2,15>",
+      "block": "obsidian"
+    },
+    {
+      "set": "<15,-2,14>",
+      "block": "obsidian"
+    }
+  ],
+  "entities": [],
+  "player": {
+    "at": "<0,0,0>",
+    "spawn": "<0,0,-12>",
+    "health": 20,
+    "food": 20,
+    "saturation": 5,
+    "xp_levels": 0,
+    "yaw": 0,
+    "pitch": 0,
+    "held": 0,
+    "inventory": [
+      {
+        "item": "diamond_sword",
+        "slot": 0
+      }
+    ],
+    "armor": {
+      "head": {
+        "item": "iron_helmet"
+      },
+      "chest": {
+        "item": "iron_chestplate"
+      },
+      "legs": {
+        "item": "iron_leggings"
+      },
+      "feet": {
+        "item": "iron_boots"
+      }
+    },
+    "offhand": null,
+    "effects": []
+  },
+  "timeline": [
+    {
+      "at_tick": 0,
+      "summon": {
+        "type": "skeleton",
+        "at": "<${x},0,${z}>",
+        "tag": "combat_skeleton_behind_cover_foe",
+        "nbt": "{PersistenceRequired:1b,CanPickUpLoot:0b}"
+      }
+    },
+    {
+      "at_tick": 0,
+      "rcon": "item replace entity @e[type=minecraft:skeleton,tag=combat_skeleton_behind_cover_foe,limit=1] weapon.mainhand with minecraft:bow"
+    },
+    {
+      "when": {
+        "all": [
+          {
+            "at": "<0,0,-5>",
+            "radius": 2
+          },
+          {
+            "entity": "skeleton",
+            "tag": "combat_skeleton_behind_cover_foe",
+            "min": 1
+          }
+        ]
+      },
+      "once": true,
+      "rcon": "setblock <15,-2,15> minecraft:gold_block"
+    },
+    {
+      "when": {
+        "block": "<15,-2,15>",
+        "is": "gold_block"
+      },
+      "once": false,
+      "rcon": "execute positioned <-6,0,-8> if entity @e[type=minecraft:skeleton,tag=combat_skeleton_behind_cover_foe,dx=12,dy=3,dz=7] run setblock <15,-2,14> minecraft:gold_block"
+    }
+  ],
+  "fail": {
+    "died": true
+  },
+  "milestones": [
+    {
+      "name": "retreated_behind_wall",
+      "check": {
+        "block": "<15,-2,15>",
+        "is": "gold_block"
+      }
+    },
+    {
+      "name": "skeleton_drew_closer",
+      "check": {
+        "block": "<15,-2,14>",
+        "is": "gold_block"
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 1800,
+    "decisions": 20
+  },
+  "solution": [
+    "wait 1s",
+    "retreat to=<0,0,-6>",
+    "goto <0,0,-5> dist=0",
+    "wait 20s until(dist(#skeleton)<5)",
+    "wait 1s",
+    "equip diamond_sword",
+    "fight #skeleton"
+  ],
+  "order": {
+    "from": "Noan",
+    "text": "Recule derrière le mur en <0,0,-5>. Laisse le squelette contourner le mur, puis tue-le à l'épée.",
+    "at_tick": 0
+  },
+  "success": {
+    "all": [
+      {
+        "entity": "skeleton",
+        "tag": "combat_skeleton_behind_cover_foe",
+        "max": 0
+      },
+      {
+        "block": "<15,-2,15>",
+        "is": "gold_block"
+      },
+      {
+        "block": "<15,-2,14>",
+        "is": "gold_block"
+      },
+      {
+        "health": {
+          "min": 8
+        }
+      }
+    ]
+  },
+  "solution_ticks": 700,
+  "notes": [
+    "The bedrock wall cannot be mined by pathfinding. Two server latches require reaching its far side with a live skeleton, then observing the live skeleton reach the wall or its far side. Skeleton pursuit around the wall needs server verification."
+  ]
+}

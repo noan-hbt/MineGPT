@@ -1,0 +1,105 @@
+{
+  "card": 1,
+  "id": "craft.blast_iron",
+  "title": "Process raw iron in a placed blast furnace",
+  "tags": [
+    "blast",
+    "fuel"
+  ],
+  "difficulty": 2,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "params": {
+    "sx": {
+      "int": [
+        -2,
+        2
+      ]
+    },
+    "n": {
+      "int": [
+        2,
+        6
+      ]
+    },
+    "fuel": {
+      "choice": [
+        "coal",
+        "charcoal"
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "easy",
+    "gamerules": {
+      "spawn_monsters": false,
+      "advance_time": false,
+      "advance_weather": false
+    }
+  },
+  "player": {
+    "at": "<0,0,0>",
+    "spawn": "<0,0,0>",
+    "inventory": [
+      {
+        "item": "raw_iron",
+        "count": "${n}"
+      },
+      {
+        "item": "${fuel}",
+        "count": 1
+      }
+    ]
+  },
+  "fail": {
+    "died": true
+  },
+  "build": [
+    {
+      "set": "<${sx},0,2>",
+      "block": "blast_furnace[facing=north]"
+    }
+  ],
+  "order": {
+    "from": "Noan",
+    "text": "fais fondre tes ${n} morceaux de fer brut dans le haut fourneau et garde les lingots",
+    "at_tick": 0
+  },
+  "success": {
+    "have": "iron_ingot",
+    "min": "${n}"
+  },
+  "milestones": [
+    {
+      "name": "first_output",
+      "check": {
+        "have": "iron_ingot",
+        "min": 1
+      }
+    },
+    {
+      "name": "half_batch",
+      "check": {
+        "have": "iron_ingot",
+        "min": "${ceil(n / 2)}"
+      }
+    }
+  ],
+  "limits": {
+    "ticks": "${3 * (100 * n + 200)}",
+    "decisions": 6
+  },
+  "solution": [
+    "blast raw_iron n=${n} fuel=${fuel}"
+  ],
+  "solution_ticks": "${100 * n + 200}"
+}

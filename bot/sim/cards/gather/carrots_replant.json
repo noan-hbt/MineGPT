@@ -1,0 +1,148 @@
+{
+  "card": 1,
+  "id": "gather.carrots_replant",
+  "title": "Harvest three ripe carrot plants and replant every plot",
+  "tags": [
+    "gather",
+    "harvest",
+    "replant",
+    "crop_age"
+  ],
+  "difficulty": 2,
+  "split": "heldout",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "dx": {
+      "int": [
+        2,
+        4
+      ]
+    },
+    "dz": {
+      "int": [
+        3,
+        5
+      ]
+    },
+    "young_age": {
+      "int": [
+        1,
+        3
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "gamerules": {
+      "advance_time": false,
+      "random_tick_speed": 0,
+      "block_drops": true
+    }
+  },
+  "build": [
+    {
+      "fill": [
+        "<${dx},-1,${dz}>",
+        "<${dx + 2},-1,${dz + 2}>"
+      ],
+      "block": "farmland[moisture=7]"
+    },
+    {
+      "fill": [
+        "<${dx},-1,${dz + 1}>",
+        "<${dx + 2},-1,${dz + 1}>"
+      ],
+      "block": "water"
+    },
+    {
+      "fill": [
+        "<${dx},0,${dz}>",
+        "<${dx + 2},0,${dz}>"
+      ],
+      "block": "carrots[age=7]"
+    },
+    {
+      "fill": [
+        "<${dx},0,${dz + 2}>",
+        "<${dx + 2},0,${dz + 2}>"
+      ],
+      "block": "carrots[age=${young_age}]"
+    }
+  ],
+  "player": {
+    "inventory": []
+  },
+  "order": {
+    "from": "Noan",
+    "text": "récolte les trois pieds de carottes mûrs et replante chaque case avec la récolte, laisse les jeunes pousses tranquilles"
+  },
+  "success": {
+    "all": [
+      {
+        "block": "<${dx},0,${dz}>",
+        "is": "carrots[age=0]"
+      },
+      {
+        "block": "<${dx + 1},0,${dz}>",
+        "is": "carrots[age=0]"
+      },
+      {
+        "block": "<${dx + 2},0,${dz}>",
+        "is": "carrots[age=0]"
+      },
+      {
+        "block": "<${dx},0,${dz + 2}>",
+        "is": "carrots[age=${young_age}]"
+      },
+      {
+        "block": "<${dx + 1},0,${dz + 2}>",
+        "is": "carrots[age=${young_age}]"
+      },
+      {
+        "block": "<${dx + 2},0,${dz + 2}>",
+        "is": "carrots[age=${young_age}]"
+      }
+    ]
+  },
+  "fail": {
+    "died": true
+  },
+  "milestones": [
+    {
+      "name": "first_plot_replanted",
+      "check": {
+        "block": "<${dx},0,${dz}>",
+        "is": "carrots[age=0]"
+      }
+    },
+    {
+      "name": "two_plots_replanted",
+      "check": {
+        "all": [
+          {
+            "block": "<${dx},0,${dz}>",
+            "is": "carrots[age=0]"
+          },
+          {
+            "block": "<${dx + 1},0,${dz}>",
+            "is": "carrots[age=0]"
+          }
+        ]
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 2700,
+    "decisions": 10
+  },
+  "solution": [
+    "harvest carrots n=3 replant=yes"
+  ],
+  "solution_ticks": 900,
+  "notes": "All three ripe plots must become age zero, while every young plot keeps its initial age. Empty starting inventory forces replanting from harvested drops. No surplus-carrot threshold: yield varies. Random ticks are frozen so replanted crops cannot mature during the solution."
+}

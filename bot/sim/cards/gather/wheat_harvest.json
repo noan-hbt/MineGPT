@@ -1,0 +1,16 @@
+{
+  "card": 1, "id": "gather.wheat_harvest", "title": "Harvest ripe wheat and leave young crops intact", "tags": ["gather", "harvest", "crop_age"],
+  "difficulty": 2, "split": "train", "seeds": [1, 2, 3, 4],
+  "params": {"n": {"int": [3, 5]}, "dx": {"int": [2, 4]}, "dz": {"int": [2, 4]}},
+  "world": {"template": "arena", "gamerules": {"advance_time": false, "random_tick_speed": 0, "block_drops": true}},
+  "build": [
+    {"fill": ["<${dx},-1,${dz}>", "<${dx + n - 1},-1,${dz + 2}>"], "block": "farmland[moisture=7]"},
+    {"fill": ["<${dx},-1,${dz + 1}>", "<${dx + n - 1},-1,${dz + 1}>"], "block": "water"},
+    {"fill": ["<${dx},0,${dz}>", "<${dx + n - 1},0,${dz}>"], "block": "wheat[age=7]"},
+    {"fill": ["<${dx},0,${dz + 2}>", "<${dx + n - 1},0,${dz + 2}>"], "block": "wheat[age=2]"}
+  ],
+  "player": {"inventory": []}, "order": {"from": "Noan", "text": "récolte les ${n} blés mûrs, laisse les jeunes pousses tranquilles, pas besoin de replanter"},
+  "success": {"all": [{"have": "wheat", "min": "${n}"}, {"block": "<${dx},0,${dz + 2}>", "is": "wheat[age=2]"}, {"block": "<${dx + n - 1},0,${dz + 2}>", "is": "wheat[age=2]"}]},
+  "fail": {"died": true}, "milestones": [{"name": "first_wheat", "check": {"have": "wheat", "min": 1}}, {"name": "half_harvest", "check": {"have": "wheat", "min": "${ceil(n/2)}"}}],
+  "limits": {"ticks": 2400, "decisions": 10}, "solution": ["harvest wheat n=${n} replant=no"], "solution_ticks": 800
+}

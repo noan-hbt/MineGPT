@@ -1,0 +1,101 @@
+{
+  "card": 1,
+  "id": "craft.bed_from_wool",
+  "title": "Craft the matching colored bed from three identical wool blocks",
+  "tags": [
+    "craft"
+  ],
+  "difficulty": 1,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "params": {
+    "tx": {
+      "int": [
+        -2,
+        2
+      ]
+    },
+    "wood": {
+      "choice": [
+        "oak",
+        "birch",
+        "spruce",
+        "acacia"
+      ]
+    },
+    "color": {
+      "choice": [
+        "white",
+        "red",
+        "blue",
+        "yellow",
+        "black"
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "easy",
+    "gamerules": {
+      "advance_time": false,
+      "advance_weather": false
+    }
+  },
+  "build": [
+    {
+      "set": "<${tx},0,2>",
+      "block": "crafting_table"
+    }
+  ],
+  "player": {
+    "at": "<0,0,0>",
+    "spawn": "<0,0,0>",
+    "inventory": [
+      {
+        "item": "${wood}_planks",
+        "count": 3
+      },
+      {
+        "item": "${color}_wool",
+        "count": 3
+      }
+    ]
+  },
+  "order": {
+    "from": "Noan",
+    "text": "Fabrique un lit avec tes trois blocs de laine ${color} et tes planches, puis garde-le.",
+    "at_tick": 0
+  },
+  "success": {
+    "have": "${color}_bed",
+    "min": 1
+  },
+  "fail": {
+    "died": true
+  },
+  "milestones": [
+    {
+      "name": "matching_bed",
+      "check": {
+        "have": "${color}_bed",
+        "min": 1
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 1200,
+    "decisions": 4
+  },
+  "solution": [
+    "craft ${color}_bed"
+  ],
+  "solution_ticks": 400
+}

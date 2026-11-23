@@ -1,0 +1,89 @@
+{
+  "card": 1,
+  "id": "craft.furnace_from_cobble",
+  "title": "Craft and place a furnace from eight cobblestone",
+  "tags": [
+    "craft",
+    "place"
+  ],
+  "difficulty": 2,
+  "split": "heldout",
+  "seeds": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "params": {
+    "tx": {
+      "int": [
+        -2,
+        2
+      ]
+    },
+    "fx": {
+      "int": [
+        -2,
+        2
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "easy",
+    "gamerules": {
+      "spawn_monsters": false,
+      "advance_time": false,
+      "advance_weather": false
+    }
+  },
+  "player": {
+    "at": "<0,0,0>",
+    "spawn": "<0,0,0>",
+    "inventory": [
+      {
+        "item": "cobblestone",
+        "count": 8
+      }
+    ]
+  },
+  "fail": {
+    "died": true
+  },
+  "build": [
+    {
+      "set": "<${tx},0,2>",
+      "block": "crafting_table"
+    }
+  ],
+  "order": {
+    "from": "Noan",
+    "text": "fabrique un four avec tes 8 pierres et pose-le en <${fx},0,-2>",
+    "at_tick": 0
+  },
+  "success": {
+    "block": "<${fx},0,-2>",
+    "is": "furnace"
+  },
+  "milestones": [
+    {
+      "name": "furnace_crafted",
+      "check": {
+        "have": "furnace",
+        "min": 1
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 1800,
+    "decisions": 6
+  },
+  "solution": [
+    "craft furnace",
+    "place furnace at=<${fx},0,-2>"
+  ],
+  "solution_ticks": 600
+}

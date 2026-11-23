@@ -1,0 +1,120 @@
+{
+  "card": 1,
+  "id": "craft.ladder_and_place",
+  "title": "Craft ladders and attach three rungs to a solid wall",
+  "tags": [
+    "craft",
+    "place"
+  ],
+  "difficulty": 2,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "params": {
+    "tx": {
+      "int": [
+        -2,
+        2
+      ]
+    },
+    "wallx": {
+      "int": [
+        2,
+        3
+      ]
+    },
+    "extra": {
+      "int": [
+        0,
+        3
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "easy",
+    "gamerules": {
+      "advance_time": false,
+      "advance_weather": false
+    }
+  },
+  "build": [
+    {
+      "set": "<${tx},0,2>",
+      "block": "crafting_table"
+    },
+    {
+      "fill": [
+        "<${wallx},0,-3>",
+        "<${wallx},2,-3>"
+      ],
+      "block": "stone_bricks"
+    }
+  ],
+  "player": {
+    "at": "<0,0,0>",
+    "spawn": "<0,0,0>",
+    "inventory": [
+      {
+        "item": "stick",
+        "count": "${7 + extra}"
+      }
+    ]
+  },
+  "order": {
+    "from": "Noan",
+    "text": "Fabrique trois échelles et pose-les contre le mur, en <${wallx},0,-2>, <${wallx},1,-2> et <${wallx},2,-2>.",
+    "at_tick": 0
+  },
+  "success": {
+    "all": [
+      {
+        "block": "<${wallx},0,-2>",
+        "is": "ladder"
+      },
+      {
+        "block": "<${wallx},1,-2>",
+        "is": "ladder"
+      },
+      {
+        "block": "<${wallx},2,-2>",
+        "is": "ladder"
+      }
+    ]
+  },
+  "fail": {
+    "died": true
+  },
+  "milestones": [
+    {
+      "name": "ladders",
+      "check": {
+        "have": "ladder",
+        "min": 3
+      }
+    },
+    {
+      "name": "first_rung",
+      "check": {
+        "block": "<${wallx},0,-2>",
+        "is": "ladder"
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 2400,
+    "decisions": 8
+  },
+  "solution": [
+    "craft ladder n=3",
+    "place ladder at=[<${wallx},0,-2>,<${wallx},1,-2>,<${wallx},2,-2>] face=north"
+  ],
+  "solution_ticks": 800
+}

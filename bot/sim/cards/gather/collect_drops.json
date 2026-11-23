@@ -1,0 +1,11 @@
+{
+  "card": 1, "id": "gather.collect_drops", "title": "Collect three scattered item stacks", "tags": ["gather", "collect", "multi_target"],
+  "difficulty": 2, "split": "train", "seeds": [1, 2, 3, 4, 13],
+  "params": {"loot": {"choice": ["flint", "apple", "iron_nugget"]}, "n": {"int": [2, 4]}, "dx": {"int": [4, 7]}, "dz": {"int": [4, 7]}},
+  "world": {"template": "arena", "gamerules": {"advance_time": false}},
+  "entities": [{"item": "${loot}", "count": "${n}", "at": "<${dx},0,${dz}>"}, {"item": "${loot}", "count": "${n}", "at": "<${-dx},0,${dz}>"}, {"item": "${loot}", "count": "${n}", "at": "<0,0,${-dz}>"}],
+  "player": {"inventory": []}, "order": {"from": "Noan", "text": "ramasse tous les objets par terre, il y a trois tas de ${loot}"},
+  "success": {"have": "${loot}", "min": "${3 * n}"}, "fail": {"died": true},
+  "milestones": [{"name": "first_stack", "check": {"have": "${loot}", "min": "${n}"}}, {"name": "two_stacks", "check": {"have": "${loot}", "min": "${2 * n}"}}],
+  "limits": {"ticks": 1800, "decisions": 8}, "solution": ["collect radius=24"], "solution_ticks": 600
+}

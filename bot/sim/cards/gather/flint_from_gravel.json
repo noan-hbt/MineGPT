@@ -1,0 +1,14 @@
+{
+  "card": 1, "id": "gather.flint_from_gravel", "title": "Dig gravel until the requested flint count is collected",
+  "tags": ["gather", "mine", "gravel", "fortune", "until"], "difficulty": 2, "split": "train", "seeds": [1, 2, 3, 4],
+  "params": {"n": {"int": [2, 4]}, "dx": {"int": [2, 4]}, "dz": {"int": [3, 6]}},
+  "world": {"template": "arena", "gamerules": {"advance_time": false, "block_drops": true}},
+  "build": [{"fill": ["<${dx},0,${dz}>", "<${dx + n + 1},0,${dz}>"], "block": "gravel"}],
+  "player": {"inventory": [{"item": "iron_shovel", "enchant": {"fortune": 3}}]},
+  "order": {"from": "Noan", "text": "creuse le gravier avec ta pelle Fortune III jusqu'à avoir ${n} silex"},
+  "success": {"have": "flint", "min": "${n}"}, "fail": {"died": true},
+  "milestones": [{"name": "first_flint", "check": {"have": "flint", "min": 1}}],
+  "limits": {"ticks": 1800, "decisions": 8},
+  "solution": ["mine gravel n=${n + 2} tool=iron_shovel until(have(flint)>=${n})"], "solution_ticks": 600,
+  "notes": "Fortune III guarantees flint from manually mined gravel, avoiding a finite supply with an unbounded random drop requirement. Gravel sits on solid stone; no falling-block loot shortcut. Two spare blocks allow the inventory-based until condition to stop the skill."
+}

@@ -1,0 +1,4 @@
+MineSim 0 port 25600; 1 card(s), policy script, lockstep
+FAIL nav.swim_across#1                  timeout  1514 ticks 32.3s {"x":4,"width":5} judge {"{\"at\":\"<4,0,10>\",\"radius\":1.2}":9.869324635496005}
+
+0/1 episodes succeeded; log C:\Users\noanh\Desktop\Dev\localai\data\own\2026-11-17\2026-11-17-18-23_SWIM_cards.jsonl; real 36.0 s, 1535 ticks (43 tps)

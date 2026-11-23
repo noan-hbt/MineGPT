@@ -1,0 +1,18 @@
+{
+  "card": 1,
+  "id": "survive.eat_hungry",
+  "title": "Hungry with food in the inventory: eat until fed",
+  "tags": ["survive", "food"],
+  "difficulty": 1,
+  "split": "train",
+  "seeds": [1, 2],
+  "params": { "food": { "int": [7, 12] }, "meal": { "choice": ["bread", "cooked_beef", "baked_potato"] } },
+  "world": { "template": "arena", "gamerules": { "natural_health_regeneration": false } },
+  "player": { "food": "${food}", "inventory": [ { "item": "${meal}", "count": 6 } ] },
+  "success": { "food": { "min": 17 } },
+  "fail": { "died": true },
+  "milestones": [ { "name": "ate_once", "check": { "food": { "min": "${food + 1}" } } } ],
+  "limits": { "ticks": 600, "decisions": 6 },
+  "solution": ["eat ${meal}", "eat ${meal}"],
+  "solution_ticks": 70
+}

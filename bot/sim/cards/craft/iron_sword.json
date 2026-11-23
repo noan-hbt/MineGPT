@@ -1,0 +1,91 @@
+{
+  "card": 1,
+  "id": "craft.iron_sword",
+  "title": "Craft an iron sword from supplied ingots and a stick",
+  "tags": [
+    "craft"
+  ],
+  "difficulty": 1,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "params": {
+    "tx": {
+      "int": [
+        -2,
+        2
+      ]
+    },
+    "extra": {
+      "int": [
+        0,
+        3
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "easy",
+    "gamerules": {
+      "spawn_monsters": false,
+      "advance_time": false,
+      "advance_weather": false
+    }
+  },
+  "player": {
+    "at": "<0,0,0>",
+    "spawn": "<0,0,0>",
+    "inventory": [
+      {
+        "item": "iron_ingot",
+        "count": "${2 + extra}"
+      },
+      {
+        "item": "stick",
+        "count": 1
+      }
+    ]
+  },
+  "fail": {
+    "died": true
+  },
+  "build": [
+    {
+      "set": "<${tx},0,2>",
+      "block": "crafting_table"
+    }
+  ],
+  "order": {
+    "from": "Noan",
+    "text": "fabrique une épée en fer et garde-la",
+    "at_tick": 0
+  },
+  "success": {
+    "have": "iron_sword",
+    "min": 1
+  },
+  "milestones": [
+    {
+      "name": "iron_sword_ready",
+      "check": {
+        "have": "iron_sword",
+        "min": 1
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 900,
+    "decisions": 4
+  },
+  "solution": [
+    "craft iron_sword"
+  ],
+  "solution_ticks": 300
+}

@@ -120,7 +120,848 @@ Strip a leading empty `<think></think>` from the content if present. Full workin
 - Bot does not talk (no LLM chat replies). Ideas: LLM chat replies, commands like "mine iron" / "build shelter",
   use RCON for scripted tests.
 
-## State at end of session 2026-11-17 #2 (resume here)
+## State 2026-11-18 session #21b (RESUME HERE) — GOAP planner + `achieve`; Bonsai 5/6 with plan tool
+Branch `v2`, **nothing committed** (the session #20/#21 changes are uncommitted too). Design + results: `notes/goap.md`.
+
+**Built.** The user's idea: GOAP/BT with the LLM as "traducteur & arbitre". Decision: **default execution** (the
+executor runs the plan; the model steps in on a new plan, a failure, a surprise or chat).
+- `bot/plan/goap.js`: pure planner.
+  - Backward chaining over crafting, smelting, blasting and smoking, natural block drops (placed forms excluded),
+    random drops (flint from gravel) and items lying on the ground (`collect`).
+  - Handles harvest tools, stations (place crafting_table/furnace/...) and fuel. Inventory reservations,
+    backtracking, station cost measured by a trial sub-plan.
+  - 1-3 alternatives (`force` map), about 1 ms per plan.
+- `bot/plan/live.js`:
+  - live world: **one** findBlocks scan per plan. One scan per kind blocked the event loop 10 s and the server
+    dropped the bot with ECONNRESET.
+  - the `achieve <goal> [via=N]` verb: plan -> run first step -> replan; it fails back to the model after 2 failures
+    of the same step or when stuck. Places stations on a free spot (never on top of a table).
+  - `tool: plan <goal>`.
+- Wiring:
+  - `spec/catalog.json`: verb achieve, tool plan.
+  - `dsl/run.js`: achieve timeout 3600.
+  - `dsl/fmt.js`: cond arguments are now formatted.
+  - `skills/index.js`.
+  - `tools.js`.
+  - mind.js SYSTEM: plan/achieve example.
+  - golden sheet updated.
+  - `test/plan.js` (8 tests) added to `npm test`; everything passes.
+- `run_cards.js --policy achieve`: one `achieve have(X)>=N` per have-card, no model.
+  **Planner alone: 54/54** (27 have-cards x seeds 1,2, 277 s; `eval/results/goap_achieve_s12.txt`).
+- `dsl/gbnf.js`: goal/say/note capped at 150 chars, plan at 200, act/tool arguments restricted to DSL characters +
+  "quoted" text. LFM3 wrote paragraphs in goal:/say: and hit max_tokens.
+- `eval/bench_mind.ps1 -Suffix _x` (tag suffix).
+
+**Mind bench (6 easy episodes, lockstep sim 1, `-Grammar -Suffix _goap`):**
+- **Bonsai-2B Q2: 5/6** (was 2/6), 12/34 invalid, 0.6 s per call.
+  - It calls `tool: plan` 16 times and **never `achieve`**: it reads the plan and types the verbs itself.
+  - It ran with the NEW capped grammar, so grammar and GOAP are confounded.
+  - **User: we will probably keep Bonsai.**
+- LFM3: 0/6, not usable.
+  - It ran with the OLD grammar: 43/47 invalid, 10 s per call.
+  - Then llama-server crashed: `CUDA error: illegal memory access`. Likely VRAM contention with Gemini's job
+    (7.7/8.2 GB used).
+
+**Gemini** is running a weight-writing experiment on the 350M (GPU, should be finished around 11:30); maybe test it
+too (`serve_hf.py`).
+
+### Next (agreed with the user)
+1. `--no-goap` flag for run_cards/mind: remove plan/achieve from the MANUAL (render.js manual() from the catalog)
+   and from the grammar (gbnf verbs/tools).
+2. Bench with the same capped grammar, with and without GOAP: Bonsai x2 and LFM3 x2 (6 episodes each). The GPU
+   must be free of Gemini's job first.
+3. Then harder cards (d2, multi-step: iron_pickaxe, torches from nothing...), where the planner should matter.
+4. Why does Bonsai not use `achieve`? Maybe make the plan output point to it.
+
+### Gotchas
+- Killing a lockstep run leaves the sim frozen: `node sim/instance.js stop 1; start 1`.
+- run_cards log file names are stamped in UTC (local time = UTC+1).
+- The DeepSeek trace run on **sim 0** (`--cmdc deepseek ... --lang fr`) was still running all session: leave it
+  alone.
+- The first episode right after a sim start can lose a craft (planks seed 1 once: 3 logs lost, 0 planks), not
+  reproduced.
+
+## State 2026-11-17 session #20 — mind policy works with gpt-6.2-sol; SFT trace generation running
+Branch `v2`, nothing committed this session (bot/sim/mind.js, run_cards.js, export_sft.js, dsl/parse.js).
+
+**UPDATE 22:2x: trace run STOPPED by user (ChatGPT 5h quota ~10% left).** d1_rest 31/36, d2 partial 36/36 pass
+(stopped ~1/3 into d2's 108 episodes; remaining d2 cards not traced). MineSim 0 restarted. Export done:
+88 episodes, 83 kept, **181 examples -> data/sft/mind_sft.jsonl**. Resume d2 later with a reduced ids_d2.txt.
+
+**Live mind (v2 playable, untested live yet):** `node bot/harness.js --mind [--llm URL | --codex medium] [--temp 0]`
+on the real server (no lockstep). Decides when idle + (wake event | goal on stack | every --idle 30 s); a player chat
+line interrupts the running action; `!pause/!resume/!stop` in chat. No tick() logger in mind mode (build() drains
+events). 350M fine-tunes (exp_350m/, user+Gemini: sol-exp 87% valid turns offline, sol-mega WIP) served by
+`python serve_hf.py --model models/LFM2.5-350M-sol-exp [--device cpu]` on :8081 (no GGUF converter in llama.cpp/).
+Idea (user agreed): **monitor-call traces** (continue/adjust/interrupt while an action runs) for the 350M; with a
+Q8 GGUF (~0.4 s/decision est., prompt cache ~0.15 s/monitor) the mind could monitor 2-3x/s. Prefer Q8 over Q4
+(tiny speed gain, likely validity loss on a 350M). Needs convert_hf_to_gguf.py + mind.js monitor loop.
+
+**2026-11-18 (session #21):** reboot fixed GPU 30 W cap (memory/gpu-power-cap.md). Mind bench, 6 easy episodes,
+lockstep sim 1 (`eval/bench_mind.ps1`, llama-server b256): **LFM3-1.7B-QAD 0/6 (65/68 invalid, ~5.4 s/call)**: think
+spills onto untagged prose lines; **Bonsai-2B Q2 1/6 (54/59 invalid, 1.5 s/call)**: writes `tag: plan`, invents expect
+conditions. Format = bottleneck -> SFT on sol traces or GBNF-constrained decoding. **GBNF grammar** (`bot/dsl/gbnf.js`, `run_cards.js
+--grammar`, `eval/bench_mind.ps1 -Grammar`, server reasoning off): Bonsai 2/6 (21/54 invalid, 0.5 s), LFM3 3/6 then 2/6
+with think capped at 300 chars (52/61 invalid: free-text act args with `?`/`.`, made-up targets). Grammar fixes the
+tags, not the content -> SFT needed; keep grammar as a safety net for fine-tuned models.
+**Teacher switched to DeepSeek v4.1 flash via Command Code** (`--cmdc deepseek/deepseek-v4.1-flash`, ~8 s/call, 6/6
+easy, 3/13 invalid) because Codex exec hung for minutes (also with --ignore-user-config). `--lang fr` = French free
+text. Traces: `data/sft/run_traces_ds.ps1` (35 d2 cards, `ids_d2_rest2.txt`) -> `traces_T_DS_d2.txt`, logs
+`*_T_DS_d2_cards.jsonl` (export glob must include T_DS_). Traces resumed: remaining 36 d2 cards
+(`data/sft/ids_d2_rest.txt`), gpt-6.2-sol LOW, sim 0, `data/sft/run_traces_d2rest.ps1` -> `traces_d2_rest.txt`, bot
+name `T_SOL_d2r_low` (MC names max 16 chars: longer = `Failed to decode packet 'serverbound/minecraft:hello'`).
+Occasional `LLM timeout (codex)` episode errors.
+
+### (was) Running (detached from Claude Code, survives /clear)
+`data/sft/run_traces.ps1` (PowerShell, hidden): gpt-6.2-sol medium via Codex as the mind policy on train cards,
+rest of d1 (18 cards) then d2 (51), seeds 1,2. Progress `data/sft/traces_d1_rest.txt`, `traces_d2.txt`; done marker
+`data/sft/traces_DONE.txt`. Episode logs `data/own/2026-11-17/*_T_SOL_*_cards.jsonl` (+ earlier `*_CODEX1_*`,
+`*_T_SOL_d1_*` = first 5 d1 cards). Stop it: kill powershell/node whose command line has `run_traces`/`T_SOL_`,
+then `node sim/instance.js stop 0; start 0` (a killed lockstep run leaves the sim frozen -> next login `slow_login`).
+When done: `node sim/export_sft.js ../data/own/2026-11-17/*_CODEX1_cards.jsonl ../data/own/2026-11-17/*_T_SOL_*_cards.jsonl`
+-> `data/sft/mind_sft.jsonl` (one example per valid call in judge-success episodes; invalid outputs dropped).
+
+### Mind policy findings
+- Loop works end to end in lockstep (sheet -> LLM -> turns -> action -> judge). Sheet now logged at round 0.
+- Local 4B models fail on format, not the harness: Nemotron3-Nano-4B 2/6 (43/62 invalid), K2-Horizon partial
+  (22/25 invalid). They copy the MANUAL grammar notation (`think: *`, `expect: true`, `act: idle`) and ignore chat
+  orders. SYSTEM prompt in mind.js now has concrete example turns (validated by parseTurn): helped a little.
+- **gpt-6.2-sol medium (Codex) = 6/6 easy cards, 12/13 valid turns**, then 11/11 on the first d1 trace cards. Uses
+  tools, goals, correct recipe math, reasons in the chat's language. Chosen teacher (memory/lfm350m-experiments.md).
+- Backends: `--policy mind` + llama-server (default), `--key-env OPENAI_API_KEY --model id` (not used: user prefers
+  Codex), `--codex low|medium [--model gpt-6.2-sol]` (codex exec read-only/ephemeral, ~7-12 s per call).
+- llama-server here has no `--no-mmap`: use `--load-mode none`. Never run llama-server while a GPU training job runs
+  (8 GB VRAM: OOM'd the user's LoRA job once). One llama-server leaked 5.8 GB RAM (K2-Horizon, mmap).
+- dsl/parse.js suggestions: ties -> shortest first (`birch` suggests birch_log before birch_door).
+
+### Next
+1. Export SFT set when traces finish; SFT LFM2.5-350M on it (GPU free of other jobs first). 2. Bench LFM3 and
+Bonsai on the mind policy (not done: GPU was busy). 3. More traces: more seeds, d3 cards, 2-3 MineSim in parallel
+(Codex uses no local RAM/GPU). 4. Baseline raw 350M on heldout cards.
+
+## State 2026-11-17 session #19 — VAL3 triage, 4 skill fixes, VAL4 495/495; next: LFM2.5-350M track
+Branch `v2`. Session #18 + #19 work committed together.
+
+### VAL3 -> VAL4
+VAL3 (session #18 fixes): 485/495. All 10 failures were skill/pathfinder bugs, fixed, each card re-run:
+- `gather.fish` 0/4: mineflayer `bot.fish()` detects the bite from particles -> reeled on approach particles
+  (empty casts), then `Fishing cancelled` when the bobber despawned = hard Fail. Now `gather.castOnce`: reel on the
+  bobber splash sound at the bobber. **minecraft-data sound ids are shifted by one on this version**: the splash
+  arrives named `entity.fishing_bobber.retrieve`, the throw named `.splash` -> accept both, only at a bobber > 2 m
+  from the player. Lost casts are recast (fail after 2n+2). 4/4, 138-361 ticks.
+- `nav.door_house` 0/4: canDig + an open door's full collision box -> pathfinder dug the door. Now (makeMovements)
+  doors/gates/trapdoors in blocksCantBreak; an open door/gate is safe, non-physical, flat; plus a `path_update` hook
+  putting waypoints back on the floor (postProcessPath put them on top of the door panel -> "stuck" forever).
+- `craft.boat` #3: 4/12 planks then 2 empty clicks in lockstep. craft retries 4x with backoff + resync.
+- `gather.carrots_replant` (flaky): (a) pathfinder dug fresh replants (avoided != unbreakable) -> crops in
+  blocksCantBreak; (b) bot climbs out of the irrigation channel by jumping onto a plot -> trampled to dirt. harvest
+  replants before collecting when seeds in hand, water liquidCost 50 during harvest, jump/drop moves landing on
+  farmland removed. Residual flake ~1/8 episodes before the last fix, unseen under trace (timing); VAL4 4/4.
+VAL4 (all fixes, full lockstep): **495/495**, 311 s, 337 tps. Log `data/own/2026-11-17/2026-11-17-19-36_VAL4_cards.jsonl`.
+
+### Next: LFM2.5-350M experiments (decided with user, see memory/lfm350m-experiments.md)
+Goal: measure what improves LFM2.5-350M (`models/LFM2.5-350M-hf`, HF safetensors; convert to GGUF with llama.cpp
+`convert_hf_to_gguf.py` for llama-server, or use transformers) as the card policy (`--policy mind`).
+- Teachers / references for traces: **DeepSeek, Claude, ChatGPT** (APIs). Not LFM3-1.7B.
+- Data: card `solution`s (script policy, 495/495) + frontier-model mind-policy traces; judge = verifiable reward.
+- Order: 1 baseline raw 350M on heldout cards (+ a frontier model as ceiling) -> 2 SFT / sequence distillation
+  -> 3 logit distillation (needs open teacher, e.g. DeepSeek weights; check tokenizer) -> 4 RLVR/GRPO with the card
+  judge -> 5 DPO/ORPO/KTO on success/fail rollout pairs -> 6 adaptation (LoRA per domain vs one model; wedit only to
+  inject facts) -> 7 compression (quant/prune) of the best checkpoint, success vs tps.
+- Mind policy itself is still untested (session #18 notes below): debug it first on easy cards with one model.
+- One heavy job at a time (16 GB RAM).
+
+## State 2026-11-17 session #18 — triage, swim, shoot, reconnect, A* fidelity, 34 cards, mind policy
+Branch `v2`. All work below is uncommitted in the working tree (commit it). `eval/results/` is now committed too
+(user doesn't care).
+
+### First thing to do
+A full lockstep validation with every fix below was running when the session ended (`--name VAL3`, output
+`eval/results/val3.txt`, log `data/own/2026-11-17/*_VAL3_cards.jsonl`). Read the FAIL lines, triage, commit.
+Previous full run (VAL2, before most fixes): 348/351. Known flaky: gather.carrots_replant ~1/12 (a replanted
+carrot gets destroyed, cause unknown, maybe trampled during pickup).
+
+### Bot fixes (validated per card)
+- `shoot`: real arrow ballistics (3.0 b/t, drag 0.99, gravity 0.05, bisection on pitch) + target lead from its
+  own position history. Kills in ~3 arrows. Can't hit a mob hugging a 1x1 pillar from on top (geometry).
+- `shield`: keeps facing the nearest hostile while raised (it only blocks frontal hits).
+- Swimming (common.makeMovements): stock pathfinder never plans out of water -> dug a tunnel under the channel.
+  Added moves: swim up inside water, climb a ledge from the water surface. nav.swim_across 85 ticks.
+- Enchanted tools: prismarine-item gives the raw 1.21 component -> digTime threw "enchantments is not iterable".
+  makeMovements normalises `item.enchants` on every inventory slot.
+- `canSee`: center ray + faces turned to the eye (ore at foot level in a tunnel wall was never "seen").
+- Pathfinder avoids crop cells (trampling); `harvest` steps off the cell before replanting, reports failures.
+- `chop`: second pass for logs missed from the first spot; reports the reason. `collect`: waits 1.5 s for a fresh
+  drop's metadata.
+
+### Runner / sim
+- run_cards: detects a lost bot (end/kicked/error or not in `list`), reconnects (lock.pause -> login -> lock.start),
+  reruns the cut episode once. Tested with a real kick.
+- Setup holding cell (cards.js reset): bot is tp'd into a barrier box with water above the arena while the arena is
+  rebuilt (it used to sink into the next card's lava and burn past tick 0; fire is also saved across runs); cell
+  removed in the player step.
+- **Lockstep A* fidelity** (clock.patchPathfinder, on with --lock): A* budgets used the frozen virtual clock, so a
+  whole search ran inside one tick. Now per-tick budget = real compute time, total timeout = game time, like live.
+- survive.drowning gap closed: 98 lockstep vs 105 x1 (was 223 vs 129; the slow goto out of water).
+- Card fixes: bow_zombie_far (island walled: a zombie in the moat is underwater, arrows can't hit), shield_skeleton
+  (hard: on easy arrows could all miss in 10 s), drop_for_owner (radius 6), clay_from_pond (walk to edge: clay not
+  visible from spawn), carrots_replant (random_tick_speed 0), drowned_shore (return to shore).
+- 34 new Codex cards (6 batches: combat/craft/gather/logistics/mine/nav, list in git status); all pass after fixes.
+  Skipped by Codex: logistics.give_to_player, fetch_tools_for_task (need a second player).
+- Debug env hooks: DBG_GO (positions during goto), DBG_HP (health/hurt trace), DBG_MIND (each LLM turn).
+
+### Mind policy (NOT tested yet)
+`node sim/run_cards.js --lock --policy mind --llm http://127.0.0.1:8080 [--max-tokens 1024] --only <cards>`.
+sim/mind.js: per decision builds the state, renders the sheet (MANUAL explains the format), asks llama-server
+(OpenAI API), applies the turn via Turns (tool rounds <= 4, 1 retry on invalid output then `wait 2s`), waits for the
+action result. In lockstep `lock.hold()` freezes the world and the bot clock while the model thinks. v1 = decision
+turns only (no monitor calls). Logs `mind_call` records. Stop the sim card run / free RAM before llama-server.
+Suggested model: Nemotron3-Nano-4B (`models/compare/`), `-fa on --reasoning-budget 256 -c 16384 --jinja
+--reasoning-format deepseek`.
+
+### Next
+1. Read VAL3, fix, commit. 2. First mind-policy run on easy cards (nav.goto_place, gather.chop_tree, craft.planks),
+debug the loop. 3. Confirm reasoning budget on 24 tasks (model_bench, sim stopped). 4. Monitor calls in the mind
+loop. 5. More cards.
+
+## State 2026-11-17 session #17 — 70 Codex cards, fidelity x1 vs lockstep, bot sync fixes, LLM speed
+Branch `v2`. Nothing committed this session yet (all changes below are in the working tree). Don't commit `eval/results/`.
+
+### First thing to do
+A full validation was running when the session ended: all cards except nav.swim_across, lockstep, default seeds
+(`--name VALF`), then nav.swim_across seed 1 alone (`--name SWIM`). Results: `eval/results/val_final.txt`,
+`eval/results/val_swim.txt` (+ `data/own/2026-11-17/*_VALF_cards.jsonl`). It finished: **344/347** (264 s,
+293 tps, 0 desync). FAIL: combat.bow_zombie_far #2 #3, combat.shield_skeleton #2 (flaky, not triaged);
+nav.swim_across #1 timeout (no disconnect this time). Then commit (cards + fixes).
+If the sim server was left frozen: rcon `tick unfreeze` + `tick rate 20` (or `node sim/instance.js stop 0`).
+
+### Cards: 21 -> 91
+- 70 new cards written by 6 parallel Codex runs (`codex exec -s workspace-write`, gpt-6.1-sol medium, brief
+  `notes/cards-codex-brief.md`, one area batch each, offline-validated only, no server). Skipped by Codex (judge
+  can't express them): survive.set_spawn_bed (respawn point), social.order_cancel ("stopped" check + script policy).
+- Validation before the fixes: only 5 of ~60 cards had failures; after the fixes below all of them pass except
+  combat.bow_zombie_far (1/4: `shoot` misses at ~12 blocks down into a pit, no target lead) and nav.swim_across
+  (goto across water times out 120 s; seed 2 ended with the bot disconnected from the server -> every later
+  episode "No player was found"; the runner should detect a lost bot and stop/reconnect).
+
+### Fidelity guard x1 vs lockstep (Next #1 of #16): done
+`node sim/compare_runs.js --latest LOCK X1` (new: per card pass/ticks mean+sd/damage/deaths, flags gaps).
+21 cards x 5 seeds: identical outcomes/ticks/damage on 15 cards; lockstep 108 s vs x1 890 s (x8). Gaps:
+- craft.* failed more at x1 (7 vs 1): bot bug (fixed below), not fidelity.
+- **survive.drowning: 223 ticks lockstep vs 129 x1 — the one real fidelity gap left, not investigated.**
+- (x1 run was cut at 101/105 by a low-RAM kill: sleep_night only 1 seed at x1.)
+
+### Bot / harness fixes (all validated on the server)
+- craft: one craft per `bot.craft()` call + resync between (several crafts in one call clicked on a drifting
+  predicted grid: lost batches, a button crafted from planks). x1 craft cards 18/25 -> 25/25.
+- `settle()` resyncs twice (a resync can be answered by an earlier pending one); smelt: furnace window resynced
+  before reading the output + inventory settled after close (bot counted 1 ingot too many).
+- Interpreter: inventory resynced with the server after every statement (`resyncInventory` in dsl/run.js):
+  the last ladder/seed/bread/arrow used was still counted. All `desync` lines gone.
+- Gamerules leaked between cards (reset only re-applied DEFAULT_RULES: advance_time false froze the clock for
+  every later card). DEFAULT_RULES now lists the vanilla value of every rule cards use; the validator rejects a
+  card rule without a default.
+- Judge `said` never worked (Judge.chat was never filled): runner records the bot's own chat per episode.
+- water_bucket_save fired on "air blocks below <= 3" = feet 3.9 above ground, out of the 4.5 reach from the eyes:
+  now fires on the real distance (<= 2.8). 4/4.
+- On fire: the server never sends the shared "on fire" metadata flag for the bot (measured), so `extinguish`
+  did nothing and the `on_fire` flag/perception were always false. New `C.burning(bot)` (skills/common.js):
+  fire/lava contact at feet/head -> burning 160/300 game ticks, water ends it; used by extinguish, DSL flag,
+  perceive. 4/4.
+- compare_runs damage flag threshold: 20 (damage_taken is in tenths of HP: 20 = 1 heart).
+
+### LLM speed (eval/model_bench.py: new `--server-args`, `--tag`)
+- llama-bench: decode is memory-bound, ~80% of the 4070 Laptop bandwidth on 4B Q4_K_M: flags won't buy more.
+  `-fa on` always >= off (+2..20% prompt, +1..4% decode). No model has MTP heads; no small model shares a tokenizer
+  with the 4B ones -> no draft-model speculation. `ngram-mod` speculation: no gain on free reasoning text (to
+  retest on real DSL prompts).
+- **Reasoning budget is the lever**: Nemotron 4B `--reasoning-budget 256`: same 6/8, tokens 574 -> 251, no
+  truncation, 6.2 -> 13.6 correct/min. LFM3 ignores it (re-reasons in the answer, ~1000+ tokens, 4/8 truncated
+  at 1536). Only 8 tasks: the 24-task confirmation (Nemotron fa / b256 / b128) was killed by low RAM -> rerun
+  with the sim server stopped: `model_bench.py --models <nemotron> --n 6 --max-tokens 1536 --tag c_b256
+  --server-args "-fa on --reasoning-budget 256"`.
+- RAM: 16 GB is tight (commit was 18.5 GB). Docker/WSL + the Minecraft launcher were closed (-3.5 GB). Never run
+  llama-server benches + a card run + Codex batches at the same time.
+
+### Next
+1. Finish triage of VALF, commit. 2. drowning fidelity gap. 3. shoot lead/vertical aim, swim pathing, runner
+detects a disconnected bot. 4. Confirm reasoning budget (24 tasks), then choose the mind model + budget.
+5. More cards (Codex batches work well: give them a list of ids + the brief). 6. Mind loop = policy `mind`.
+
+## State 2026-11-17 session #16 — lockstep player freeze (Fabric mod)
+Branch `v2`. Don't commit `eval/results/`.
+
+### Done
+- **Sim instances run Fabric** (loader 0.20.1, MC 1.21.11) + mod `bot/sim/mod/` (`minesim-freeze.jar`). Two
+  mixins, active only while `TickRateManager.runsNormally()` is false (frozen, no `tick step` tick running):
+  `ServerGamePacketListenerImpl.tickPlayer()` returns false without running (= `ServerPlayer.doTick`: air, regen,
+  hunger, sleep, effects, fire + floating-kick counters), `ServerPlayer.tick()` cancelled (entity loop: vanilla
+  `isEntityFrozen` never freezes players). Unfrozen (x1) = vanilla behaviour.
+- Built WITHOUT Gradle/Loom: sources use Fabric intermediary names, compiled by `java -m jdk.compiler/...` (the
+  bundled Minecraft runtime has jdk.compiler/jdk.jartool) against `.fabric/remappedJars/.../server-intermediary.jar`.
+  `sim/mod/build.js` `ensure(dir)`: Fabric launcher (cached in `mcserver-sim/fabric-cache/`, downloaded from
+  meta.fabricmc.net if missing), first remap via `--initSettings`, rebuild if sources newer, copy to `<inst>/mods/`.
+  Called by `instance.js start()` (launches `fabric-server-launch.jar`). New instances get it automatically.
+- `node sim/mod/map.js <MojangClass> [method]`: Mojang -> obf -> intermediary names (needs `server_mappings.txt` +
+  `mappings/mappings.tiny` in `mcserver-sim/fabric-cache/`, both there now) for future mixins.
+- `node sim/freeze_check.js [--x1]`: fidelity probe. x1 and lockstep identical now: Air -1.00/tick (300 -> 0 in 300
+  ticks), night skipped after 99-100 ticks in bed (before the mod: Air 259 -> 0 in 10 ticks, sleep 58).
+- Validation lockstep: cards 21 x seeds 1-5 **105/105** (survive.drowning 5/5, was 0/5), 23415 ticks in 108 s
+  (216 tps; was 19832 ticks: episodes take more game ticks now, expected); live suite **64/64** (32.5 s, 131 tps).
+
+### Open (carried)
+- craft.planks#4 lockstep flake, ledger noise across seeds, some lockstep episodes waiting on real time (see #15).
+- Other per-loop server work not tied to the player tick is not audited (e.g. anything in the connection tick:
+  keepalive still runs per loop, harmless). Fidelity guard below will show remaining gaps.
+
+### Next
+1. Fidelity guard: all cards x1 vs lockstep (outcome, ticks, damage distributions); `freeze_check.js` style
+   probes for regen/hunger. 2. More cards. 3. Mind loop = policy `mind`.
+
+## State 2026-11-17 session #15 — 21 cards, lockstep player-tick finding
+Branch `v2`. Don't commit `eval/results/`.
+
+### Validation
+- 21 cards x seeds 1-5 lockstep: 100/105. survive.drowning 0/5 in lockstep (expected, see below), 5/5 at x1
+  (seeds 1-2 checked after the last fix, 3-5 before). craft.planks#4 1 flaky (below). Live suite lockstep: 64/64.
+- Rerun: `node sim/run_cards.js --sim 0 --lock --seeds 1,2,3,4,5` and `node test/live.js --lock --sim 0` from bot/.
+  x1: drop `--lock`. If the server is left frozen: rcon `tick unfreeze` + `tick rate 20` (or `node sim/instance.js stop 0`).
+
+### Done (session #15)
+- 6 cards: survive.drowning (dry pit flooded at tick 0), survive.sleep_night, survive.hunger_hunt (kill cow, eat raw
+  beef), combat.zombie_group (3 zombies), heldout: survive.descend_cliff, craft.cook_beef (table+furnace+smelt).
+- eat_hungry card bug: food 5 + 2 baked potatoes < 17 -> food param 7-12.
+- Bot bugs fixed: fight/attack picked a mob in its death animation (still in bot.entities ~1 s) -> C.nearest skips
+  entities after entityDead. `go()` from a water surface: pathfinder finds no path -> swimOut (to the nearest dry
+  standing spot, jump+forward re-asserted each 100 ms) then plan again once. `sleep` now waits until woken (night
+  skipped, up to 10 s) instead of returning in bed (any next statement woke it before the night passed). `eat` waits
+  for the slot update (consume() resolves before it: bot model had 1 food item too many).
+- Runner: death/damage scoreboards reset right before tick 0 (plan.scores), not in reset (falling into a pit dug
+  under the bot's previous position counted as episode damage).
+- notes/scenario-cards.md: success_when, setup order, "pitfalls" section.
+
+### KEY FINDING: lockstep does not freeze the player
+`tick freeze` + `tick rate 10000` (sim/lockstep.js): vanilla never freezes players, so the bot's ServerPlayer ticks
+every server loop, many times per game tick. Measured: Air 259 -> 0 in 10 game ticks during setup; drowning in ~43
+ticks; sleep skipped the night in 58 ticks (x1 needs 100+). Also affects natural regen, hunger/saturation, effect
+durations, fire, item use timers -> lockstep is optimistic for every "keep N hp" card (creeper, zombie...).
+Options: (a) `tick rate` near the achieved step rate (approximate), (b) server mod/plugin freezing players
+(Fabric/Paper), (c) mark such cards x1-only. **User decided: (b)**, to be done in a new session (session #16).
+Why keep lockstep: ~x8 faster than x1 (105 episodes = 19832 ticks in 127 s at 156 tps vs >= 16.5 min at x1; live
+suite 33 s vs >= 3.5 min), and the world pauses while the LLM thinks, so mind-loop results don't depend on GPU latency.
+
+### Open
+- craft.planks#4 (acacia n=13) once in lockstep: bot model 16 planks, server 4 (3 of 4 crafts lost server-side,
+  clicks too fast?). Not reproduced in 9 reruns.
+- Ledger noise: a `sleep` step logged gained/lost bed from the previous seed.
+- Lockstep episodes sometimes ~10 s real for ~350 ticks: something waits on real time.
+- Reserved, not implemented: actors (owner NPC), seed-world templates, mind.chests/map, snapshot/restore.
+
+### Next
+1. **Session #16: freeze the player in lockstep (option b).** Check first what the sim server runs
+   (sim/instance.js: vanilla jar?), then the cheapest exact route: a small Fabric mod (mixin skipping
+   ServerPlayer tick / ServerGamePacketListenerImpl player tick while the tick manager is frozen and not stepping),
+   or Paper if it exposes this. Keep client movement packets handled (the bot moves during stepped ticks only).
+   Verify with the measurements above: Air must drop 1 per stepped tick, sleep must take 100 ticks, then
+   survive.drowning must pass in lockstep and the full suite must stay green. 2. Fidelity guard (all cards x1 vs lockstep, outcome + ticks +
+   damage distributions). 3. More cards (shelter, fall, mob mixes, longer chains). 4. Mind loop = policy `mind`.
+
+## State 2026-11-17 session #14 — 15 cards, lava/health/RNG fixes
+Branch `v2`. Commit `8f7158f`.
+
+### Done
+- `success_when: "end"` (card key): success judged only at the time limit (survival cards); runner waits for it.
+- 6 cards: survive.creeper (pillar 4 + shoot, 5/5), survive.descend_pillar, survive.lava_moat (4/4 after fix),
+  craft.stone_pickaxe (multi-stage, 7 steps), nav.order_change (timeline chat redirect), craft.torches (`heldout`).
+- Bot bug found by lava_moat: mineflayer-pathfinder plans a sprint parkour jump over a 3-wide lava moat and the bot
+  misses ("LFM tried to swim in lava"). `C.makeMovements(bot)` (skills/common.js) = the one Movements config
+  (canDig, 1x1 towers) + no parkour when lava is under the jump; used by harness.js, live.js, run_cards.js.
+- Runner bug: health persisted across episodes AND runs (creeper/zombie failures at 9.67 HP were leftovers) ->
+  reset gives instant_health. The earlier "zombie#2 died after 2 HP" was probably this too.
+- RNG: weak string hash gave correlated draws across seeds 1,2,3 (creeper dz always < 0) -> sha256 seed + mulberry32.
+- Sword-fight / flee+bow creeper solutions failed, but under the health bug: retest if a card needs them.
+
+## State 2026-11-17 session #13 — scenario cards v1, craft/see/pickup fixes
+Branch `v2`. **NOT committed** (everything since `8cd9b21`, incl. session #12 files + `bot/sim/cards.js`,
+`bot/sim/run_cards.js`, `bot/sim/cards/**`, `notes/scenario-cards.md`, skills/common.js, state/perceive.js).
+Don't commit `eval/results/`. Validation done: live suite lockstep **64/64**, x1 63/64 (`plant` flake: server
+refused wheat_seeds), cards 22/23 then zombie 6/6.
+
+### Done
+- **Craft**: `settle()` in craft.js retries (resync + empty grid/cursor, up to 4x) instead of one pass; debug removed.
+- **Scenario cards** (spec `notes/scenario-cards.md`): JSON cards in `bot/sim/cards/<area>/`, loader/validator/
+  seeded expansion/RCON compile/server-side judge in `bot/sim/cards.js` (`node sim/cards.js` validates all cards
+  for all seeds incl. DSL parse), runner `node sim/run_cards.js --sim 0 [--lock] [--only id|prefix] [--seeds 1,2]`
+  (policy `script` = reference solution; `mind` = H5). Episode record: outcome, ticks, milestones, died,
+  death_msgs, damage, judge values; `card_step` records carry `desync` (bot inventory vs server count).
+  9 cards: craft.planks / wooden_pickaxe / smelt_iron, mine.iron_ore, gather.chop_tree, survive.eat_hungry,
+  combat.zombie, logistics.fetch_from_chest, nav.goto_place. All pass with script policy (~15 s lockstep).
+- Bot bugs the cards found (fixed):
+  - `C.canSee` reimplemented: mineflayer `canSeeBlock` ray length = distance to the block's min corner -> some
+    blocks never "seen" (birch 8E 5S invisible -> chop no_target_known). perceive.js `safeSee` uses it too.
+  - `C.pickup`: GoalNear(1) counted as reached out of pickup range (3 ore mined, 1 collected) -> GoalBlock on the
+    drop's cell, GoalNear fallback.
+- RCON facts: `execute if items/entity` prints `Test passed. Count: N` (capital C); entities/players need
+  loaded chunks (a query with no player online fails); food has no command -> runner drains it with hunger.
+
+### Open
+- combat.zombie#2 once: bot died after 2 HP damage (cause unknown; not reproduced in 6 seeds; death_msgs now logged).
+- Some lockstep episodes take ~10 s real for ~350 ticks (chop, mine#1): something waits on real time; find it.
+- Format reserved, not implemented: actors (owner NPC), seed-world templates, mind.chests/map, snapshot/restore.
+
+### Next
+1. Commit (ask user). 2. More cards (danger: lava/fall/night/creeper, multi-stage, orders mid-episode, held-out set).
+3. Fidelity guard: same cards x1 vs lockstep outcome distributions. 4. Mind loop (LLM -> turns) = policy `mind`.
+
+## State 2026-11-17 session #12 — craft stall fixed, MineSim instances, bench done
+Branch `v2`. **NOT committed** (everything since `8cd9b21`: rcon, clock, craft, run.js, live.js, sim/instance.js,
+.gitignore, eval/model_bench.py; don't commit `eval/results/`).
+
+### FIRST: finish craft_planks at x1, then commit
+- Lockstep sim 0: 64/64 x2. **x1 sim 0 (`node test/live.js --sim 0`): 63/64**, `craft_planks` FAIL
+  `partial server_refused | 4/8 done, then craft oak_planks: no result` (full suite only).
+- `--only craft_planks` alone at x1: 3/3 PASS. So a state left by an earlier case triggers it.
+- Debug left in `craft()`: `CRAFT_DEBUG=1` prints inventory/grid/cursor at start, after each batch, after settle.
+  REMOVE IT (the `dbg` lines) once fixed.
+- A run was left going in the background at the end of the session: preceding cases + craft (x2), output
+  `C:\Users\noanh\AppData\Local\Temp\claude\115b64199a6beba7\f2c2e44c-f200-4270-a21c-869b33c68c88\tasks\bsmbiohcv.output`
+  (cmd: `CRAFT_DEBUG=1 node test/live.js --sim 0 --only mine_stone,mine_missing_tool,mine_tool_too_weak,mine_ore_ok,mine_unknown,chop,craft_planks,craft_sticks`).
+  If it did not reproduce: run the full suite x1 with `CRAFT_DEBUG=1` and read the `[craft]` lines.
+- Sim instance 0 (java) may still be running: `node sim/instance.js status` / `stop 0`.
+
+### Done
+- **Craft stall fixed** (`bot/skills/craft.js`). Two causes:
+  1. mineflayer waits `once(updateSlot:0)` (20 s) after each crafting-grid/result click; 1.17.1+ servers may not
+     answer. Wrapping `bot.clickWindow` was not enough: `putAway(0)` uses mineflayer's INTERNAL clickWindow.
+     `patchClickWindow(bot)` now hooks the outgoing `window_click` packet: no `updateSlot:0` within 1 s (bot clock)
+     -> real resync `bot._syncWindow(window)` (stale-stateId no-op click, server resends the whole window).
+  2. mineflayer's local inventory model drifts from the server (crafts counted twice / not at all, ingredients left
+     in the 2x2 grid, which the server keeps until a window closes). `craft()` now calls `settle()` before and after
+     every batch: resync, shift-click grid slots 1-4 (+ cursor) back to the inventory, resync; counts on that
+     synced inventory. 2 batches with no result -> `server_refused` (no more fake `ok` with `stick x0`).
+- **MineSim instances** `bot/sim/instance.js`: `node sim/instance.js create|start|stop|status|rm <n>` ->
+  `mcserver-sim/<n>/` (gitignored, copy of mcserver jar/libraries/versions), flat world seed 1, view/sim distance 4,
+  game port 25600+n, RCON 25700+n, random RCON password. Starts in ~9 s.
+  `node test/live.js --lock --sim 0` runs the suite on it (starts it if down). live.js waits `waitForChunksToLoad`
+  after the first tp (fresh world: arena chunks were not loaded -> goto_pos no_path).
+- Lockstep on sim 0 after the fixes: **64/64, 64/64** (34-41 s real, 102-120 tps). x1 on sim 0: 63/64 (above).
+- The suite has NO LLM: scripted DSL statements; "LFM" is only the bot username.
+- **Model bench** done (merged `eval/results/model_bench_2026-11-17-15-52.jsonl` + `-15-57.jsonl`, 8 tasks, 1024 tok):
+  K2-Horizon-4B 6/8 (med 252 tok, 69 tok/s), Nemotron3-Nano-4B 6/8 (294, 77), Sharp-Spark-X2.6 6/8 (514, 74),
+  Spark-X2.6 6/8 (410, 65), LFM3-1.7B-Unc 4/8 (1014, 155), Bonsai-2B Q2 3/8 (1024, 201). `grid` failed for all
+  (truncated at 1024: not discriminating at this budget). Most efficient: K2-Horizon, Nemotron.
+
+### Next
+1. **Scenario cards** (user's choice, next session): format (world template + RCON setup + inventory/pos + goal +
+   success cond + timeout + seeds) + runner reusing live.js infra and `sim/instance.js`.
+2. Then: snapshot/restore (branching), fidelity guard (same cards x1 vs lockstep), mind loop (LLM -> turns).
+- Speed (user asked, 120 tps "low"): pure stepping did 450-550 tps (spike); suite cost = 2 RCON round trips/tick +
+  bot physics + setup commands. Plan: don't optimise the driver yet. Once the mind loop exists, measure LLM time vs
+  world time per episode; LLM (~1-5 s/decision) will likely dominate. If the world is the bottleneck: parallel
+  instances first (~linear with cores, no fidelity risk), then 1 round trip/tick (needs another barrier than
+  `time query`, est. x1.5-2). No batched `tick step N` (physics must run every tick).
+- Still open: macros keep or drop? `brew`, `stonecut`, grindstone repair not implemented.
+
+## State 2026-11-17 session #11 — H4 started: lockstep MineSim works
+Branch `v2`. Commit `8cd9b21` = H4 spike. **Uncommitted** (all tested, see below): `bot/rcon.js`, `bot/sim/clock.js`,
+`bot/skills/craft.js`, `bot/dsl/run.js`, `bot/test/live.js`, `eval/model_bench.py` (+ `eval/results/`, don't commit logs).
+
+### H4 decision: option C, strict lockstep (measured, see `bot/sim/spike.js`)
+- A = `tick rate R` + bot clock scaled (`clock.install()`, k follows server tps from `update_time`): walk OK up to
+  1000 tps but mining drifts in game time (16 ticks/block at x1 -> 36 at 200 tps, 112 at 1000): real latency
+  (Windows timers ~15 ms + round trips). Also a wrong k silently lets the bot move too fast (server accepts it).
+- **C = frozen server stepped by the bot** (`clock.installManual()` virtual timer queue + `sim/lockstep.js`: per
+  step `clock.advance(50)` then RCON `tick step 1` + `time query gametime`): mining 16 ticks/block like x1, walk
+  83 ticks, ~450-550 tps in the spike. One server tick per bot step (checked).
+- `node test/live.js --lock`: full suite in ~32-42 s real (vs ~290 s at x1), ~100-150 tps overall (setup RCON
+  commands count). Last runs: 64/64, 64/64, 63/64 (chop flake).
+- Consequences: the sim needs its own server (a connected player freezes with the world); several bots on one
+  server must step together; keepalive timer runs on the bot clock (pass `checkTimeoutInterval: 30000*1000`).
+
+### Bugs fixed on the way (uncommitted)
+- `rcon.js`: one request in flight (vanilla RCON parses one packet per read; pipelined driver + test commands
+  -> server dropped the connection).
+- `clock.js`: `new Date()` patched too (mineflayer `clickWindow` does `new Date() - bot.lastDigTime`: real vs
+  virtual time blocked crafts ~20 s).
+- `craft.js`: loop counts accepted crafts (not the lagging local inventory -> crafted one batch too many), waits
+  up to 1 s for the inventory; `patchClickWindow(bot)` (called by the Interpreter): mineflayer waits
+  `updateSlot:0` after every grid click (20 s timeout) even when the result does not change -> synthetic release
+  after 1 s. This one also failed at x1 (normal run 59/64 before it).
+  **NOT enough**: after the patch, lockstep runs 63/64, 60/64, 64/64; craft_sticks still stalls 21.1 s with
+  `stick x0`, then planks left in the grid break craft_no_table/craft_table/craft_with_table. Another 20 s
+  mineflayer wait remains (candidates: `putAway` `once(window, updateSlot:<slot>)`, other grid slots): log the
+  pending `once` events to find it. Intermittent, at x1 too.
+- Normal-speed suite NOT re-run after the clickWindow patch (last x1 run 59/64: craft chain + break_one/dig_box
+  pickup counts gained 0/1, unexplained yet).
+
+### Model comparison (user request, generic bench, no MC knowledge / DSL format)
+- All 6 in `models/compare/` load with our llama.cpp (Bonsai Q2_0 too, no prism fork). llama-bench tg128 (tok/s):
+  Bonsai-2B 216, LFM3-1.7B-Unc 163, Nemotron-3-Nano-4B 80, Sharp-Spark-4B 78, Spark-X2.6-4B 73, K2-Horizon-4B 73.
+  pp512: 4.3k-12k. VRAM 7.6 GB free: one model at a time.
+- `eval/model_bench.py`: same seeded tasks for all (arith, grid shortest path via BFS, resource planning,
+  state tracking), answer `ANSWER: n`, temperature 0, reasoning auto; measures acc, truncation, latency, ttft,
+  tokens, tok/s, correct/min. User wants it SHORT: running `--n 2 --max-tokens 1024 --timeout 60` (8 tasks/model)
+  in background, output `eval/results/model_bench_run.txt` + `model_bench_<stamp>.jsonl` (summary table at the end).
+  Smoke test: LFM3 (thinks) truncated 2/4 at 3072 tokens.
+
+### Next
+1. Bench + MC server were KILLED by Claude Code (system low on RAM) mid-run. Partial (8 tasks, 1024 tok max,
+   `eval/results/model_bench_2026-11-17-15-52.jsonl`): K2-Horizon 6/8 (2 truncated, ~410 tok), Nemotron 6/8 (2 trunc,
+   ~450 tok), LFM3-1.7B-Unc 4/8 (4 trunc, ~900 tok), Sharp-Spark 2/4 partial; Spark-X2.6 + Bonsai not run.
+   Rerun only those 2 when asked: `--models models/compare/Spark-X2.6-4B-Q4_K_M.gguf,models/compare/Ternary-Bonsai-2-2B-Q2_0.gguf`.
+   16 GB RAM: don't run MC server + llama-server + bench + live suite together.
+2. Fix the craft stall above (intermittent, x1 and lockstep), rerun `node test/live.js --lock` x3 and x1 once,
+   then commit the uncommitted files.
+3. H4 next: own sim server instance(s) (flat/prepared worlds, view-distance 4), scenario cards (RCON setup
+   scripts), world snapshot/restore for branching, fidelity guard (same cards x1 vs lockstep), speed up the
+   driver (2 RCON round trips per tick). Mind loop (LLM -> turns) still not written: harness has no model.
+- Still open: macros keep or drop? `brew`, `stonecut`, grindstone repair not implemented.
+
+## State 2026-11-17 session #10 — H3 done, committed
+Branch `v2`. H3 = interpreter + skills + tools + turns (see session #9 below for content).
+
+### Done this session
+- Live suite `node bot/test/live.js`: **63/64** full run (log `data/own/2026-11-17/2026-11-17-13-40_LFM_live.jsonl`,
+  `spec/tools/validate.py` OK); the one failure (eat_full: food not refilled by reset) fixed and verified with `--only`.
+- Fixes: `C.reach` falls back to GoalNear when GoalLookAtBlock has no path (crops, non-full blocks); `pickup` skips
+  unreachable drops instead of stopping; enchant/repair move items by WINDOW slot (mineflayer `putTargetItem` uses
+  inventory-window slots -> table stayed empty, `ready` never fired; `anvil.combine` refuses on 1.21 components
+  "Not anvil-able"): repair = manual slots + shift-click result; `perceive.js` tolerates `it.enchants` throwing.
+- Test fixes: reset refills food (saturation), smelt_no_fuel places its furnace, tools2 names its own place
+  (`pre_act`), since say_note_forget forgets `spot`.
+- `--only` still resets before `keep` cases (break_one, dig_box, tools2, eat_hungry fail alone): expected.
+- Comparison models downloading one at a time to `models/compare/` (log `models/compare/download.log`):
+  LFM3-1.7B-Uncensored Q4_K_M (AtomicChat), Ternary-Bonsai-2-2B Q2_0 (prism-ml; may need prism's llama.cpp fork),
+  Nemotron-3-Nano-4B Q4_K_M (nvidia), Sharp-Spark-X2.6-4B Q4_K_XL, K2-Horizon-3.7B Q4_K_M (IFM), Spark-X2.6-4B Q4_K_M.
+
+### Next
+1. **H4 (MineSim)**, decided by the user 2026-11-17 (plan `notes/harness-v2.md` section 8).
+   If the downloads stopped: `bash models/compare/dl.sh > models/compare/download.log 2>&1` (hf skips finished files).
+- Still open: macros (strip_mine, branch_mine, chop, toss_junk, sort, equip_best, water_bucket_save) keep or drop?
+  Tailscale hostname scrubbed from history (2026-11-17), keep it out. `brew`, `stonecut`, grindstone repair not implemented.
+
+## State 2026-11-17 session #9 — H3 nearly done (uncommitted)
+Branch `v2`, nothing committed this session. Semantics documented in `notes/spec-v2.md` 2.5.
+
+### Done (H3)
+- `bot/dsl/fmt.js` (AST -> canonical source), `bot/dsl/cond.js` (cond eval, relative baselines, unmet -> surprise),
+  `bot/dsl/run.js` = `Interpreter`: cancellable scopes, seq/if/repeat/routine, until (ok + cause interrupted_until),
+  timeout (failed/partial), death abort, interrupt/stop, `adjust`, expect check -> `surprise`, one `result` event per
+  statement with gained/lost/cause/detail, `avoid` watcher (interrupt events).
+- `bot/skills/` (common, movement, gather, craft, combat (+place/use), inventory, social (+farm, meta)): 69/71 verbs;
+  `brew`, `stonecut`, grindstone repair not implemented (result `invalid`). No omniscience: targets = seen blocks.
+- `bot/tools.js`: all 13 tools (`wiki` stub until H5). `bot/turns.js`: apply a parsed turn (tools -> tool_answer,
+  act/interrupt/override -> interpreter, note/say/goal/plan -> memory).
+- `bot/harness.js` uses the interpreter; `drive.js` removed (`git rm`). `--script file` (decision turns separated by
+  `---`, `--exit-when-done`), chat `do <stmt> [=> <expect>]`, `tool <call>`, `stop`.
+- `Senses.chests` (contents seen when opened) -> `inventory.chests`. `perceive.js` exports `seesSky`.
+- Tests: `bot/test/interp.js` offline (fmt round trip on golden, conds, interpreter control flow on a fake bot) PASS;
+  added to `npm test` (full `npm test` not re-run after the last edits: run it first).
+- `bot/test/live.js`: 64 live cases, arena built by RCON at (3000,200,3000) (y=100 had water flowing in), throwaway
+  memory, restores gamerule spawn_monsters. Last full run **52/64**. Fixes applied after it (not yet verified):
+  `C.go` checks `goal.isEnd` (pathfinder.goto resolves silently when no path), `placeReach` for placing into air,
+  arena reset clears above the floor (a leftover pillar put the bot inside dirt -> blind: look/harvest/bonemeal/plant/
+  sleep/enchant/repair failures), descend case uses `Y-5`, shear picks up wool, tools2 keeps inventory.
+  Rerun of 16 cases with `--only` (log `data/own/2026-11-17/2026-11-17-13-25_LFM_live.jsonl`): **9/16**.
+  Fixed: place_list, descend, look, plant, shear, sleep. Still failing:
+  - break_one, dig_box, tools2: test artifact, `--only` resets before `keep` cases (they depend on the previous case);
+    should pass in a full run (or make `--only` honour keep).
+  - harvest, bonemeal: `no_path` after 5 s on the crop block (likely `C.reach` -> GoalLookAtBlock on a non-full block):
+    use placeReach-style GoalNear for crops.
+  - enchant: hangs until the 120 s timeout, the enchanting table `ready` event never fires: add a timeout / debug.
+  - repair: mineflayer anvil refuses ("Not anvil-able") two damaged iron_pickaxe: check `combine` usage / item args.
+
+### Next
+1. `cd bot; npm test`, then `node test/live.js --only place_list,break_one,dig_box,descend,strip_mine,ascend,look,harvest,bonemeal,plant,shear,sleep,enchant,repair,tools,tools2`, then full `node test/live.js` (~4 min), `spec/tools/validate.py` on the `_live.jsonl` log.
+2. Commit H3. Then H4 (MineSim) or the mind loop.
+- Still open: macros (strip_mine, branch_mine, chop, toss_junk, sort, equip_best, water_bucket_save) keep or drop?
+  Tailscale hostname scrubbed from history (2026-11-17), keep it out.
+
+## State 2026-11-17 session #8 — H2 done
+Branch `v2` (not pushed).
+
+### Done (H2)
+- `spec/recipes.json` (crafting 1026, smelting/blasting/smoking/campfire, stonecutting) from the server jar:
+  `.venv/Scripts/python.exe spec/tools/gen_recipes.py`. `spec/state.schema.json`: `slice.y_from` added.
+- `bot/state/`: `perceive.js` (body, inventory, surroundings: 9x9x5 slice, blocks of interest seen in line of
+  sight, entities/items/players, flags), `index.js` (`Senses`: events gain/loss/damage+source/death+message/respawn/
+  chat/entity appear-leave/time phase/weather, builds the full state), `ledger.js`, `map.js` (16x16 cells, biome,
+  surface y, resources, dangers, frontier; persisted `data/own/memory/<bot>.map.json`), `memory.js` (notes, places,
+  routines persisted `data/own/memory/<bot>.json`; episode + goals per session), `afford.js`.
+- `bot/render.js` sheet r1 (see `notes/spec-v2.md` 3.1). `node bot/render.js [state.json]`.
+- `bot/harness.js`: live loop at `--hz 2`, logs `data/own/<date>/<session>.jsonl` (state per call + chars per
+  section + sent mode full/diff, full every 10 calls) + `<session>.sheet.txt`. `bot/drive.js` = TEST driver
+  (random goto, chop seen logs, craft planks/sticks; chat orders follow/come/stop/wander) to make the state move,
+  never a policy nor training data. Chat hooks: `goal <text>`, `done`, `note <text>`, `place <name>`, `plan a | b`.
+- `eval/sheet_tokens.py`: tokens per section with the real tokenizers. `bot/rcon.js` restored from v1.
+- Tests: `cd bot; npm test` = 176 DSL golden + 5 state/render tests (renderer snapshot `spec/golden/sheet_example.txt`).
+- 6 live runs of 1 min, all logs valid (`spec/tools/validate.py`). Perf: build 45-65 ms/call, render 0.6 ms.
+  Log volume ~2.5 MB/min at 2 Hz (state JSON per call).
+
+### Measured (279 live calls, 350M tokenizer)
+Full sheet mean 5.2k tokens (p95 5.9k, max 6.2k), diff calls 1.4-1.9k. MAP 1.5k, SURROUNDINGS 1.1k (p95 1.8k),
+MANUAL 1.05k, AFFORDANCES 0.86k, rest < 250. Well under the 10-20k budget: room for a bigger slice, more cells,
+knowledge cards, longer ledger, once a model shows what it needs.
+
+### Known issues / open
+- Server has `advance_time false` (time frozen at 1000): the tester script turns it on then restores it.
+- Sounds disabled: mineflayer's sound id -> name table is wrong for 1.21.11 (zombie hit heard as zombie_horse.hurt).
+- A second mineflayer bot ("Tester") that joins near LFM is never seen by LFM (its client does not even follow the
+  tp; looks like the 1.21 "player loaded" handshake). A probe teleporting a bot from far IS seen, so player
+  perception works; check with the real client (ZeiK_0) next time the user plays.
+- Driver `goto` places scaffolding (pathfinder) -> `lost cobblestone` in results: real, not a bug.
+- Session names use UTC time.
+- Open points from H1 still open: catalogue macros (strip_mine, chop, toss_junk, sort, equip_best,
+  water_bucket_save) keep or drop? Tailscale hostname scrubbed (2026-11-17).
+
+### Next = H3
+DSL interpreter in `bot/` (replaces drive.js): each verb -> mineflayer skill with rich `result` events (gained/lost,
+causes from the closed set), `until()` / `timeout`, `expect:` checking -> `surprise` events, monitor-call hooks.
+
+## State 2026-11-17 session #7 — v2 started, H1 done
+Branch `v2` (not pushed). Commits: `22df018` clean restart layout, `13a59d3` DSL + turns frozen, then schemas.
+
+### Done
+- Clean restructure (details in session #6 "Next" below). `.venv/` (python, + jsonschema), `bot/` (node deps).
+- User decisions at H1 review: DSL lines for BOTH models; section budgets measured in H2; **no predefined build
+  templates** (model builds block by block, may save its own routines); place names chosen by the model;
+  **keep `models/LFM2.5-350M-wedit*` + base models as reference baselines** to measure fine-tuning gains.
+- **H1 frozen in `spec/`**: `dsl.md` (grammar, values, normalized AST, errors), `turns.md` (decision / monitor /
+  mind tags), `catalog.json` (71 verbs + 13 tools, typed params), `names.json` (minecraft-data 1.21.11 + jar tags,
+  `tools/gen_names.py`), `state.schema.json` + `events.schema.json` (+ `golden/state_example.json`,
+  `tools/validate.py`). Reference parser `bot/dsl/parse.js` + `turn.js` (errors written for the model, with
+  "did you mean" ids), `bot/dsl/check.js` = JSONL validation service for Python. `cd bot; npm test` = 176 golden.
+
+### Open points to raise with the user
+- Catalogue still has code-side macros of the same kind as build templates: `strip_mine`, `branch_mine`, `chop`
+  (whole tree), `toss_junk`, `sort`, `equip_best`, `water_bucket_save`. Keep (motor skills) or drop (model decides)?
+- Never write the Tailscale funnel hostname in committed files (public repo); it lives in `remote/` only.
+
+### Next = H2
+Big sheet renderer + ledger + mental map + more inputs in `bot/`, logged live (state JSON per call, validated by
+`spec/tools/validate.py`). First: perception -> state.schema.json, renderer state -> text, measure tokens/section.
+
+## State 2026-11-17 session #6 — v2 restart decided, v1 archived
+
+### Read first
+- `notes/harness-v2.md` (rev 3 + section 8 MineSim): the agreed v2 plan. `notes/spec-v2.md`: H1 spec draft (turn
+  protocol, DSL grammar + ~80 verbs + 13 tools, results/failure causes, 12-section situation sheet, events, mind
+  loop, logging). User has not reviewed the spec yet.
+- Project memory now lives IN THE REPO: `memory/` (index `memory/MEMORY.md`). Update it there only.
+
+### Decisions (user, this session)
+- v1 harness (one verb from a closed grammar + code hint) judged "très restreint et nul". v2 = model decides
+  everything, code = senses/muscles/reflexes, no recommended action, only facts + affordances.
+- LLM is local, free, fast: call it VERY often (350M "hands" monitor/decision calls 2-5/s; 1.7B "mind" every
+  5-10 s). Situation sheet 10-20k tokens (bigger than first proposed), stable->volatile for KV cache.
+- Huge action space (DSL **lines**, not JSON tool calls) + many read-only tools; models trained on this syntax.
+- Distil 3 teachers into the students: GPT 6.1 sol (Codex), DeepSeek v4.1 flash (Command Code), **Claude via
+  the user's subscription (Claude Code)**. 350M = fast multi-turn tool use, 1.7B = knowledge/reasoning (hypothesis,
+  ablate). Much wider Minecraft KB: minecraft-data + offline minecraft.wiki dump (OK by user) + other sources +
+  teacher-generated, fact-checked data.
+- Continual learning on own logs: prediction loss (`expect:` vs outcome), hindsight relabelling, teacher fixes on
+  surprises (DAgger), GRPO; regression gate before deploy.
+- MineSim must replicate the real engine very faithfully -> NOT a reimplementation: vanilla server accelerated
+  (`/tick sprint`), mineflayer physics stepped in lockstep with server ticks, several small instances, scenario
+  cards via RCON, world snapshots for branching. Measure throughput at start of H4.
+- 1.7B training on gpt_train: NOT started, user said wait for their go (moot now with v2).
+- **Clean restart**: v1 code committed on branch `v1-archive`, tag `v1-final` (commit 7301831, also on `b6-b7`).
+  NOT yet done: restructure into `bot/ sim/ kb/ data/ teach/ train/ eval/ spec/`, moving v1 data to
+  `data/v1/`, removing v1 code from the working tree. Keep: `models/`, `llama.cpp/`, `mcserver/`, venv
+  (`b21/.venv`, torch etc.), `mcbot/node_modules`. **NEVER touch `remote/`** (remote access) nor `.commandcode/`.
+  `b21/runs` (3.1 GB, closed B21 edited models): user not asked yet -> archive by default, ask before deleting.
+  Was waiting for Codex to finish (it writes in `b19/wedit` and `models/LFM2.5-350M-wedit*`).
+
+### Results of the session (b19, option-scoring top1/top3)
+- Real-log test (290) is LEAKY (split by 30-tick blocks, 6/8 test sessions in train) -> high scores = memorisation.
+- GPT vs DeepSeek teacher (same 10 seeds): GPT 10/10 episodes, 200 rows, 2x faster, more distinct actions; DeepSeek
+  7/10, stalls. GPT chosen for volume. Script `b19/compare_teachers.py`.
+- Held-out synthetic tests (31 states each, ±17 pts noise): gpt_test / ds_test / real test
+  - 350M zero .290/.323, .516/.516, .683/.948 (copies the hint 100% -> score = teacher hint-follow rate)
+  - 350M full SFT on gpt_train (168) .290/.387, .484/.581, .659/.683 (no gain, top3 collapses on real)
+  - LFM3 zero .355/.581, .355/.548 ; LFM3 LoRA on real logs .258/.452, .419/.516, .986/1.00
+  - Codex direct weight writing (b19/wedit, lm_head memories, 0 original weights rewritten, +4.6M..+67M params):
+    v1/v2/v3 all = base on unseen (.290, .516 top1), .948-.979 on leaky real test = memorisation. Claude Code's wrapper shell was reaped
+    (low RAM) at clear but codex.exe + a 2.9 GB python collector kept running: check `tasklist`; Codex still
+    running at clear (final collectors, report `b19/wedit/REPORT.md` via `make_report.py`, final message
+    `b19/wedit/codex_final.md`). Conclusion so far: direct writing memorises, does not generalise.
+- Lesson: one-word imitation on ~200 decisions measures hint-copying; v2 needs volume + outcome-based eval.
+
+### Next
+1. Codex was STOPPED by the user before REPORT.md (v4/v5 not evaluated). Conclusion (user): weight writing is
+   effective for retention -> possible tool to inject knowledge later (see `memory/weight-writing-retention.md`).
+   **Clean restructure DONE (session 7, branch `v2` from b6-b7, NOT committed yet)**: v1 code `git rm`'d (b19, b21,
+   mcbot, root scripts, run-*.ps1); v1 data -> `data/v1/` (logs, logs-b5run, memory, evals, b19, b21); big v1
+   outputs -> `archive/v1/` (b21-runs 3.1 GB, b19-wedit, b19-runs, recordings, old *.log); venv -> `.venv/`
+   (was b21/.venv, checked: torch 2.13 cu130 OK); node_modules + package.json -> `bot/` (mineflayer loads);
+   worktree `../localai-b5run` removed; ROADMAP = H1-H9; README = v2 layout. `data/` and `archive/` gitignored.
+   Leftover: empty `mcbot/node_modules/prismarine-viewer` locked by some process -> delete after reboot.
+   models/LFM2.5-350M-wedit* (v1..v5) still in models/.
+2. User reviews `notes/spec-v2.md` -> freeze H1 (+ `spec/` grammar/schemas/golden examples).
+3. H2: big sheet renderer + ledger + mental map + more inputs in the new `bot/`, live logged.
+
+## State 2026-11-17 session #5 — B19 executor experiments in `b19/`
+Goal of the session (user): compare ALL executor options on the existing logs (policy net from scratch vs small LLM SFT
+vs LFM3 LoRA), then go heavier with teacher distillation. Teacher LLMs invent **synthetic logs** of all kinds of
+situations (structure from real logs, content invented). Nothing committed yet (all of `b19/` is untracked).
+
+### Cleanup done at ~11:54 (user asked: free RAM/VRAM)
+Killed: llama-server (LFM3, :8080), the Minecraft client (launcher java) + launcher, `mcbot/viewer.js`. No MC server
+was running. NOT killed: Docker/Guacamole + Tailscale (remote access), rbx-studio-plus, an idle interactive Command Code.
+Restart the game stack with `.\start-game.ps1` / `.\start-mc.ps1` when needed.
+
+### Still running at clear (background, OS processes; check results by files, not by task notifications)
+- `b19/sft.py --model models/LFM3-1.7B-hf --mode lora --epochs 2`: training finished 11:46 (8.5 min, adapter in
+  `b19/runs/LFM3-1.7B-lora/`), eval (option scoring of 290 test states) still running, slow (VRAM was saturated).
+  Result -> last line of `b19/runs/results.jsonl`. If the process is gone with no line: rerun eval only (TODO add `--eval-only --adapter`).
+- `b19/synth.py` DeepSeek batch, 10 episodes, seed 1000 -> `b19/data/synth.jsonl` (9/10 done at 11:54: 118 rows).
+- `b19/synth.py --teacher gpt` same 10 cards (seed 1000) -> `b19/data/synth_gpt.jsonl` (1/10 done: 16 rows, 134 s).
+- Raw teacher answers: `b19/runs/synth_raw/{deepseek_,gpt_,}ep_<seed>.txt` (ep_<seed>.txt without prefix = DeepSeek, old naming).
+
+### Files (`b19/`)
+| File | What |
+|---|---|
+| `extract.py` | logs (`mcbot/logs` + `..\localai-b5run\mcbot\logs`) -> `data/train.jsonl` (825) / `data/test.jsonl` (313). Split = blocks of 30 ticks per session. `keep` = ok & not wait & llm/task/user (train 620 / test 290) |
+| `render.py` | Python port of bot.js `observe()` text + grammar. Self-check `python b19/render.py` = **612/612 exact** on real logs |
+| `baselines.py` | random / follow hint / most frequent action |
+| `policy.py` | option-scoring MLP from scratch (75k params, state feats + option feats + verb/item embeddings), `--no-hint` ablation |
+| `sft.py` | `--mode zero|full|lora`, prod prompt (chat template, system of the session + obs_text), loss on answer only; eval = log p(option) argmax over legal options (= grammar). Run with `b21/.venv/Scripts/python.exe` |
+| `synth.py` | teacher episodes: random scenario card (goal 38 items + 6 free goals, phase, 16 places, time, vitals, 11 dangers, 2 of 15 twists, 14-26 decisions) -> JSONL decisions {state, options, hint, action, reason, result}; history rebuilt by us; validated vs `data/mc_names.json` (minecraft-data 1.21.11) + action legal; rendered with render.py. `--teacher deepseek` (Command Code `-p`, deepseek-v4.1-flash, prompt via stdin, cwd `runs/cc_work`) or `--teacher gpt` (Codex `exec -m gpt-6.1-sol -c model_reasoning_effort="medium" -s read-only --ephemeral`). Empty answer -> 1 retry + stderr saved to `*.err.txt` |
+| `runs/results.jsonl` | all metrics |
+Models: `models/LFM2.5-350M-hf` downloaded this session (709 MB, LiquidAI/LFM2.5-350M).
+
+### Results on REAL logs (test = 290 kept decisions; labels = LFM3's own choices)
+| Model | top1 | top3 | notes |
+|---|---|---|---|
+| random legal | 11.4% | | |
+| follow code hint | 27.2% | | |
+| most frequent action | 67.2% | | logs dominated by repeated collects |
+| LFM2.5-350M zero-shot | 68.3% | 94.8% | |
+| policy net, no hint/plan feats | 84.5% | 95.5% | 0.19 ms CPU |
+| policy net | 90.3% | 92.8% | 0.13 ms CPU, 74 s train CPU |
+| **LFM2.5-350M full SFT (2 ep)** | **98.6%** | 99.3% | 153 s train, 5.3 GB peak; HF scoring latency (1 s) meaningless (VRAM saturated) |
+| LFM3-1.7B LoRA r16 (2 ep) | pending | | |
+Caveat: this measures imitation of LFM3 (bugs included). Real judge = live bench `mcbot/eval.js`. Missing: LFM3 zero-shot
+reference on the same scorer, per-example predictions (to see the 1.4% errors).
+
+### Synthetic pilot findings
+- DeepSeek: pilot 2 eps 44/44 valid; batch: ~3-6.5 min/episode, 13-25 valid decisions per episode, rejects rare
+  (7 unknown items in one ep, 1 illegal action); **2/10 episodes came back EMPTY** (210 s and 520 s; cause unknown,
+  stderr was not captured then — now it is). Quality good: varied verbs, reacts to failures, often overrides the hint
+  with a sensible reason. Seen issues (prompt tightened after the pilot): goal changed mid-episode, hint "pursue the goal" on plan error.
+- GPT 6.1 sol medium: first episode 134 s, 16/16 valid. Compare when both are done: time/episode, valid rate, verb
+  diversity, hint-override rate, reason quality side by side (same cards).
+
+### Ideas agreed / proposed this session
+- User: teachers generate lots of fake logs, inspired by real logs for structure only. Done (`synth.py`).
+- User idea, proposed as **B23 (not yet in ROADMAP, user not asked to confirm)**: route events to the right actor =
+  cascade reflexes (code) -> policy net (if confident: softmax margin) -> small SFT LLM -> strategist (DeepSeek / 7-8B)
+  for stuck / new goal / chat / novel. Router learned from the comparison data (cheapest actor that is right per state);
+  strategist decisions fed back as training data (DAgger).
+- User declined MiniCPM3-4B / MiniCPM-V 4.7 (old / too big or vision not needed).
+
+### Next
+1. Read the LoRA result + both synth batches; write the DeepSeek vs GPT comparison (table + 2-3 sample decisions each).
+2. Faster eval in `sft.py`: prompt KV computed once per state (prefix sharing), `--eval-only --adapter`, save predictions.
+3. LFM3-1.7B zero-shot on the same scorer (reference).
+4. Pick teacher(s), generate a few hundred episodes (several k decisions; user approves volume — subscription quotas unknown).
+5. Retrain the 3 actors on real / synth / real+synth; test on real test + held-out synthetic episodes.
+6. Live: export best SFT model to GGUF (llama.cpp), plug as `--llm`, run `eval.js`; policy net needs a small server
+   (bot would send `obs.state` in the request body).
+
+## State 2026-11-17 session #4
+### B5 1 h run: FAILED (B5 and B1 NOT ticked)
+- Full write-up: `notes/b5-run-and-architecture.md`. `longrun.js` finished at 60 min (2 restarts, 2 deaths by zombie).
+  6 goals in 27 min (3 torch, iron_pickaxe, 16 torch, shield, bucket, diamond_pickaxe), then **stuck 33 min on
+  diamond_sword**: 47 diamonds, `craft diamond_sword` never tried, 48x `wait 1`, ore hopping. Watchdog fired 5x
+  (escalation up to 4) and never unstuck it: escalations just keep banning, no strategy change.
+- `..\localai-b5run` worktree **kept** (its `mcbot/logs/*.jsonl` = loop examples for datasets). Not removed.
+- Processes seen at handoff (~09:20): java (MC server) + llama-server (old 1-slot launch) since 07:55, node 14368
+  (since 02:16, unknown) and node 40052 (since 09:15, unknown). Check before starting a bot; one bot at a time (RAM).
+
+### Decisions this session
+- **No new hardcoded behaviour rules** (user rejected "drop `collect X` from the grammar when the plan has enough").
+  Code keeps only survival reflexes + safety. Loops are to be fixed by models/data, not rules.
+- Target architecture: **strategist** (big LLM: chat, orders, sub-goals, called by the watchdog instead of bans) +
+  **executor trained from scratch** (sub-goal + `obs.state` -> score legal grammar options) + reflexes. = B19 moved up.
+  ROADMAP B19 has the data protocol: compare sources A (DeepSeek synthetic), B (LFM trial & error), C (LFM plays +
+  DeepSeek labels = DAgger), D (A then C), 10k pilot each, B6 + offline eval. Target 100k-1M examples.
+- Teacher (B12): probably **Command Code + `deepseek-v4.1-flash-1017`** on the user's subscription, not the paid API.
+- 8 GB VRAM: 7-8B Q4 strategist + LFM Q4 fits with short ctx; full fine-tune of a 1.7B does not.
+
+### Next
+Same list as session #3 below, minus "finish run" (done, failed). Then the next ROADMAP brick. First new code for B19:
+extraction script logs -> (state, sub-goal, action) + count of usable examples. Nothing committed this session
+(edits: ROADMAP B5/B12/B19, `notes/`, this file) on branch `b6-b7`.
+
+### Remote access (session #4b, user works remotely from a corporate network)
+- Corporate network = HTTPS only (UDP blocked): **Chrome Remote Desktop installed + registered** (service `chromoting`,
+  auto) but it fails from there (connects, drops after ~26 s). Use it from home / 4G only.
+- Tailscale funnel `https://<tailscale-host>`: `/` -> Guacamole (docker :8090 -> TightVNC :5900, laggy for
+  3D), **`/viewer/` -> prismarine-viewer :3007** (trailing slash required). cloudflared killed, task `Cloudflared-Guacamole` disabled.
+- **Viewer**: `run-viewer.ps1 [-Target auto|EVAL|LFM]` -> `mcbot/viewer.js`: spectator player `Viewer` (invisible to bots,
+  checked), RCON-tp behind the target every 1 s, 3rd-person orbit view in the browser. auto = EVAL > LFM > B5RUN > any non-human.
+  Running detached (hidden powershell). Uses 1.21.4 textures (viewer max), new blocks may look wrong. Added deps
+  `prismarine-viewer@1.33.0` + `canvas` in `mcbot/package.json` (not committed).
+- `remote/` holds plaintext VNC/guac passwords: never commit. Claude Code shell is not admin: elevation = UAC clicked by the user via Guacamole.
+- Next: user watches `/viewer/` while we validate B6/B7 (list below).
+
+## State 2026-11-17 session #3
+### Running when this was written (~08:30)
+- llama-server (`start-game.ps1`, still the OLD 1-slot launch), MC server (`start-mc.ps1`), and
+  `node longrun.js 60 --name B5RUN --goals "iron_pickaxe,16 torch,shield,bucket,diamond_pickaxe,diamond_sword"`
+  running from the git worktree `..\localai-b5run` (detached, commit a8d53b8 + hot-patched planner fix).
+  Started ~07:57, ends by itself ~08:57 (`[done]` in `localai-b5run\mcbot\longrun_events.log`).
+  If the session was cleared the node process may still run: check `Get-Process node`.
+- **To finish B5/B1**: `cd ..\localai-b5run\mcbot; python stats.py --all` (3+ log files = restarts), read
+  `longrun_events.log` / `longrun_bot.log`. Results so far (27 min): 3 torch, iron_pickaxe, 16 torch, shield, bucket,
+  diamond_pickaxe all reached; diamond_sword in progress. Watchdog `no progress` fired live 2x (oak_log loop,
+  unreachable deepslate_diamond_ore), ban `place furnace` 1x, restart test OK ("back online, resuming ... home 4m").
+  1 death: "slain by Zombie" (Easy difficulty) during a 20 s explore -> fixed in e75bb50 (not in the run).
+  If no endless loop to the end: tick B5 and B1 in ROADMAP. Then `git worktree remove ..\localai-b5run`
+  (junction node_modules inside: remove the junction first, `cmd /c rmdir`), keep its logs if useful.
+- After the run: restart llama-server so `-Slots 2` applies (decider slot 0, chat slot 1).
+
+### Branch `b6-b7` (not pushed, not merged; main = a8d53b8)
+- `2db2e0e` planner: planks/logs of any wood interchangeable. Bug seen live: 4 acacia_planks made the plan ask
+  for an unreachable acacia_log while holding 40 oak_log -> endless `collect oak_log`. Hot-patched into the run.
+- `14cad26` rcon.js finds `mcserver/` from a git worktree (longrun in a worktree could not use RCON).
+- `33d1ee9` **B6 `mcbot/eval.js`** (Node, not python: needs a mineflayer "Judge" player for chat/`come`).
+  `node eval.js --model <label> [--llm url] [--only iron,night,home,orders] [--trials n]`, `node eval.js --report`.
+  Bot `EVAL`, fresh memory, fresh untouched spot each scenario (counter `evals/state.json`, x/z 20000+ ring),
+  prepared by a short client join + RCON clear/tp. Scenarios: iron (peaceful, 15 min, partial credit per tier),
+  night (normal, time 9000 running, alive at dawn), home (sethome, kill, tp 60 m, restart with goal "go back home",
+  <=5 m in 3 min), orders (10 exact chat commands; NL orders to add now that B7 exists).
+  Results `evals/run_*.json` (tracked). **Never run live yet** (needs the bot slot): first `--only orders`.
+  RCON output formats checked live (Pos, Health, `time query daytime`, `clear X item 0` = count).
+- `4709e1c` **B7 `mcbot/chat.js`** + `test_chat.js`: any non-command chat -> LLM, JSON schema `{intent, arg, say}`,
+  intents get/stop/resume/follow/come/set_home/go_home (names chosen so the 1.7B doesn't mix goal/go), FR persona,
+  status + B4 memory + last 10 turns, few-shot examples. `get` arg validated by parseTarget (unknown item -> no
+  action). bot.js: `command()` refactor (exact commands = fast path), `--no-chat`, `doing` var, slots via `/props`.
+  `start-game.ps1 -Slots 2` default. test_chat: 18/22 intents, held-out 6/10 (fails "approche", "laisse tomber,
+  fais ce que tu faisais", "colle moi"), ~250 ms. Says sometimes hallucinate ("marteau en bois"). -> B14 LoRA.
+  **Never run in game yet.**
+- `2410831` skills: placement cells refused by the server skipped 5 min (was: same bad cell 3x -> ban).
+- `e75bb50` skills: `goto` aborts on danger (hostile <= 3.5 m or -4 hp since start); attack/flee use setGoal, not
+  affected. The old "sudden deaths underground (lava?)" were most likely zombies.
+- None of the skills fixes was tested live (`node test_skills.js` needs a 2nd bot: run it when the run is over).
+
+### Findings to remember
+- LLM role today: it follows the code's "Recommended action" 93% (56/60), task continuation = 31% of decisions.
+  The real brain = planner + hint rules + skills. Proposed: `--no-hint` flag + B6 with/without hint = measure what
+  the LLM does alone = target for B13-B15 training (label WITHOUT the hint, add free-goal/danger situations).
+- Prompt size: decider ~850-950 tokens (system 411 fixed + obs 420-530), output ~5-10 tokens; chat ~900-1400.
+- Iron pickaxe breaks after ~250 blocks: bot mines a lot of stone; planner rebuilds it.
+- User wants the model to KNOW the game better. Proposed (not decided, maybe block B22): Minecraft quiz (~200 Q)
+  on LFM3 / Qwen3.5-4B / Andy-4.2 first, then local wiki RAG, then optional domain LoRA (continued pretraining on
+  wiki + paraphrases + 20-30% general replay), checked with quiz + B6 + B21 decision replay.
+
+### Next
+1. Finish run -> stats -> tick B5/B1. 2. Restart llama-server (2 slots). 3. `node test_skills.js` (fixes).
+4. `node eval.js --model lfm3-base --only orders`, then all. 5. B7 live: talk to the bot in French in game.
+6. `--no-hint` flag. 7. Merge `b6-b7` to main + push when green.
+
+## State at end of session 2026-11-17 #2
 - **Branch `main`** = B3 skills + B4 memory + B5 control merged and pushed (github noan-hbt/MineGPT).
   ROADMAP: B1 open (stats ok, no 1 h log yet), B2 [x], B3 [ ] (works live, see bugs), **B4 [x]**, **B5 [ ] = code done, 1 h run missing**.
 - **Everything was stopped**: Claude Code killed llama-server, MC server and the bots (Windows RAM low: 16 GB with MC server,

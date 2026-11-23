@@ -1,0 +1,150 @@
+{
+  "card": 1,
+  "id": "farm.breed_cows",
+  "title": "Feed two adult cows and produce a calf",
+  "tags": [
+    "farm"
+  ],
+  "difficulty": 2,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "x": {
+      "int": [
+        3,
+        5
+      ]
+    },
+    "z": {
+      "int": [
+        -3,
+        3
+      ]
+    },
+    "n": {
+      "int": [
+        2,
+        6
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "easy",
+    "gamerules": {
+      "advance_time": false,
+      "advance_weather": false,
+      "keep_inventory": false,
+      "mob_griefing": false
+    }
+  },
+  "player": {
+    "at": "<${x},0,${z}>",
+    "spawn": "<0,0,0>",
+    "inventory": [
+      {
+        "item": "wheat",
+        "count": "${n}",
+        "slot": 0
+      }
+    ]
+  },
+  "order": {
+    "from": "Noan",
+    "text": "Donne du blé aux deux vaches pour qu’elles fassent un petit."
+  },
+  "success": {
+    "all": [
+      {
+        "entity": "cow",
+        "near": "<${x},0,${z}>",
+        "radius": 5,
+        "min": 3
+      },
+      {
+        "entity": "cow",
+        "tag": "breeding_adult",
+        "near": "<${x},0,${z}>",
+        "radius": 5,
+        "min": 2
+      },
+      {
+        "have": "wheat",
+        "min": 0,
+        "max": "${n - 2}"
+      }
+    ]
+  },
+  "fail": {
+    "died": true
+  },
+  "milestones": [
+    {
+      "name": "wheat_used",
+      "check": {
+        "have": "wheat",
+        "min": 0,
+        "max": "${n - 2}"
+      }
+    },
+    {
+      "name": "calf_born",
+      "check": {
+        "entity": "cow",
+        "near": "<${x},0,${z}>",
+        "radius": 5,
+        "min": 3
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 900,
+    "decisions": 20
+  },
+  "solution": [
+    "breed cow n=1",
+    "wait 10s"
+  ],
+  "solution_ticks": 300,
+  "build": [
+    {
+      "fill": [
+        "<${x - 2},0,${z - 2}>",
+        "<${x + 2},1,${z + 2}>"
+      ],
+      "block": "glass",
+      "mode": "hollow"
+    },
+    {
+      "fill": [
+        "<${x - 1},0,${z - 1}>",
+        "<${x + 1},1,${z + 1}>"
+      ],
+      "block": "air"
+    }
+  ],
+  "entities": [
+    {
+      "type": "cow",
+      "at": "<${x - 1},0,${z}>",
+      "count": 1,
+      "tag": "breeding_adult",
+      "nbt": "{Age:0,InLove:0,PersistenceRequired:1b}"
+    },
+    {
+      "type": "cow",
+      "at": "<${x + 1},0,${z}>",
+      "count": 1,
+      "tag": "breeding_adult",
+      "nbt": "{Age:0,InLove:0,PersistenceRequired:1b}"
+    }
+  ],
+  "notes": "Only two adult cows are summoned and no later event adds cows. A third cow is therefore the naturally born calf. The open-topped glass pen retains active breeding AI."
+}

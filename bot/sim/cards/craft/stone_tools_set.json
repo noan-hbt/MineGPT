@@ -1,0 +1,125 @@
+{
+  "card": 1,
+  "id": "craft.stone_tools_set",
+  "title": "Allocate cobblestone and sticks to a complete stone tool set",
+  "tags": [
+    "craft",
+    "planning",
+    "tools"
+  ],
+  "difficulty": 2,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "params": {
+    "tx": {
+      "int": [
+        -2,
+        2
+      ]
+    },
+    "extra": {
+      "int": [
+        0,
+        4
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "easy",
+    "gamerules": {
+      "advance_time": false,
+      "advance_weather": false
+    }
+  },
+  "build": [
+    {
+      "set": "<${tx},0,2>",
+      "block": "crafting_table"
+    }
+  ],
+  "player": {
+    "at": "<0,0,0>",
+    "spawn": "<0,0,0>",
+    "inventory": [
+      {
+        "item": "cobblestone",
+        "count": "${9 + extra}"
+      },
+      {
+        "item": "stick",
+        "count": 7
+      }
+    ]
+  },
+  "order": {
+    "from": "Noan",
+    "text": "Fabrique une pioche, une hache, une pelle et une épée en pierre. Garde les quatre outils.",
+    "at_tick": 0
+  },
+  "success": {
+    "all": [
+      {
+        "have": "stone_pickaxe",
+        "min": 1
+      },
+      {
+        "have": "stone_axe",
+        "min": 1
+      },
+      {
+        "have": "stone_shovel",
+        "min": 1
+      },
+      {
+        "have": "stone_sword",
+        "min": 1
+      }
+    ]
+  },
+  "fail": {
+    "died": true
+  },
+  "milestones": [
+    {
+      "name": "pickaxe",
+      "check": {
+        "have": "stone_pickaxe",
+        "min": 1
+      }
+    },
+    {
+      "name": "axe",
+      "check": {
+        "have": "stone_axe",
+        "min": 1
+      }
+    },
+    {
+      "name": "shovel",
+      "check": {
+        "have": "stone_shovel",
+        "min": 1
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 3000,
+    "decisions": 10
+  },
+  "solution": [
+    "craft stone_pickaxe",
+    "craft stone_axe",
+    "craft stone_shovel",
+    "craft stone_sword"
+  ],
+  "solution_ticks": 1000
+}

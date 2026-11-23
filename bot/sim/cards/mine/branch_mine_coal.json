@@ -1,0 +1,35 @@
+{
+  "card": 1,
+  "id": "mine.branch_mine_coal",
+  "title": "Branch mine at the starting depth to collect buried coal",
+  "tags": ["mine", "branch_mine", "depth", "drops"],
+  "difficulty": 3,
+  "split": "train",
+  "seeds": [1, 2, 3, 4, 5],
+  "params": {"depth": {"int": [3, 6]}, "sx": {"int": [-2, 2]}, "n": {"int": [2, 4]}},
+  "world": {"template": "arena", "depth": 16, "gamerules": {"advance_time": false, "block_drops": true}},
+  "build": [
+    {"fill": ["<${sx - 1},${-depth},-5>", "<${sx + 1},${1 - depth},-4>"], "block": "air"},
+    {"fill": ["<${sx + 2},${-depth},0>", "<${sx + n + 1},${-depth},0>"], "block": "coal_ore"}
+  ],
+  "player": {"at": "<${sx},${-depth},-4>", "spawn": "<-10,0,-10>", "yaw": 0, "inventory": [{"item": "iron_pickaxe", "slot": 0}]},
+  "order": {"from": "Noan", "text": "reste à la hauteur du point <${sx},${-depth},-4> : creuse une galerie principale de 4 blocs vers le sud, puis deux branches de 6 blocs à gauche et à droite au bout ; récupère au moins ${n} charbons", "at_tick": 0},
+  "success": {"all": [
+    {"have": "coal", "min": "${n}"},
+    {"y": {"min": "${-depth}", "max": "${-depth}"}},
+    {"block": "<${sx + 6},${-depth},0>", "is": "air"},
+    {"block": "<${sx + 6},${1 - depth},0>", "is": "air"},
+    {"block": "<${sx - 6},${-depth},0>", "is": "air"},
+    {"block": "<${sx - 6},${1 - depth},0>", "is": "air"}
+  ]},
+  "fail": {"died": true},
+  "milestones": [
+    {"name": "main_tunnel_dug", "check": {"block": "<${sx},${-depth},0>", "is": "air"}},
+    {"name": "first_coal", "check": {"have": "coal", "min": 1}},
+    {"name": "east_branch_dug", "check": {"block": "<${sx + 6},${-depth},0>", "is": "air"}}
+  ],
+  "limits": {"ticks": 4200, "decisions": 12},
+  "solution": ["branch_mine len=4 spacing=3", "if(have(coal)<${n}) collect coal radius=12"],
+  "solution_ticks": 1400,
+  "notes": "The bot starts safely in a dry two-block-high chamber at the requested Y; branch_mine retains this Y when its optional absolute y argument is omitted. Minecraft yaw 0 faces south. spacing=3 means four main-tunnel blocks before the one pair of six-block branches. Coal replaces feet-level blocks in the east branch, so walking the branch collects the drops. Both branch endpoints must be dug, preventing early inventory-only success. Everything remains inside the stone arena at every seed."
+}

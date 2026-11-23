@@ -1,0 +1,117 @@
+{
+  "card": 1,
+  "id": "gather.clay_from_pond",
+  "title": "Dig clay under shallow water and return to the bank",
+  "tags": [
+    "gather",
+    "mine",
+    "clay",
+    "shallow_water"
+  ],
+  "difficulty": 2,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "n": {
+      "int": [
+        2,
+        3
+      ]
+    },
+    "dx": {
+      "int": [
+        2,
+        4
+      ]
+    },
+    "dz": {
+      "int": [
+        3,
+        5
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "gamerules": {
+      "advance_time": false,
+      "block_drops": true
+    }
+  },
+  "build": [
+    {
+      "fill": [
+        "<${dx},-2,${dz}>",
+        "<${dx + n - 1},-2,${dz}>"
+      ],
+      "block": "clay"
+    },
+    {
+      "fill": [
+        "<${dx - 1},-1,${dz - 1}>",
+        "<${dx + n},-1,${dz + 1}>"
+      ],
+      "block": "water"
+    }
+  ],
+  "player": {
+    "at": "<0,0,0>",
+    "spawn": "<0,0,0>",
+    "inventory": [
+      {
+        "item": "iron_shovel"
+      }
+    ]
+  },
+  "order": {
+    "from": "Noan",
+    "text": "creuse l'argile au fond du petit bassin, récupère ${4 * n} boules d'argile puis reviens sur la berge au point de départ"
+  },
+  "success": {
+    "all": [
+      {
+        "have": "clay_ball",
+        "min": "${4 * n}"
+      },
+      {
+        "at": "<0,0,0>",
+        "radius": 1.5
+      }
+    ]
+  },
+  "fail": {
+    "died": true
+  },
+  "milestones": [
+    {
+      "name": "first_clay_block",
+      "check": {
+        "have": "clay_ball",
+        "min": 4
+      }
+    },
+    {
+      "name": "clay_collected",
+      "check": {
+        "have": "clay_ball",
+        "min": "${4 * n}"
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 3600,
+    "decisions": 10
+  },
+  "solution": [
+    "goto <${dx},0,${dz - 2}> dist=1",
+    "mine clay n=${n} tool=iron_shovel",
+    "goto <0,0,0> dist=0"
+  ],
+  "solution_ticks": 1200,
+  "notes": "One layer of source water above clay, with solid stone below and dry walkable banks on all sides. Mining creates at most two-block-deep water pockets. The bot starts and respawns dry. Each clay block drops four balls without Silk Touch; pickup and the final return exercise shallow-water pathfinding. From the spawn the clay under the water is hidden by the bank (no line of sight): the bot has to walk to the edge to see it."
+}

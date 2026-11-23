@@ -1,0 +1,197 @@
+{
+  "card": 1,
+  "id": "combat.equip_armor_then_fight",
+  "title": "Select and wear the best inventory armor before engaging a zombie",
+  "tags": [
+    "combat",
+    "equip_armor_then_fight"
+  ],
+  "difficulty": 3,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "dx": {
+      "int": [
+        -2,
+        2
+      ]
+    },
+    "dz": {
+      "int": [
+        6,
+        9
+      ]
+    },
+    "metal": {
+      "choice": [
+        "iron",
+        "diamond"
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "radius": 15,
+    "height": 8,
+    "depth": 8,
+    "floor": "stone",
+    "dimension": "overworld",
+    "time": 18000,
+    "weather": "clear",
+    "difficulty": "easy",
+    "gamerules": {
+      "advance_time": false,
+      "advance_weather": false,
+      "spawn_monsters": false,
+      "natural_health_regeneration": false,
+      "mob_griefing": false
+    }
+  },
+  "build": [
+    {
+      "fill": [
+        "<-14,0,-14>",
+        "<-14,4,14>"
+      ],
+      "block": "stone_bricks"
+    },
+    {
+      "fill": [
+        "<14,0,-14>",
+        "<14,4,14>"
+      ],
+      "block": "stone_bricks"
+    },
+    {
+      "fill": [
+        "<-13,0,-14>",
+        "<13,4,-14>"
+      ],
+      "block": "stone_bricks"
+    },
+    {
+      "fill": [
+        "<-13,0,14>",
+        "<13,4,14>"
+      ],
+      "block": "stone_bricks"
+    },
+    {
+      "fill": [
+        "<-14,5,-14>",
+        "<14,5,14>"
+      ],
+      "block": "stone_bricks"
+    },
+    {
+      "set": "<12,-2,12>",
+      "block": "obsidian"
+    }
+  ],
+  "entities": [],
+  "player": {
+    "at": "<0,0,0>",
+    "spawn": "<0,0,-10>",
+    "yaw": 0,
+    "pitch": 0,
+    "health": 20,
+    "food": 20,
+    "saturation": 5,
+    "inventory": [
+      {
+        "item": "iron_sword",
+        "slot": 0
+      },
+      {
+        "item": "${metal}_helmet",
+        "slot": 9
+      },
+      {
+        "item": "${metal}_chestplate",
+        "slot": 10
+      },
+      {
+        "item": "${metal}_leggings",
+        "slot": 11
+      },
+      {
+        "item": "${metal}_boots",
+        "slot": 12
+      },
+      {
+        "item": "leather_chestplate",
+        "slot": 13
+      }
+    ],
+    "armor": {},
+    "held": 0
+  },
+  "order": {
+    "from": "Noan",
+    "text": "Enfile ta meilleure armure avant de combattre le zombie.",
+    "at_tick": 0
+  },
+  "timeline": [
+    {
+      "at_tick": 0,
+      "summon": {
+        "type": "zombie",
+        "at": "<${dx},0,${dz}>",
+        "tag": "combat_equip_armor_then_fight_foe",
+        "nbt": "{PersistenceRequired:1b,CanPickUpLoot:0b,IsBaby:0b}"
+      }
+    },
+    {
+      "when": {
+        "block": "<12,-2,12>",
+        "is": "obsidian"
+      },
+      "once": false,
+      "rcon": "execute positioned <0,0,0> as @a[distance=..24,sort=nearest,limit=1] if items entity @s armor.head minecraft:${metal}_helmet if items entity @s armor.chest minecraft:${metal}_chestplate if items entity @s armor.legs minecraft:${metal}_leggings if items entity @s armor.feet minecraft:${metal}_boots if entity @e[distance=..25,type=minecraft:zombie,tag=combat_equip_armor_then_fight_foe] run setblock <12,-2,12> minecraft:gold_block"
+    }
+  ],
+  "fail": {
+    "died": true
+  },
+  "milestones": [
+    {
+      "name": "best_armor_worn_before_kill",
+      "check": {
+        "block": "<12,-2,12>",
+        "is": "gold_block"
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 900,
+    "decisions": 20
+  },
+  "solution": [
+    "wait 1s",
+    "equip_best slot=armor",
+    "wait 1s",
+    "equip iron_sword",
+    "fight #zombie"
+  ],
+  "solution_ticks": 320,
+  "success": {
+    "all": [
+      {
+        "block": "<12,-2,12>",
+        "is": "gold_block"
+      },
+      {
+        "entity": "zombie",
+        "tag": "combat_equip_armor_then_fight_foe",
+        "max": 0,
+        "near": "<0,0,0>",
+        "radius": 25
+      }
+    ]
+  }
+}

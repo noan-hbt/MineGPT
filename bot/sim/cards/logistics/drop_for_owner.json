@@ -1,0 +1,163 @@
+{
+  "card": 1,
+  "id": "logistics.drop_for_owner",
+  "title": "Leave exactly the requested item stack at a delivery point",
+  "tags": [
+    "logistics"
+  ],
+  "difficulty": 2,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "x": {
+      "int": [
+        4,
+        7
+      ]
+    },
+    "z": {
+      "int": [
+        3,
+        6
+      ]
+    },
+    "item": {
+      "choice": [
+        "bread",
+        "iron_ingot",
+        "oak_log"
+      ]
+    },
+    "n": {
+      "int": [
+        3,
+        10
+      ]
+    },
+    "left": {
+      "int": [
+        2,
+        6
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "easy",
+    "gamerules": {
+      "advance_time": false,
+      "advance_weather": false,
+      "keep_inventory": false,
+      "mob_griefing": false
+    }
+  },
+  "player": {
+    "at": "<0,0,0>",
+    "spawn": "<0,0,0>",
+    "inventory": [
+      {
+        "item": "stone_pickaxe",
+        "count": 1,
+        "slot": 0
+      },
+      {
+        "item": "${item}",
+        "count": "${total}",
+        "slot": 9
+      }
+    ]
+  },
+  "order": {
+    "from": "Noan",
+    "text": "Pose ${n} ${item} par terre à @depot pour moi, puis recule à @recul. Garde le reste."
+  },
+  "success": {
+    "all": [
+      {
+        "have": "${item}",
+        "min": "${left}",
+        "max": "${left}"
+      },
+      {
+        "have": "stone_pickaxe",
+        "min": 1,
+        "max": 1
+      },
+      {
+        "entity": "item",
+        "tag": "owner_delivery",
+        "near": "<${x},0,${z}>",
+        "radius": 6,
+        "min": 1,
+        "max": 1
+      },
+      {
+        "at": "<${x},0,${z - 5}>",
+        "radius": 1.5
+      }
+    ]
+  },
+  "fail": {
+    "died": true
+  },
+  "milestones": [
+    {
+      "name": "at_delivery_point",
+      "check": {
+        "at": "<${x},0,${z}>",
+        "radius": 1.5
+      }
+    },
+    {
+      "name": "requested_stack_on_ground",
+      "check": {
+        "entity": "item",
+        "tag": "owner_delivery",
+        "near": "<${x},0,${z}>",
+        "radius": 6,
+        "min": 1
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 1000,
+    "decisions": 20
+  },
+  "solution": [
+    "goto @depot dist=0",
+    "look <${x},0,${z + 3}>",
+    "drop ${item} n=${n}",
+    "goto @recul dist=0"
+  ],
+  "solution_ticks": 350,
+  "let": {
+    "total": "${n + left}"
+  },
+  "build": [
+    {
+      "set": "<${x},-1,${z}>",
+      "block": "gold_block"
+    }
+  ],
+  "mind": {
+    "places": {
+      "depot": "<${x},0,${z}>",
+      "recul": "<${x},0,${z - 5}>"
+    }
+  },
+  "timeline": [
+    {
+      "at_tick": 0,
+      "once": false,
+      "rcon": "execute as @e[type=minecraft:item,nbt={Item:{id:\"minecraft:${item}\",count:${n}}}] positioned <${x},0,${z}> if entity @s[distance=..6] run tag @s add owner_delivery"
+    }
+  ],
+  "notes": "Only the requested item exists as a drop. Repeated RCON tags an exact matching stack near the delivery point; remaining inventory verifies quantity conservation."
+}

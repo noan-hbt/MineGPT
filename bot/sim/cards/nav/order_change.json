@@ -1,0 +1,19 @@
+{
+  "card": 1,
+  "id": "nav.order_change",
+  "title": "Ordered to one place, then redirected to another mid-way",
+  "tags": ["nav", "orders", "memory"],
+  "difficulty": 2,
+  "split": "train",
+  "seeds": [1, 2, 3],
+  "params": { "ax": { "int": [-12, -6] }, "bx": { "int": [6, 12] }, "z": { "int": [6, 12] } },
+  "world": { "template": "arena" },
+  "player": { "inventory": [] },
+  "mind": { "places": { "well": "<${ax},0,${z}>", "farm": "<${bx},0,${z}>" } },
+  "order": { "from": "Noan", "text": "va au @well" },
+  "timeline": [ { "at_tick": 40, "chat": { "from": "Noan", "text": "non attends, va plutôt à la @farm" } } ],
+  "success": { "at": "<${bx},0,${z}>", "radius": 2 },
+  "fail": { "died": true },
+  "limits": { "ticks": 1200, "decisions": 6 },
+  "solution": ["goto @farm"]
+}

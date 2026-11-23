@@ -1,0 +1,132 @@
+{
+  "card": 1,
+  "id": "survive.fall_water_bucket",
+  "title": "Save a timeline-triggered fall with a water bucket",
+  "tags": [
+    "survive",
+    "fall",
+    "water",
+    "timing"
+  ],
+  "difficulty": 4,
+  "split": "heldout",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "h": {
+      "int": [
+        32,
+        36
+      ]
+    },
+    "x": {
+      "int": [
+        -3,
+        3
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "radius": 15,
+    "height": 40,
+    "depth": 15,
+    "floor": "stone",
+    "dimension": "overworld",
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "normal",
+    "gamerules": {
+      "spawn_monsters": false,
+      "advance_time": false,
+      "advance_weather": false,
+      "natural_health_regeneration": false
+    }
+  },
+  "build": [
+    {
+      "fill": [
+        "<${x - 1},${h - 1},-1>",
+        "<${x + 1},${h - 1},1>"
+      ],
+      "block": "stone"
+    }
+  ],
+  "player": {
+    "at": "<${x},${h},0>",
+    "spawn": "<8,0,0>",
+    "inventory": [
+      {
+        "item": "water_bucket",
+        "slot": 0
+      }
+    ],
+    "held": 0
+  },
+  "timeline": [
+    {
+      "at_tick": 0,
+      "rcon": "fill <${x - 1},${h - 1},-1> <${x + 1},${h - 1},1> air"
+    }
+  ],
+  "notes": "Start on a solid platform. Tick 0 removes it. The one-second wait lets onGround clear before water_bucket_save checks it. Disable regeneration so a failed clutch cannot heal away.",
+  "success_when": "end",
+  "success": {
+    "all": [
+      {
+        "not": {
+          "died": true
+        }
+      },
+      {
+        "y": {
+          "min": 0,
+          "max": 1
+        }
+      },
+      {
+        "health": {
+          "min": 19
+        }
+      },
+      {
+        "damage_taken": {
+          "max": 10
+        }
+      }
+    ]
+  },
+  "fail": {
+    "died": true
+  },
+  "milestones": [
+    {
+      "name": "platform_removed",
+      "check": {
+        "block": "<${x},${h - 1},0>",
+        "is": "air"
+      }
+    },
+    {
+      "name": "landed",
+      "check": {
+        "y": {
+          "max": 1
+        }
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 240,
+    "decisions": 20
+  },
+  "solution": [
+    "wait 1s",
+    "water_bucket_save"
+  ],
+  "solution_ticks": 90
+}

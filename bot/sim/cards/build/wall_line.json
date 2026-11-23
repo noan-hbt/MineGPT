@@ -1,0 +1,135 @@
+{
+  "card": 1,
+  "id": "build.wall_line",
+  "title": "Build a continuous one-block-high wall of the requested length",
+  "tags": [
+    "build",
+    "place",
+    "line"
+  ],
+  "difficulty": 2,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "x": {
+      "int": [
+        -4,
+        -2
+      ]
+    },
+    "z": {
+      "int": [
+        3,
+        5
+      ]
+    },
+    "n": {
+      "int": [
+        4,
+        8
+      ]
+    },
+    "material": {
+      "choice": [
+        "cobblestone",
+        "stone_bricks",
+        "oak_planks"
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "radius": 15,
+    "height": 14,
+    "depth": 15,
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "peaceful",
+    "gamerules": {
+      "advance_time": false,
+      "advance_weather": false
+    }
+  },
+  "player": {
+    "at": "<0,0,0>",
+    "spawn": "<0,0,0>",
+    "inventory": [
+      {
+        "item": "${material}",
+        "count": "${n}"
+      }
+    ]
+  },
+  "fail": {
+    "died": true
+  },
+  "order": {
+    "from": "Noan",
+    "text": "fais un mur droit de ${n} blocs de ${material}, haut d'un bloc, de <${x},0,${z}> à <${x+n-1},0,${z}>"
+  },
+  "success": {
+    "all": [
+      {
+        "block": "<${x+min(1,n)-1},0,${z}>",
+        "is": "${material}"
+      },
+      {
+        "block": "<${x+min(2,n)-1},0,${z}>",
+        "is": "${material}"
+      },
+      {
+        "block": "<${x+min(3,n)-1},0,${z}>",
+        "is": "${material}"
+      },
+      {
+        "block": "<${x+min(4,n)-1},0,${z}>",
+        "is": "${material}"
+      },
+      {
+        "block": "<${x+min(5,n)-1},0,${z}>",
+        "is": "${material}"
+      },
+      {
+        "block": "<${x+min(6,n)-1},0,${z}>",
+        "is": "${material}"
+      },
+      {
+        "block": "<${x+min(7,n)-1},0,${z}>",
+        "is": "${material}"
+      },
+      {
+        "block": "<${x+min(8,n)-1},0,${z}>",
+        "is": "${material}"
+      }
+    ]
+  },
+  "milestones": [
+    {
+      "name": "wall_started",
+      "check": {
+        "block": "<${x},0,${z}>",
+        "is": "${material}"
+      }
+    },
+    {
+      "name": "half_wall",
+      "check": {
+        "block": "<${x+floor(n/2)-1},0,${z}>",
+        "is": "${material}"
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 1500,
+    "decisions": 8
+  },
+  "solution": [
+    "place ${material} at=(<${x},0,${z}>,<${x+n-1},0,${z}>)"
+  ],
+  "solution_ticks": 500
+}

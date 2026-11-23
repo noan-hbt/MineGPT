@@ -1,0 +1,327 @@
+MineSim 0 port 25600; 91 card(s), policy script, lockstep
+PASS build.fence_pen#1                  success   176 ticks 0.4s {"x":-2,"z":3,"wood":"oak"}
+PASS build.fence_pen#2                  success   181 ticks 0.3s {"x":-2,"z":5,"wood":"spruce"}
+PASS build.fence_pen#3                  success   181 ticks 0.3s {"x":-3,"z":3,"wood":"birch"}
+PASS build.fence_pen#4                  success   178 ticks 0.2s {"x":-2,"z":4,"wood":"spruce"}
+PASS build.pillar_marker#1              success    42 ticks 0.1s {"x":4,"z":-4,"n":4,"material":"gold_block"}
+PASS build.pillar_marker#2              success    26 ticks 0s {"x":5,"z":3,"n":3,"material":"red_concrete"}
+PASS build.pillar_marker#3              success    21 ticks 0s {"x":3,"z":-2,"n":4,"material":"gold_block"}
+PASS build.pillar_marker#4              success    21 ticks 0s {"x":4,"z":-1,"n":4,"material":"red_concrete"}
+PASS build.place_pattern#1              success    43 ticks 0s {"x":3,"z":-2,"material":"yellow_concrete"}
+PASS build.place_pattern#2              success    43 ticks 0s {"x":2,"z":0,"material":"blue_concrete"}
+PASS build.place_pattern#3              success    44 ticks 0s {"x":2,"z":2,"material":"red_concrete"}
+PASS build.place_pattern#4              success    44 ticks 0s {"x":3,"z":1,"material":"blue_concrete"}
+PASS build.wall_line#1                  success    49 ticks 0.1s {"x":-3,"z":4,"n":8,"material":"oak_planks"}
+PASS build.wall_line#2                  success    44 ticks 0.1s {"x":-3,"z":3,"n":7,"material":"oak_planks"}
+PASS build.wall_line#3                  success    26 ticks 0s {"x":-3,"z":3,"n":6,"material":"cobblestone"}
+PASS build.wall_line#4                  success    48 ticks 0.1s {"x":-2,"z":4,"n":8,"material":"oak_planks"}
+FAIL combat.bow_zombie_far#1            fail      458 ticks 0.6s {"dx":0,"dz":9} judge {"{\"entity\":\"zombie\",\"tag\":\"combat_bow_zombie_far_foe\",\"max\":0,\"near\":\"<0,0,0>\",\"radius\":25}":1,"{\"at\":\"<0,3,-3>\",\"radius\":2}":0,"{\"have\":\"arrow\",\"max\":31}":20}
+FAIL combat.bow_zombie_far#2            fail      455 ticks 0.5s {"dx":-1,"dz":9} judge {"{\"entity\":\"zombie\",\"tag\":\"combat_bow_zombie_far_foe\",\"max\":0,\"near\":\"<0,0,0>\",\"radius\":25}":1,"{\"at\":\"<0,3,-3>\",\"radius\":2}":0,"{\"have\":\"arrow\",\"max\":31}":20}
+FAIL combat.bow_zombie_far#3            fail      455 ticks 0.5s {"dx":1,"dz":9} judge {"{\"entity\":\"zombie\",\"tag\":\"combat_bow_zombie_far_foe\",\"max\":0,\"near\":\"<0,0,0>\",\"radius\":25}":1,"{\"at\":\"<0,3,-3>\",\"radius\":2}":0,"{\"have\":\"arrow\",\"max\":31}":20}
+  desync after "shoot #zombie n=12": {"arrow":{"bot":29,"server":28}}
+PASS combat.bow_zombie_far#4            success   109 ticks 0.1s {"dx":-1,"dz":10}
+PASS combat.cave_spider_corridor#1      success    45 ticks 0.1s {"dz":7}
+PASS combat.cave_spider_corridor#2      success    63 ticks 0.1s {"dz":7}
+PASS combat.cave_spider_corridor#3      success    65 ticks 0.1s {"dz":7}
+PASS combat.cave_spider_corridor#4      success    65 ticks 0.1s {"dz":10}
+PASS combat.equip_armor_then_fight#1    success   110 ticks 0.2s {"dx":-1,"dz":9,"metal":"iron"}
+PASS combat.equip_armor_then_fight#2    success   109 ticks 0.1s {"dx":-1,"dz":8,"metal":"iron"}
+PASS combat.equip_armor_then_fight#3    success    88 ticks 0.1s {"dx":1,"dz":7,"metal":"iron"}
+PASS combat.equip_armor_then_fight#4    success   109 ticks 0.1s {"dx":1,"dz":7,"metal":"iron"}
+PASS combat.husk_desert#1               success    85 ticks 0.1s {"dx":1,"dz":6}
+PASS combat.husk_desert#2               success    85 ticks 0.1s {"dx":1,"dz":7}
+PASS combat.husk_desert#3               success    85 ticks 0.1s {"dx":-2,"dz":7}
+PASS combat.husk_desert#4               success    85 ticks 0.1s {"dx":2,"dz":9}
+PASS combat.pick_weapon#1               success    88 ticks 0.1s {"dx":2,"dz":6,"metal":"diamond"}
+PASS combat.pick_weapon#2               success    88 ticks 0.1s {"dx":-2,"dz":7,"metal":"iron"}
+PASS combat.pick_weapon#3               success    88 ticks 0.1s {"dx":0,"dz":7,"metal":"iron"}
+PASS combat.pick_weapon#4               success    88 ticks 0.1s {"dx":-2,"dz":8,"metal":"diamond"}
+PASS combat.retreat_low_hp#1            success    65 ticks 0.1s {"refuge_x":-2,"refuge_z":-9,"enemy_z":8}
+PASS combat.retreat_low_hp#2            success    64 ticks 0.1s {"refuge_x":1,"refuge_z":-10,"enemy_z":6}
+PASS combat.retreat_low_hp#3            success    65 ticks 0.1s {"refuge_x":-1,"refuge_z":-11,"enemy_z":7}
+PASS combat.retreat_low_hp#4            success    65 ticks 0.1s {"refuge_x":-1,"refuge_z":-11,"enemy_z":8}
+PASS combat.shield_skeleton#1           success   300 ticks 0.5s {"dx":0,"dz":8}
+PASS combat.shield_skeleton#2           success   300 ticks 0.4s {"dx":-1,"dz":8}
+PASS combat.shield_skeleton#3           success   320 ticks 0.4s {"dx":-1,"dz":9}
+PASS combat.shield_skeleton#4           success   323 ticks 0.4s {"dx":1,"dz":8}
+PASS combat.skeleton#1                  success    67 ticks 0.1s {"dx":0,"dz":6}
+PASS combat.skeleton#2                  success    88 ticks 0.1s {"dx":-2,"dz":9}
+PASS combat.skeleton#3                  success    88 ticks 0.1s {"dx":1,"dz":7}
+PASS combat.skeleton#4                  success    88 ticks 0.1s {"dx":0,"dz":7}
+PASS combat.slime_split#1               success   111 ticks 0.2s {"dx":1,"dz":7}
+PASS combat.slime_split#2               success   111 ticks 0.1s {"dx":1,"dz":8}
+PASS combat.slime_split#3               success   132 ticks 0.2s {"dx":-1,"dz":7}
+PASS combat.slime_split#4               success   110 ticks 0.1s {"dx":1,"dz":6}
+PASS combat.spider_night#1              success    64 ticks 0.1s {"dx":1,"dz":6}
+PASS combat.spider_night#2              success    64 ticks 0.1s {"dx":0,"dz":8}
+PASS combat.spider_night#3              success    64 ticks 0.1s {"dx":0,"dz":6}
+PASS combat.spider_night#4              success    64 ticks 0.1s {"dx":1,"dz":9}
+  desync after "shoot #witch n=20": {"arrow":{"bot":29,"server":28}}
+PASS combat.witch_ranged#1              success   115 ticks 0.2s {"dx":-1,"dz":8}
+PASS combat.witch_ranged#2              success    94 ticks 0.1s {"dx":-1,"dz":10}
+PASS combat.witch_ranged#3              success    94 ticks 0.1s {"dx":0,"dz":9}
+PASS combat.witch_ranged#4              success    93 ticks 0.1s {"dx":1,"dz":10}
+PASS combat.zombie#1                    success    62 ticks 0.1s {"dx":6,"dz":1}
+PASS combat.zombie#2                    success    63 ticks 0.1s {"dx":6,"dz":-1}
+PASS combat.zombie#3                    success    63 ticks 0.1s {"dx":7,"dz":3}
+PASS combat.zombie_group#1              success   207 ticks 0.3s {"dx":8,"dz":-4}
+PASS combat.zombie_group#2              success   208 ticks 0.3s {"dx":7,"dz":-5}
+PASS combat.zombie_group#3              success   208 ticks 0.3s {"dx":8,"dz":1}
+PASS combat.zombie_villager_protect#1   success   132 ticks 0.2s {"lane":0,"distance":9}
+PASS combat.zombie_villager_protect#2   success   111 ticks 0.2s {"lane":-1,"distance":9}
+PASS combat.zombie_villager_protect#3   success   111 ticks 0.2s {"lane":-1,"distance":9}
+PASS combat.zombie_villager_protect#4   success   111 ticks 0.2s {"lane":1,"distance":8}
+PASS craft.bed_from_wool#1              success    22 ticks 0.1s {"tx":1,"wood":"acacia","color":"white"}
+PASS craft.bed_from_wool#2              success    22 ticks 0.1s {"tx":0,"wood":"acacia","color":"blue"}
+PASS craft.bed_from_wool#3              success    22 ticks 0.1s {"tx":0,"wood":"spruce","color":"yellow"}
+PASS craft.bed_from_wool#4              success    22 ticks 0.1s {"tx":1,"wood":"birch","color":"black"}
+PASS craft.bed_from_wool#5              success    22 ticks 0.1s {"tx":1,"wood":"spruce","color":"black"}
+PASS craft.boat#1                       success    44 ticks 0.2s {"wood":"birch","tx":2,"bx":5}
+PASS craft.boat#2                       success    44 ticks 0.2s {"wood":"spruce","tx":-1,"bx":7}
+PASS craft.boat#3                       success    44 ticks 0.2s {"wood":"oak","tx":1,"bx":7}
+PASS craft.boat#4                       success    44 ticks 0.2s {"wood":"oak","tx":0,"bx":6}
+PASS craft.boat#5                       success    44 ticks 0.2s {"wood":"birch","tx":2,"bx":7}
+PASS craft.bread#1                      success    22 ticks 0.1s {"tx":-2,"n":3,"extra":2}
+PASS craft.bread#2                      success    28 ticks 0.1s {"tx":2,"n":5,"extra":2}
+PASS craft.bread#3                      success    28 ticks 0.1s {"tx":-1,"n":5,"extra":0}
+PASS craft.bread#4                      success    25 ticks 0.2s {"tx":-1,"n":4,"extra":2}
+PASS craft.bread#5                      success    25 ticks 0.2s {"tx":-2,"n":3,"extra":0}
+PASS craft.bucket_and_fill#1            success    22 ticks 0.1s {"tx":0,"wx":2}
+PASS craft.bucket_and_fill#2            success    27 ticks 0.2s {"tx":2,"wx":3}
+PASS craft.bucket_and_fill#3            success    27 ticks 0.2s {"tx":-1,"wx":3}
+PASS craft.bucket_and_fill#4            success    27 ticks 0.2s {"tx":-2,"wx":3}
+PASS craft.bucket_and_fill#5            success    28 ticks 0.1s {"tx":-2,"wx":3}
+PASS craft.charcoal_torches#1           success   663 ticks 0.7s {"wood":"acacia","n":3,"fx":2}
+PASS craft.charcoal_torches#2           success   426 ticks 0.5s {"wood":"spruce","n":2,"fx":-2}
+PASS craft.charcoal_torches#3           success   647 ticks 0.7s {"wood":"oak","n":3,"fx":1}
+PASS craft.charcoal_torches#4           success   247 ticks 0.3s {"wood":"acacia","n":1,"fx":-1}
+  desync after "craft torch n=8": {"torch":{"bot":8,"server":4}}
+FAIL craft.charcoal_torches#5           fail      486 ticks 0.6s {"wood":"acacia","n":2,"fx":-2} judge {"{\"have\":\"torch\",\"min\":8}":4}
+PASS craft.chest_from_logs#1            success    45 ticks 0.2s {"wood":"birch","n":2,"tx":1}
+PASS craft.chest_from_logs#2            success    45 ticks 0.2s {"wood":"birch","n":3,"tx":-1}
+PASS craft.chest_from_logs#3            success    26 ticks 0.1s {"wood":"spruce","n":1,"tx":0}
+PASS craft.chest_from_logs#4            success    45 ticks 0.2s {"wood":"acacia","n":2,"tx":1}
+PASS craft.chest_from_logs#5            success    27 ticks 0.2s {"wood":"spruce","n":1,"tx":-2}
+PASS craft.cook_beef#1                  success   473 ticks 0.7s {"n":2,"wood":"oak"}
+PASS craft.cook_beef#2                  success   680 ticks 0.9s {"n":3,"wood":"oak"}
+PASS craft.full_iron_armor_partial#1    success    51 ticks 0.4s {"tx":-2,"ingots":23,"legs":1,"head":1,"feet":0,"left":3}
+PASS craft.full_iron_armor_partial#2    success    36 ticks 0.3s {"tx":1,"ingots":15,"legs":1,"head":0,"feet":0,"left":0}
+PASS craft.full_iron_armor_partial#3    success    52 ticks 0.5s {"tx":1,"ingots":24,"legs":1,"head":1,"feet":1,"left":0}
+PASS craft.full_iron_armor_partial#4    success    37 ticks 0.3s {"tx":1,"ingots":15,"legs":1,"head":0,"feet":0,"left":0}
+PASS craft.full_iron_armor_partial#5    success    40 ticks 0.4s {"tx":0,"ingots":19,"legs":1,"head":0,"feet":1,"left":0}
+PASS craft.furnace_fuel_choice#1        success   620 ticks 0.7s {"n":3,"wood":"birch","fuel":"stick","fx":1}
+PASS craft.furnace_fuel_choice#2        success   830 ticks 0.9s {"n":4,"wood":"oak","fuel":"stick","fx":0}
+PASS craft.furnace_fuel_choice#3        success   832 ticks 0.9s {"n":4,"wood":"spruce","fuel":"stick","fx":-2}
+PASS craft.furnace_fuel_choice#4        success   642 ticks 0.7s {"n":3,"wood":"acacia","fuel":"tag:planks","fx":-2}
+PASS craft.furnace_fuel_choice#5        success   620 ticks 0.7s {"n":3,"wood":"spruce","fuel":"tag:planks","fx":1}
+PASS craft.iron_pickaxe#1               success    22 ticks 0.1s {"tx":-1,"extra":3}
+PASS craft.iron_pickaxe#2               success    22 ticks 0.1s {"tx":-1,"extra":3}
+PASS craft.iron_pickaxe#3               success    22 ticks 0.1s {"tx":0,"extra":3}
+PASS craft.iron_pickaxe#4               success    23 ticks 0.1s {"tx":-1,"extra":3}
+PASS craft.iron_pickaxe#5               success    22 ticks 0.1s {"tx":0,"extra":2}
+  desync after "place ladder at=[(3003,200,2998),(3003,201,2998),(3003,202,2998)] face=north": {"ladder":{"bot":1,"server":0}}
+PASS craft.ladder_and_place#1           success    44 ticks 0.2s {"tx":0,"wallx":3,"extra":3}
+  desync after "place ladder at=[(3002,200,2998),(3002,201,2998),(3002,202,2998)] face=north": {"ladder":{"bot":1,"server":0}}
+PASS craft.ladder_and_place#2           success    44 ticks 0.2s {"tx":1,"wallx":2,"extra":0}
+  desync after "place ladder at=[(3002,200,2998),(3002,201,2998),(3002,202,2998)] face=north": {"ladder":{"bot":1,"server":0}}
+PASS craft.ladder_and_place#3           success    43 ticks 0.2s {"tx":-1,"wallx":2,"extra":3}
+  desync after "place ladder at=[(3002,200,2998),(3002,201,2998),(3002,202,2998)] face=north": {"ladder":{"bot":2,"server":1}}
+PASS craft.ladder_and_place#4           success    43 ticks 0.2s {"tx":1,"wallx":2,"extra":0}
+  desync after "place ladder at=[(3002,200,2998),(3002,201,2998),(3002,202,2998)] face=north": {"ladder":{"bot":1,"server":0}}
+PASS craft.ladder_and_place#5           success    43 ticks 0.2s {"tx":1,"wallx":2,"extra":2}
+PASS craft.planks#1                     success    22 ticks 0s {"wood":"acacia","n":9,"logs":3}
+PASS craft.planks#2                     success    22 ticks 0s {"wood":"birch","n":13,"logs":4}
+PASS craft.planks#3                     success     5 ticks 0s {"wood":"oak","n":4,"logs":1}
+PASS craft.shield#1                     success    22 ticks 0.1s {"tx":1,"wood":"birch"}
+PASS craft.shield#2                     success    22 ticks 0.1s {"tx":0,"wood":"spruce"}
+PASS craft.shield#3                     success    22 ticks 0.1s {"tx":-2,"wood":"oak"}
+PASS craft.shield#4                     success    23 ticks 0.2s {"tx":1,"wood":"birch"}
+PASS craft.shield#5                     success    22 ticks 0.1s {"tx":2,"wood":"birch"}
+PASS craft.smelt_iron#1                 success   810 ticks 0.9s {"n":4,"fuel":"coal"}
+PASS craft.smelt_iron#2                 success   220 ticks 0.3s {"n":1,"fuel":"charcoal"}
+PASS craft.stone_pickaxe#1              success   271 ticks 0.7s {"wood":"spruce"}
+PASS craft.stone_pickaxe#2              success   166 ticks 0.5s {"wood":"oak"}
+PASS craft.stone_tools_set#1            success    51 ticks 0.6s {"tx":2,"extra":2}
+PASS craft.stone_tools_set#2            success    52 ticks 0.5s {"tx":-2,"extra":4}
+PASS craft.stone_tools_set#3            success    53 ticks 0.6s {"tx":2,"extra":0}
+PASS craft.stone_tools_set#4            success    52 ticks 0.6s {"tx":2,"extra":4}
+PASS craft.stone_tools_set#5            success    37 ticks 0.5s {"tx":0,"extra":2}
+PASS craft.torches#1                    success    22 ticks 0s {"coal":2,"fuel":"coal"}
+PASS craft.torches#2                    success    22 ticks 0s {"coal":3,"fuel":"coal"}
+PASS craft.wooden_pickaxe#1             success    46 ticks 0.2s {"extra":0,"logs":3}
+PASS craft.wooden_pickaxe#2             success    47 ticks 0.2s {"extra":1,"logs":4}
+PASS farm.breed_cows#1                  success   112 ticks 0.1s {"x":4,"z":1,"n":2}
+PASS farm.breed_cows#2                  success   112 ticks 0.1s {"x":4,"z":2,"n":5}
+PASS farm.breed_cows#3                  success   111 ticks 0.1s {"x":3,"z":-3,"n":6}
+PASS farm.breed_cows#4                  success   112 ticks 0.1s {"x":5,"z":1,"n":5}
+PASS farm.tame_wolf#1                   success    48 ticks 0.1s {"x":4,"z":3,"n":52}
+PASS farm.tame_wolf#2                   success    26 ticks 0s {"x":6,"z":1,"n":56}
+PASS farm.tame_wolf#3                   success    26 ticks 0s {"x":4,"z":-3,"n":48}
+PASS farm.tame_wolf#4                   success    47 ticks 0s {"x":3,"z":0,"n":59}
+PASS farm.trade_villager#1              success    26 ticks 0s {"x":4,"z":3,"n":1,"price":4,"item":"bread","cost":4,"emeralds":7}
+PASS farm.trade_villager#2              success    27 ticks 0s {"x":5,"z":-1,"n":2,"price":4,"item":"bread","cost":8,"emeralds":11}
+PASS farm.trade_villager#3              success    22 ticks 0s {"x":4,"z":1,"n":1,"price":2,"item":"apple","cost":2,"emeralds":5}
+PASS farm.trade_villager#4              success    32 ticks 0s {"x":5,"z":-2,"n":1,"price":4,"item":"carrot","cost":4,"emeralds":7}
+PASS gather.chop_n_logs_mixed_trees#1   success   161 ticks 15s {"wood":"birch","n":6,"dz":4}
+PASS gather.chop_n_logs_mixed_trees#2   success   177 ticks 0.8s {"wood":"spruce","n":8,"dz":3}
+PASS gather.chop_n_logs_mixed_trees#3   success   202 ticks 0.8s {"wood":"spruce","n":8,"dz":3}
+PASS gather.chop_n_logs_mixed_trees#4   success   160 ticks 0.7s {"wood":"spruce","n":5,"dz":5}
+PASS gather.chop_n_logs_mixed_trees#6   success   177 ticks 0.8s {"wood":"oak","n":6,"dz":4}
+PASS gather.chop_tree#1                 success   287 ticks 14.2s {"wood":"birch","dx":6,"dz":5}
+PASS gather.chop_tree#2                 success   326 ticks 0.6s {"wood":"birch","dx":-5,"dz":5}
+PASS gather.chop_tree#3                 success   708 ticks 1.1s {"wood":"oak","dx":-6,"dz":7}
+PASS gather.collect_drops#1             success   133 ticks 0.1s {"loot":"flint","n":2,"dx":4,"dz":7}
+PASS gather.collect_drops#2             success   111 ticks 0.1s {"loot":"apple","n":2,"dx":4,"dz":5}
+PASS gather.collect_drops#3             success   156 ticks 0.2s {"loot":"flint","n":3,"dx":7,"dz":7}
+PASS gather.collect_drops#4             success   108 ticks 0.1s {"loot":"apple","n":4,"dx":7,"dz":7}
+PASS gather.collect_drops#13            success    90 ticks 0.1s {"loot":"iron_nugget","n":2,"dx":6,"dz":7}
+PASS gather.fish#1                      success    90 ticks 0.2s {"shift":-1,"width":10}
+PASS gather.fish#2                      success   291 ticks 0.4s {"shift":-1,"width":9}
+PASS gather.fish#3                      success   396 ticks 0.5s {"shift":-2,"width":8}
+PASS gather.fish#4                      success   176 ticks 0.2s {"shift":2,"width":8}
+PASS gather.milk_cow#1                  success    43 ticks 0s {"dx":6,"dz":-4}
+PASS gather.milk_cow#2                  success    43 ticks 0s {"dx":6,"dz":3}
+PASS gather.milk_cow#3                  success    43 ticks 0s {"dx":6,"dz":-3}
+PASS gather.milk_cow#4                  success    43 ticks 0s {"dx":5,"dz":2}
+  desync after "plant beetroot_seeds at=((3003,200,3004),(3006,200,3004))": {"beetroot_seeds":{"bot":1,"server":0}}
+PASS gather.plant_seeds#1               success    44 ticks 0s {"dx":3,"dz":4,"seed":"beetroot_seeds"}
+  desync after "plant wheat_seeds at=((3002,200,3003),(3005,200,3003))": {"wheat_seeds":{"bot":1,"server":0}}
+PASS gather.plant_seeds#2               success    43 ticks 0s {"dx":2,"dz":3,"seed":"wheat_seeds"}
+  desync after "plant wheat_seeds at=((3002,200,3003),(3005,200,3003))": {"wheat_seeds":{"bot":1,"server":0}}
+PASS gather.plant_seeds#3               success    44 ticks 0s {"dx":2,"dz":3,"seed":"wheat_seeds"}
+  desync after "plant beetroot_seeds at=((3004,200,3002),(3007,200,3002))": {"beetroot_seeds":{"bot":1,"server":0}}
+PASS gather.plant_seeds#4               success    44 ticks 0.1s {"dx":4,"dz":2,"seed":"beetroot_seeds"}
+PASS gather.sand_glass#1                success   500 ticks 0.6s {"n":2,"dx":5,"dz":4,"fuel":"charcoal"}
+PASS gather.sand_glass#2                success   500 ticks 0.6s {"n":2,"dx":4,"dz":4,"fuel":"coal"}
+PASS gather.sand_glass#3                success   502 ticks 0.6s {"n":2,"dx":6,"dz":3,"fuel":"charcoal"}
+PASS gather.sand_glass#4                success   904 ticks 0.9s {"n":4,"dx":6,"dz":2,"fuel":"charcoal"}
+PASS gather.shear_sheep#1               success    52 ticks 0.1s {"dx":6,"dz":-2,"color":15}
+PASS gather.shear_sheep#2               success    51 ticks 7.4s {"dx":7,"dz":-2,"color":0}
+PASS gather.shear_sheep#3               success    52 ticks 0.1s {"dx":6,"dz":3,"color":0}
+PASS gather.shear_sheep#4               success    47 ticks 0s {"dx":3,"dz":-3,"color":0}
+PASS gather.shear_sheep#11              success    53 ticks 0.1s {"dx":5,"dz":-2,"color":8}
+PASS gather.wheat_harvest#1             success    71 ticks 0.2s {"n":4,"dx":2,"dz":3}
+PASS gather.wheat_harvest#2             success    93 ticks 7.3s {"n":4,"dx":4,"dz":2}
+PASS gather.wheat_harvest#3             success    67 ticks 14.2s {"n":3,"dx":4,"dz":2}
+PASS gather.wheat_harvest#4             success    72 ticks 7.6s {"n":4,"dx":2,"dz":2}
+FAIL logistics.drop_for_owner#1         fail      113 ticks 0.1s {"x":4,"z":5,"item":"iron_ingot","n":6,"left":6,"total":12} judge {"{\"have\":\"iron_ingot\",\"min\":6,\"max\":6}":6,"{\"have\":\"stone_pickaxe\",\"min\":1,\"max\":1}":1,"{\"entity\":\"item\",\"tag\":\"owner_delivery\",\"near\":\"<4,0,5>\",\"radius\":4,\"min\":1,\"max\":1}":0,"{\"at\":\"<4,0,0>\",\"radius\":1.5}":0.1273174439301514}
+PASS logistics.drop_for_owner#2         success   108 ticks 0.1s {"x":7,"z":6,"item":"iron_ingot","n":5,"left":4,"total":9}
+PASS logistics.drop_for_owner#3         success    68 ticks 0.1s {"x":5,"z":6,"item":"oak_log","n":7,"left":2,"total":9}
+  desync after "drop bread n=6": {"bread":{"bot":5,"server":0}}
+PASS logistics.drop_for_owner#4         success   104 ticks 0.1s {"x":4,"z":6,"item":"bread","n":6,"left":5,"total":11}
+PASS logistics.fetch_from_chest#1       success    25 ticks 0s {"cx":0,"cz":-8,"n":2}
+PASS logistics.fetch_from_chest#2       success    26 ticks 0s {"cx":1,"cz":-8,"n":5}
+PASS logistics.sort_two_chests#1        success    64 ticks 0.1s {"z":-5,"ore":"gold_ore","food":"bread","n":17,"m":5}
+PASS logistics.sort_two_chests#2        success    65 ticks 0.1s {"z":-4,"ore":"iron_ore","food":"bread","n":17,"m":5}
+PASS logistics.sort_two_chests#3        success    65 ticks 0.1s {"z":4,"ore":"iron_ore","food":"bread","n":13,"m":3}
+PASS logistics.sort_two_chests#4        success    53 ticks 0.1s {"z":-1,"ore":"iron_ore","food":"carrot","n":16,"m":8}
+PASS logistics.store_in_chest#1         success    22 ticks 0s {"x":4,"z":3,"n":33,"extra":22,"total":55}
+PASS logistics.store_in_chest#2         success    21 ticks 0s {"x":3,"z":3,"n":39,"extra":20,"total":59}
+PASS logistics.store_in_chest#3         success    27 ticks 0s {"x":3,"z":-3,"n":33,"extra":7,"total":40}
+PASS logistics.store_in_chest#4         success    27 ticks 0s {"x":4,"z":-2,"n":52,"extra":19,"total":71}
+PASS logistics.take_and_bring#1         success    65 ticks 0.1s {"z":4,"item":"oak_log","n":7,"left":4,"total":11}
+PASS logistics.take_and_bring#2         success    65 ticks 0.1s {"z":5,"item":"iron_ingot","n":8,"left":7,"total":15}
+PASS logistics.take_and_bring#3         success    65 ticks 0.1s {"z":2,"item":"oak_log","n":5,"left":4,"total":9}
+PASS logistics.take_and_bring#4         success    65 ticks 0.1s {"z":1,"item":"copper_ingot","n":4,"left":7,"total":11}
+PASS logistics.toss_junk_full_inv#1     success    76 ticks 0.1s {"x":6,"z":2,"n":3}
+PASS logistics.toss_junk_full_inv#2     success    77 ticks 0.1s {"x":6,"z":3,"n":3}
+PASS logistics.toss_junk_full_inv#3     success    91 ticks 0.1s {"x":8,"z":3,"n":3}
+PASS logistics.toss_junk_full_inv#4     success    76 ticks 0.1s {"x":5,"z":1,"n":1}
+PASS mine.coal_vein#1                   success   267 ticks 9s {"dx":7,"dz":-3,"n":4}
+PASS mine.coal_vein#2                   success   200 ticks 8.5s {"dx":3,"dz":-1,"n":3}
+PASS mine.coal_vein#3                   success   312 ticks 16.6s {"dx":4,"dz":0,"n":5}
+PASS mine.coal_vein#4                   success   311 ticks 9.1s {"dx":5,"dz":-3,"n":5}
+PASS mine.diamond_need_iron_pickaxe#1   success   154 ticks 0.6s {"dx":6,"dz":-2,"n":1,"wood":"spruce"}
+PASS mine.diamond_need_iron_pickaxe#2   success   154 ticks 0.6s {"dx":6,"dz":2,"n":1,"wood":"birch"}
+FAIL mine.diamond_need_iron_pickaxe#3   fail      287 ticks 16.6s {"dx":4,"dz":0,"n":2,"wood":"birch"} judge {"{\"have\":\"iron_pickaxe\",\"min\":1}":1,"{\"have\":\"diamond\",\"min\":2}":1}
+PASS mine.diamond_need_iron_pickaxe#4   success   361 ticks 9s {"dx":5,"dz":-1,"n":3,"wood":"oak"}
+PASS mine.dig_down_to_y#1               success   316 ticks 0.3s {"drop":6,"dx":-1,"dz":0}
+PASS mine.dig_down_to_y#2               success   190 ticks 0.2s {"drop":4,"dx":0,"dz":-1}
+PASS mine.dig_down_to_y#3               success   316 ticks 0.3s {"drop":6,"dx":0,"dz":0}
+PASS mine.dig_down_to_y#4               success   190 ticks 0.2s {"drop":4,"dx":1,"dz":-3}
+PASS mine.dig_down_to_y#5               success   378 ticks 0.4s {"drop":7,"dx":-1,"dz":-2}
+PASS mine.iron_ore#1                    success   238 ticks 0.8s {"dx":4,"dz":-5,"n":2}
+PASS mine.iron_ore#2                    success   154 ticks 0.5s {"dx":9,"dz":-6,"n":1}
+PASS mine.iron_ore#3                    success   346 ticks 1.1s {"dx":7,"dz":-1,"n":3}
+PASS mine.need_stone_pickaxe#1          success   455 ticks 9.9s {"dx":5,"dz":-3,"n":4,"wood":"oak"}
+PASS mine.need_stone_pickaxe#2          success   245 ticks 0.9s {"dx":4,"dz":-1,"n":2,"wood":"oak"}
+PASS mine.need_stone_pickaxe#3          success   362 ticks 1.4s {"dx":5,"dz":3,"n":3,"wood":"birch"}
+PASS mine.need_stone_pickaxe#4          success   246 ticks 9.1s {"dx":4,"dz":1,"n":2,"wood":"birch"}
+PASS mine.need_stone_pickaxe#8          success   361 ticks 1.3s {"dx":6,"dz":0,"n":3,"wood":"spruce"}
+PASS nav.bridge_gap#1                   success    63 ticks 0.1s {"n":5,"z":1,"material":"cobblestone"}
+PASS nav.bridge_gap#2                   success    64 ticks 0.1s {"n":5,"z":2,"material":"birch_planks"}
+PASS nav.bridge_gap#3                   success    64 ticks 0.1s {"n":6,"z":2,"material":"oak_planks"}
+PASS nav.bridge_gap#4                   success    48 ticks 0.1s {"n":4,"z":0,"material":"oak_planks"}
+PASS nav.come_here_coords#1             success    62 ticks 0.1s {"x":8,"z":-10}
+PASS nav.come_here_coords#2             success    43 ticks 0.1s {"x":7,"z":-9}
+PASS nav.come_here_coords#3             success    42 ticks 0s {"x":6,"z":-8}
+PASS nav.come_here_coords#4             success    41 ticks 0.1s {"x":8,"z":-6}
+PASS nav.door_house#1                   success   167 ticks 0.3s {"z":4,"wood":"birch"}
+PASS nav.door_house#2                   success   168 ticks 0.5s {"z":5,"wood":"oak"}
+PASS nav.door_house#3                   success   167 ticks 0.2s {"z":4,"wood":"birch"}
+PASS nav.door_house#4                   success   166 ticks 0.2s {"z":4,"wood":"oak"}
+PASS nav.follow_owner_place#1           success    42 ticks 0.1s {"place":"verger","x":8,"z":-6}
+PASS nav.follow_owner_place#2           success    42 ticks 0.1s {"place":"verger","x":8,"z":-7}
+PASS nav.follow_owner_place#3           success    42 ticks 0s {"place":"atelier","x":7,"z":-8}
+PASS nav.follow_owner_place#4           success    43 ticks 0.1s {"place":"puits","x":7,"z":-9}
+PASS nav.goto_place#1                   success    62 ticks 0.1s {"px":-1,"pz":8}
+PASS nav.goto_place#2                   success    61 ticks 0.1s {"px":-11,"pz":10}
+PASS nav.goto_place#3                   success    82 ticks 0.1s {"px":-11,"pz":12}
+PASS nav.ladder_tower#1                 success   105 ticks 0.1s {"x":6,"z":2,"h":8}
+PASS nav.ladder_tower#2                 success   105 ticks 0.1s {"x":3,"z":-2,"h":8}
+PASS nav.ladder_tower#3                 success   104 ticks 0.2s {"x":3,"z":3,"h":9}
+PASS nav.ladder_tower#4                 success   105 ticks 0.2s {"x":3,"z":-3,"h":9}
+PASS nav.maze_walls#1                   success   148 ticks 0.2s {"x":0,"z":0}
+PASS nav.maze_walls#2                   success   148 ticks 0.2s {"x":-2,"z":1}
+PASS nav.maze_walls#3                   success   148 ticks 0.2s {"x":-2,"z":-1}
+PASS nav.maze_walls#4                   success   148 ticks 0.2s {"x":-1,"z":0}
+PASS nav.order_change#1                 success    41 ticks 0.1s {"ax":-11,"bx":6,"z":6}
+PASS nav.order_change#2                 success    42 ticks 0.1s {"ax":-6,"bx":9,"z":8}
+PASS nav.order_change#3                 success    62 ticks 0.1s {"ax":-6,"bx":10,"z":9}
+PASS nav.pillar_to_ledge#1              success    46 ticks 0s {"h":4,"z":0,"material":"dirt"}
+PASS nav.pillar_to_ledge#2              success    64 ticks 0.1s {"h":5,"z":1,"material":"dirt"}
+PASS nav.pillar_to_ledge#3              success    46 ticks 0s {"h":4,"z":1,"material":"dirt"}
+PASS nav.pillar_to_ledge#4              success    64 ticks 0.1s {"h":5,"z":0,"material":"cobblestone"}
+FAIL nav.swim_across#1                  timeout  1517 ticks 46.9s {"x":4,"width":5} judge {"{\"at\":\"<4,0,10>\",\"radius\":1.2}":9.869324635496005}
+FAIL nav.swim_across#2                  fail      168 ticks 25.7s {"x":-2,"width":7} judge {"{\"at\":\"<-2,0,12>\",\"radius\":1.2}":null}
+  rcon "clear VAL": No player was found
+  rcon "xp set VAL 0 levels": No player was found
+  rcon "xp set VAL 0 points": No player was found
+  rcon "gamemode survival VAL": No player was found
+  rcon "spawnpoint VAL 3001 200 3000": No player was found
+FAIL nav.swim_across#3                  fail        0 ticks 0.4s {"x":1,"width":7} judge {"{\"at\":\"<1,0,12>\",\"radius\":1.2}":null}
+  rcon "clear VAL": No player was found
+  rcon "xp set VAL 0 levels": No player was found
+  rcon "xp set VAL 0 points": No player was found
+  rcon "gamemode survival VAL": No player was found
+  rcon "spawnpoint VAL 3004 200 3000": No player was found
+FAIL nav.swim_across#4                  fail        0 ticks 0.4s {"x":4,"width":6} judge {"{\"at\":\"<4,0,11>\",\"radius\":1.2}":null}
+  rcon "clear VAL": No player was found
+  rcon "xp set VAL 0 levels": No player was found
+  rcon "xp set VAL 0 points": No player was found
+  rcon "gamemode survival VAL": No player was found
+  rcon "spawnpoint VAL 2993 200 3003": No player was found
+FAIL social.name_place_here#1           fail        0 ticks 0.9s {"x":-7,"z":3,"away_x":8} judge {"{\"at\":\"<-7,0,3>\",\"radius\":1.5}":null,"{\"block\":\"<0,8,0>\",\"is\":\"emerald_block\"}":false,"{\"block\":\"<0,8,1>\",\"is\":\"gold_block\"}":false}
+  rcon "clear VAL": No player was found
+  rcon "xp set VAL 0 levels": No player was found
+  rcon "xp set VAL 0 points": No player was found
+  rcon "gamemode survival VAL": No player was found
+  rcon "spawnpoint VAL 2994 200 3005": No player was found
+FAIL social.name_place_here#2           fail        0 ticks 0.9s {"x":-6,"z":5,"away_x":8} judge {"{\"at\":\"<-6,0,5>\",\"radius\":1.5}":null,"{\"block\":\"<0,8,0>\",\"is\":\"emerald_block\"}":false,"{\"block\":\"<0,8,1>\",\"is\":\"gold_block\"}":false}
+  rcon "clear VAL": No player was found
+  rcon "xp set VAL 0 levels": No player was found
+  rcon "xp set VAL 0 points": No player was found
+  rcon "gamemode survival VAL": No player was found
+  rcon "spawnpoint VAL 2995 200 2999": No player was found
+FAIL social.name_place_here#3           fail        0 ticks 1.1s {"x":-5,"z":-1,"away_x":9} judge {"{\"at\":\"<-5,0,-1>\",\"radius\":1.5}":null,"{\"block\":\"<0,8,0>\",\"is\":\"emerald_block\"}":false,"{\"block\":\"<0,8,1>\",\"is\":\"gold_block\"}":false}
+  rcon "clear VAL": No player was found
+  rcon "xp set VAL 0 levels": No player was found
+  rcon "xp set VAL 0 points": No player was found
+  rcon "gamemode survival VAL": No player was found
+  rcon "spawnpoint VAL 2995 200 3004": No player was found
+FAIL social.name_place_here#4           fail        0 ticks 0.9s {"x":-5,"z":4,"away_x":9} judge {"{\"at\":\"<-5,0,4>\",\"radius\":1.5}":null,"{\"block\":\"<0,8,0>\",\"is\":\"emerald_block\"}":false,"{\"block\":\"<0,8,1>\",\"is\":\"gold_block\"}":false}
+  rcon "clear VAL": No player was found
+  rcon "xp set VAL 0 levels": No player was found
+  rcon "xp set VAL 0 points": No player was found
+  rcon "gamemode survival VAL": No player was found
+  rcon "spawnpoint VAL 3000 200 3000": No player was found

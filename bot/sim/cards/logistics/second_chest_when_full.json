@@ -1,0 +1,337 @@
+{
+  "card": 1,
+  "id": "logistics.second_chest_when_full",
+  "title": "Fill the last space in one chest and store overflow in another",
+  "tags": [
+    "logistics",
+    "inventory",
+    "containers"
+  ],
+  "difficulty": 3,
+  "split": "heldout",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "z": {
+      "int": [
+        -4,
+        4
+      ]
+    },
+    "cargo": {
+      "choice": [
+        "cobblestone",
+        "oak_planks",
+        "copper_ingot"
+      ]
+    },
+    "space": {
+      "int": [
+        4,
+        12
+      ]
+    },
+    "rest": {
+      "int": [
+        8,
+        24
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "radius": 15,
+    "height": 12,
+    "depth": 15,
+    "floor": "stone",
+    "dimension": "overworld",
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "peaceful",
+    "gamerules": {
+      "advance_time": false,
+      "advance_weather": false,
+      "keep_inventory": false
+    }
+  },
+  "player": {
+    "at": "<0,0,0>",
+    "spawn": "<0,0,0>",
+    "health": 20,
+    "food": 20,
+    "saturation": 5,
+    "inventory": [
+      {
+        "item": "iron_pickaxe",
+        "count": 1,
+        "slot": 0
+      },
+      {
+        "item": "${cargo}",
+        "count": "${space}",
+        "slot": 9
+      },
+      {
+        "item": "${cargo}",
+        "count": "${rest}",
+        "slot": 10
+      },
+      {
+        "item": "bread",
+        "count": 4,
+        "slot": 1
+      }
+    ],
+    "held": 0
+  },
+  "fail": {
+    "died": true
+  },
+  "let": {
+    "initial": "${64 - space}"
+  },
+  "build": [
+    {
+      "container": "<-5,0,${z}>",
+      "block": "chest[facing=south]",
+      "items": [
+        {
+          "item": "dirt",
+          "count": 64,
+          "slot": 0
+        },
+        {
+          "item": "dirt",
+          "count": 64,
+          "slot": 1
+        },
+        {
+          "item": "dirt",
+          "count": 64,
+          "slot": 2
+        },
+        {
+          "item": "dirt",
+          "count": 64,
+          "slot": 3
+        },
+        {
+          "item": "dirt",
+          "count": 64,
+          "slot": 4
+        },
+        {
+          "item": "dirt",
+          "count": 64,
+          "slot": 5
+        },
+        {
+          "item": "dirt",
+          "count": 64,
+          "slot": 6
+        },
+        {
+          "item": "dirt",
+          "count": 64,
+          "slot": 7
+        },
+        {
+          "item": "dirt",
+          "count": 64,
+          "slot": 8
+        },
+        {
+          "item": "dirt",
+          "count": 64,
+          "slot": 9
+        },
+        {
+          "item": "dirt",
+          "count": 64,
+          "slot": 10
+        },
+        {
+          "item": "dirt",
+          "count": 64,
+          "slot": 11
+        },
+        {
+          "item": "dirt",
+          "count": 64,
+          "slot": 12
+        },
+        {
+          "item": "dirt",
+          "count": 64,
+          "slot": 13
+        },
+        {
+          "item": "dirt",
+          "count": 64,
+          "slot": 14
+        },
+        {
+          "item": "dirt",
+          "count": 64,
+          "slot": 15
+        },
+        {
+          "item": "dirt",
+          "count": 64,
+          "slot": 16
+        },
+        {
+          "item": "dirt",
+          "count": 64,
+          "slot": 17
+        },
+        {
+          "item": "dirt",
+          "count": 64,
+          "slot": 18
+        },
+        {
+          "item": "dirt",
+          "count": 64,
+          "slot": 19
+        },
+        {
+          "item": "dirt",
+          "count": 64,
+          "slot": 20
+        },
+        {
+          "item": "dirt",
+          "count": 64,
+          "slot": 21
+        },
+        {
+          "item": "dirt",
+          "count": 64,
+          "slot": 22
+        },
+        {
+          "item": "dirt",
+          "count": 64,
+          "slot": 23
+        },
+        {
+          "item": "dirt",
+          "count": 64,
+          "slot": 24
+        },
+        {
+          "item": "dirt",
+          "count": 64,
+          "slot": 25
+        },
+        {
+          "item": "${cargo}",
+          "count": "${initial}",
+          "slot": 26
+        }
+      ]
+    },
+    {
+      "container": "<5,0,${z}>",
+      "block": "chest[facing=south]",
+      "items": []
+    }
+  ],
+  "mind": {
+    "places": {
+      "premier": "<-5,0,${z}>",
+      "second": "<5,0,${z}>"
+    }
+  },
+  "order": {
+    "from": "Noan",
+    "text": "Range tous tes ${cargo} dans @premier, puis mets ce qui reste dans @second quand le premier est plein. Garde ta pioche et ton pain.",
+    "at_tick": 0
+  },
+  "success": {
+    "all": [
+      {
+        "container": "<-5,0,${z}>",
+        "item": "${cargo}",
+        "min": 64,
+        "max": 64
+      },
+      {
+        "container": "<-5,0,${z}>",
+        "item": "dirt",
+        "min": 1664,
+        "max": 1664
+      },
+      {
+        "container": "<5,0,${z}>",
+        "item": "${cargo}",
+        "min": "${rest}",
+        "max": "${rest}"
+      },
+      {
+        "container": "<5,0,${z}>",
+        "item": "dirt",
+        "min": 0,
+        "max": 0
+      },
+      {
+        "have": "${cargo}",
+        "min": 0,
+        "max": 0
+      },
+      {
+        "have": "iron_pickaxe",
+        "min": 1,
+        "max": 1
+      },
+      {
+        "have": "bread",
+        "min": 4,
+        "max": 4
+      },
+      {
+        "block": "<-5,0,${z}>",
+        "is": "chest"
+      },
+      {
+        "block": "<5,0,${z}>",
+        "is": "chest"
+      }
+    ]
+  },
+  "milestones": [
+    {
+      "name": "first_chest_filled",
+      "check": {
+        "container": "<-5,0,${z}>",
+        "item": "${cargo}",
+        "min": 64,
+        "max": 64
+      }
+    },
+    {
+      "name": "overflow_stored",
+      "check": {
+        "container": "<5,0,${z}>",
+        "item": "${cargo}",
+        "min": "${rest}",
+        "max": "${rest}"
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 1200,
+    "decisions": 10
+  },
+  "solution_ticks": 400,
+  "solution": [
+    "store chest=@premier filter=[${cargo}]",
+    "store chest=@second filter=[${cargo}]"
+  ],
+  "notes": "The first chest has 26 full dirt slots and one partial cargo slot. Inventory slot 9 fits exactly; slot 10 is overflow. The first store must return partial after filling the chest, and the next statement stores the remainder. Explicit filters include every cargo stack while preserving tools and food."
+}

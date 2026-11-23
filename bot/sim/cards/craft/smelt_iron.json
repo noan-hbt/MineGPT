@@ -1,0 +1,20 @@
+{
+  "card": 1,
+  "id": "craft.smelt_iron",
+  "title": "Smelt raw iron in a placed furnace",
+  "tags": ["smelt", "containers"],
+  "difficulty": 2,
+  "split": "train",
+  "seeds": [1, 2],
+  "params": { "n": { "int": [1, 4] }, "fuel": { "choice": ["coal", "charcoal"] } },
+  "world": { "template": "arena" },
+  "build": [ { "set": "<-2,0,2>", "block": "furnace[facing=north]" } ],
+  "player": { "inventory": [ { "item": "raw_iron", "count": "${n}" }, { "item": "${fuel}", "count": 1 } ] },
+  "order": { "from": "Noan", "text": "fais fondre ton fer" },
+  "success": { "have": "iron_ingot", "min": "${n}" },
+  "fail": { "died": true },
+  "milestones": [ { "name": "first_ingot", "check": { "have": "iron_ingot", "min": 1 } } ],
+  "limits": { "ticks": 2400, "decisions": 6 },
+  "solution": ["smelt raw_iron n=${n}"],
+  "solution_ticks": "${200 * n + 40}"
+}

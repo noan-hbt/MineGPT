@@ -1,0 +1,18 @@
+{
+  "card": 1,
+  "id": "survive.descend_cliff",
+  "title": "On a high dirt plateau with no tools: get down safely (held out: never trained on)",
+  "tags": ["survive", "danger", "nav", "dig"],
+  "difficulty": 2,
+  "split": "heldout",
+  "seeds": [1, 2],
+  "params": { "h": { "int": [7, 11] }, "tx": { "int": [6, 10] } },
+  "world": { "template": "arena", "height": 14 },
+  "build": [ { "fill": ["<-2,0,-2>", "<2,${h - 1},2>"], "block": "dirt" } ],
+  "player": { "at": "<0,${h},0>", "inventory": [] },
+  "order": { "from": "Noan", "text": "descends sans te faire mal" },
+  "success": { "all": [ { "at": "<${tx},0,0>", "radius": 2 }, { "damage_taken": { "max": 40 } } ] },
+  "fail": { "any": [ { "died": true }, { "damage_taken": { "min": 60 } } ] },
+  "limits": { "ticks": 2400, "decisions": 6 },
+  "solution": ["goto <${tx},0,0>"]
+}

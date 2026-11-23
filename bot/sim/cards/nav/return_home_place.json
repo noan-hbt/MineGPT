@@ -1,0 +1,162 @@
+{
+  "card": 1,
+  "id": "nav.return_home_place",
+  "title": "Return from a distant work site to remembered home through its courtyard entrance",
+  "tags": [
+    "nav",
+    "pathfinding",
+    "memory",
+    "home"
+  ],
+  "difficulty": 2,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "distance": {
+      "int": [
+        17,
+        21
+      ]
+    },
+    "z": {
+      "int": [
+        -5,
+        5
+      ]
+    },
+    "wood": {
+      "choice": [
+        "oak",
+        "spruce",
+        "birch"
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "radius": 26,
+    "height": 12,
+    "depth": 15,
+    "floor": "bedrock",
+    "dimension": "overworld",
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "normal",
+    "gamerules": {
+      "spawn_monsters": false,
+      "advance_time": false,
+      "advance_weather": false
+    }
+  },
+  "build": [
+    {
+      "fill": [
+        "<${-distance-3},0,${z-3}>",
+        "<${-distance+3},2,${z-3}>"
+      ],
+      "block": "bedrock"
+    },
+    {
+      "fill": [
+        "<${-distance-3},0,${z+3}>",
+        "<${-distance+3},2,${z+3}>"
+      ],
+      "block": "bedrock"
+    },
+    {
+      "fill": [
+        "<${-distance-3},0,${z-3}>",
+        "<${-distance-3},2,${z+3}>"
+      ],
+      "block": "bedrock"
+    },
+    {
+      "fill": [
+        "<${-distance+3},0,${z-3}>",
+        "<${-distance+3},2,${z+3}>"
+      ],
+      "block": "bedrock"
+    },
+    {
+      "fill": [
+        "<${-distance+3},0,${z+1}>",
+        "<${-distance+3},1,${z+1}>"
+      ],
+      "block": "air"
+    },
+    {
+      "fill": [
+        "<${-distance-2},-1,${z-2}>",
+        "<${-distance+2},-1,${z+2}>"
+      ],
+      "block": "${wood}_planks"
+    },
+    {
+      "set": "<${-distance},-1,${z}>",
+      "block": "gold_block"
+    },
+    {
+      "set": "<${distance},-1,${z}>",
+      "block": "iron_block"
+    }
+  ],
+  "player": {
+    "at": "<${distance},0,${z}>",
+    "spawn": "<${distance},0,${z}>",
+    "health": 20,
+    "food": 20,
+    "saturation": 5,
+    "inventory": []
+  },
+  "fail": {
+    "died": true
+  },
+  "milestones": [
+    {
+      "name": "halfway_home",
+      "check": {
+        "at": "<0,0,${z}>",
+        "radius": 4
+      }
+    },
+    {
+      "name": "courtyard_entrance",
+      "check": {
+        "at": "<${-distance+3},0,${z+1}>",
+        "radius": 1.5
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 1200,
+    "decisions": 8
+  },
+  "solution": [
+    "goto <0,0,${z}> dist=0",
+    "goto <${-distance+4},0,${z+1}> dist=0",
+    "goto @home dist=0"
+  ],
+  "solution_ticks": 400,
+  "mind": {
+    "places": {
+      "home": "<${-distance},0,${z}>",
+      "chantier": "<${distance},0,${z}>"
+    },
+    "notes": [
+      "@home est le repère en or dans la cour. L'entrée est du côté est, décalée d'un bloc vers le sud."
+    ]
+  },
+  "order": {
+    "from": "Noan",
+    "text": "le boulot est fini, rentre à @home dans la cour par l'entrée"
+  },
+  "success": {
+    "at": "<${-distance},0,${z}>",
+    "radius": 1.2
+  }
+}

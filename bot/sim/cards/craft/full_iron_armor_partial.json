@@ -1,0 +1,145 @@
+{
+  "card": 1,
+  "id": "craft.full_iron_armor_partial",
+  "title": "Allocate a limited iron budget to distinct armor pieces in priority order",
+  "tags": [
+    "craft",
+    "planning",
+    "resource_budget"
+  ],
+  "difficulty": 3,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "params": {
+    "tx": {
+      "int": [
+        -2,
+        2
+      ]
+    },
+    "ingots": {
+      "choice": [
+        12,
+        15,
+        19,
+        20,
+        23,
+        24
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "easy",
+    "gamerules": {
+      "advance_time": false,
+      "advance_weather": false
+    }
+  },
+  "build": [
+    {
+      "set": "<${tx},0,2>",
+      "block": "crafting_table"
+    }
+  ],
+  "player": {
+    "at": "<0,0,0>",
+    "spawn": "<0,0,0>",
+    "inventory": [
+      {
+        "item": "iron_ingot",
+        "count": "${ingots}"
+      }
+    ]
+  },
+  "order": {
+    "from": "Noan",
+    "text": "Fais une armure en fer avec tes ${ingots} lingots. Une seule pièce de chaque : plastron, puis pantalon si possible, puis casque si possible, puis bottes si possible. Garde les pièces et le fer restant dans ton inventaire.",
+    "at_tick": 0
+  },
+  "success": {
+    "all": [
+      {
+        "have": "iron_chestplate",
+        "min": 1,
+        "max": 1
+      },
+      {
+        "have": "iron_leggings",
+        "min": "${legs}",
+        "max": "${legs}"
+      },
+      {
+        "have": "iron_helmet",
+        "min": "${head}",
+        "max": "${head}"
+      },
+      {
+        "have": "iron_boots",
+        "min": "${feet}",
+        "max": "${feet}"
+      },
+      {
+        "have": "iron_ingot",
+        "min": "${left}",
+        "max": "${left}"
+      }
+    ]
+  },
+  "fail": {
+    "died": true
+  },
+  "milestones": [
+    {
+      "name": "chestplate",
+      "check": {
+        "have": "iron_chestplate",
+        "min": 1
+      }
+    },
+    {
+      "name": "second_piece",
+      "check": {
+        "any": [
+          {
+            "have": "iron_leggings",
+            "min": 1
+          },
+          {
+            "have": "iron_helmet",
+            "min": 1
+          },
+          {
+            "have": "iron_boots",
+            "min": 1
+          }
+        ]
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 3000,
+    "decisions": 10
+  },
+  "solution": [
+    "craft iron_chestplate",
+    "if(have(iron_ingot)>=7) craft iron_leggings",
+    "if(have(iron_ingot)>=5) craft iron_helmet",
+    "if(have(iron_ingot)>=4) craft iron_boots"
+  ],
+  "let": {
+    "legs": "${min(1, floor((ingots - 8) / 7))}",
+    "head": "${min(1, floor((ingots - 8 - 7 * legs) / 5))}",
+    "feet": "${min(1, floor((ingots - 8 - 7 * legs - 5 * head) / 4))}",
+    "left": "${ingots - 8 - 7 * legs - 5 * head - 4 * feet}"
+  },
+  "solution_ticks": 1000
+}

@@ -1,0 +1,33 @@
+{
+  "card": 1,
+  "id": "mine.gold_needs_iron_pick",
+  "title": "Replace a stone pickaxe with a crafted iron pickaxe to harvest gold",
+  "tags": ["mine", "craft", "tool_tier", "multi_stage"],
+  "difficulty": 2,
+  "split": "train",
+  "seeds": [1, 2, 3, 4],
+  "params": {"dx": {"int": [4, 7]}, "dz": {"int": [-3, 2]}, "n": {"int": [2, 4]}, "table_x": {"int": [-2, 1]}},
+  "world": {"template": "arena", "gamerules": {"advance_time": false, "block_drops": true}},
+  "build": [
+    {"set": "<${table_x},0,2>", "block": "crafting_table"},
+    {"fill": ["<${dx},0,${dz}>", "<${dx},0,${dz + n - 1}>"], "block": "gold_ore"}
+  ],
+  "player": {"at": "<0,0,0>", "spawn": "<0,0,0>", "held": 0, "inventory": [
+    {"item": "stone_pickaxe", "slot": 0},
+    {"item": "iron_ingot", "count": 3},
+    {"item": "stick", "count": 2}
+  ]},
+  "order": {"from": "Noan", "text": "fabrique une pioche en fer avec tes lingots et tes bâtons, puis ramène-moi ${n} ors bruts ; ta pioche en pierre ne suffit pas", "at_tick": 0},
+  "success": {"all": [{"have": "iron_pickaxe", "min": 1}, {"have": "raw_gold", "min": "${n}"}]},
+  "fail": {"any": [
+    {"died": true},
+    {"all": [{"not": {"have": "iron_pickaxe", "min": 1}}, {"not": {"block": "<${dx},0,${dz}>", "is": "gold_ore"}}]}
+  ]},
+  "milestones": [
+    {"name": "iron_pickaxe_ready", "check": {"have": "iron_pickaxe", "min": 1}},
+    {"name": "first_raw_gold", "check": {"have": "raw_gold", "min": 1}}
+  ],
+  "limits": {"ticks": 2400, "decisions": 10},
+  "solution": ["craft iron_pickaxe", "mine gold_ore n=${n} tool=iron_pickaxe"],
+  "solution_ticks": 800
+}

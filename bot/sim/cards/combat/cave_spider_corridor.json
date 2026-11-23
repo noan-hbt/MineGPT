@@ -1,0 +1,211 @@
+{
+  "card": 1,
+  "id": "combat.cave_spider_corridor",
+  "title": "Fight a cave spider in a narrow roofed corridor",
+  "tags": [
+    "combat",
+    "cave_spider_corridor"
+  ],
+  "difficulty": 3,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "dz": {
+      "int": [
+        6,
+        10
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "radius": 15,
+    "height": 8,
+    "depth": 8,
+    "floor": "stone",
+    "dimension": "overworld",
+    "time": 18000,
+    "weather": "clear",
+    "difficulty": "normal",
+    "gamerules": {
+      "advance_time": false,
+      "advance_weather": false,
+      "spawn_monsters": false,
+      "natural_health_regeneration": false,
+      "mob_griefing": false
+    }
+  },
+  "build": [
+    {
+      "fill": [
+        "<-14,0,-14>",
+        "<-14,4,14>"
+      ],
+      "block": "stone_bricks"
+    },
+    {
+      "fill": [
+        "<14,0,-14>",
+        "<14,4,14>"
+      ],
+      "block": "stone_bricks"
+    },
+    {
+      "fill": [
+        "<-13,0,-14>",
+        "<13,4,-14>"
+      ],
+      "block": "stone_bricks"
+    },
+    {
+      "fill": [
+        "<-13,0,14>",
+        "<13,4,14>"
+      ],
+      "block": "stone_bricks"
+    },
+    {
+      "fill": [
+        "<-14,5,-14>",
+        "<14,5,14>"
+      ],
+      "block": "stone_bricks"
+    },
+    {
+      "fill": [
+        "<-2,0,-3>",
+        "<-2,2,12>"
+      ],
+      "block": "deepslate_bricks"
+    },
+    {
+      "fill": [
+        "<2,0,-3>",
+        "<2,2,12>"
+      ],
+      "block": "deepslate_bricks"
+    },
+    {
+      "fill": [
+        "<-2,3,-3>",
+        "<2,3,12>"
+      ],
+      "block": "deepslate_bricks"
+    },
+    {
+      "fill": [
+        "<-1,0,-3>",
+        "<1,2,-3>"
+      ],
+      "block": "deepslate_bricks"
+    },
+    {
+      "fill": [
+        "<-1,0,12>",
+        "<1,2,12>"
+      ],
+      "block": "deepslate_bricks"
+    }
+  ],
+  "entities": [],
+  "player": {
+    "at": "<0,0,0>",
+    "spawn": "<0,0,-10>",
+    "yaw": 0,
+    "pitch": 0,
+    "health": 20,
+    "food": 20,
+    "saturation": 5,
+    "inventory": [
+      {
+        "item": "iron_sword",
+        "slot": 0
+      }
+    ],
+    "armor": {
+      "head": {
+        "item": "iron_helmet"
+      },
+      "chest": {
+        "item": "iron_chestplate"
+      },
+      "legs": {
+        "item": "iron_leggings"
+      },
+      "feet": {
+        "item": "iron_boots"
+      }
+    },
+    "held": 0
+  },
+  "order": {
+    "from": "Noan",
+    "text": "Élimine l'araignée venimeuse dans le couloir sans te faire coincer.",
+    "at_tick": 0
+  },
+  "timeline": [
+    {
+      "at_tick": 0,
+      "summon": {
+        "type": "cave_spider",
+        "at": "<0,0,${dz}>",
+        "tag": "combat_cave_spider_corridor_foe",
+        "nbt": "{PersistenceRequired:1b,CanPickUpLoot:0b}"
+      }
+    }
+  ],
+  "fail": {
+    "died": true
+  },
+  "milestones": [
+    {
+      "name": "entered_corridor_fight",
+      "check": {
+        "all": [
+          {
+            "at": "<0,0,${dz}>",
+            "radius": 4
+          },
+          {
+            "entity": "cave_spider",
+            "tag": "combat_cave_spider_corridor_foe",
+            "min": 1,
+            "near": "<0,0,0>",
+            "radius": 25
+          }
+        ]
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 1000,
+    "decisions": 20
+  },
+  "solution": [
+    "wait 1s",
+    "equip iron_sword",
+    "fight #cave_spider"
+  ],
+  "solution_ticks": 360,
+  "success": {
+    "all": [
+      {
+        "entity": "cave_spider",
+        "tag": "combat_cave_spider_corridor_foe",
+        "max": 0,
+        "near": "<0,0,0>",
+        "radius": 25
+      },
+      {
+        "health": {
+          "min": 1
+        }
+      }
+    ]
+  }
+}

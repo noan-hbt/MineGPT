@@ -1,0 +1,214 @@
+{
+  "card": 1,
+  "id": "survive.cactus_maze",
+  "title": "Navigate a cactus maze without taking any damage",
+  "tags": [
+    "survive",
+    "cactus",
+    "nav"
+  ],
+  "difficulty": 3,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "z": {
+      "int": [
+        -3,
+        3
+      ]
+    },
+    "tx": {
+      "int": [
+        9,
+        11
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "radius": 15,
+    "height": 12,
+    "depth": 15,
+    "floor": "stone",
+    "dimension": "overworld",
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "normal",
+    "gamerules": {
+      "spawn_monsters": false,
+      "advance_time": false,
+      "advance_weather": false,
+      "natural_health_regeneration": false
+    }
+  },
+  "build": [
+    {
+      "fill": ["<-15,-1,-15>", "<15,-1,15>"],
+      "block": "sand"
+    },
+    {
+      "fill": [
+        "<-2,0,${z - 6}>",
+        "<13,3,${z - 6}>"
+      ],
+      "block": "bedrock"
+    },
+    {
+      "fill": [
+        "<-2,0,${z + 6}>",
+        "<13,3,${z + 6}>"
+      ],
+      "block": "bedrock"
+    },
+    {
+      "fill": [
+        "<-2,0,${z - 5}>",
+        "<-2,3,${z + 5}>"
+      ],
+      "block": "bedrock"
+    },
+    {
+      "fill": [
+        "<13,0,${z - 5}>",
+        "<13,3,${z + 5}>"
+      ],
+      "block": "bedrock"
+    },
+    {
+      "fill": [
+        "<2,0,${z + -4}>",
+        "<2,2,${z + -4}>"
+      ],
+      "block": "cactus"
+    },
+    {
+      "fill": [
+        "<2,0,${z + -2}>",
+        "<2,2,${z + -2}>"
+      ],
+      "block": "cactus"
+    },
+    {
+      "fill": [
+        "<2,0,${z + 0}>",
+        "<2,2,${z + 0}>"
+      ],
+      "block": "cactus"
+    },
+    {
+      "fill": [
+        "<2,0,${z + 2}>",
+        "<2,2,${z + 2}>"
+      ],
+      "block": "cactus"
+    },
+    {
+      "fill": [
+        "<6,0,${z + -2}>",
+        "<6,2,${z + -2}>"
+      ],
+      "block": "cactus"
+    },
+    {
+      "fill": [
+        "<6,0,${z + 0}>",
+        "<6,2,${z + 0}>"
+      ],
+      "block": "cactus"
+    },
+    {
+      "fill": [
+        "<6,0,${z + 2}>",
+        "<6,2,${z + 2}>"
+      ],
+      "block": "cactus"
+    },
+    {
+      "fill": [
+        "<6,0,${z + 4}>",
+        "<6,2,${z + 4}>"
+      ],
+      "block": "cactus"
+    }
+  ],
+  "player": {
+    "at": "<0,0,${z}>",
+    "inventory": []
+  },
+  "mind": {
+    "places": {
+      "arrivee": "<${tx},0,${z}>"
+    },
+    "notes": [
+      "Passe au sud de la première rangée puis au nord de la seconde ; ne touche aucun cactus."
+    ]
+  },
+  "order": {
+    "from": "Noan",
+    "text": "rejoins @arrivee sans toucher les cactus",
+    "at_tick": 0
+  },
+  "success": {
+    "all": [
+      {
+        "not": {
+          "died": true
+        }
+      },
+      {
+        "at": "<${tx},0,${z}>",
+        "radius": 1
+      },
+      {
+        "damage_taken": {
+          "max": 0
+        }
+      }
+    ]
+  },
+  "fail": {
+    "any": [
+      {
+        "died": true
+      },
+      {
+        "damage_taken": {
+          "min": 1
+        }
+      }
+    ]
+  },
+  "milestones": [
+    {
+      "name": "first_row_passed",
+      "check": {
+        "at": "<4,0,${z + 4}>",
+        "radius": 1.5
+      }
+    },
+    {
+      "name": "second_row_passed",
+      "check": {
+        "at": "<8,0,${z - 4}>",
+        "radius": 1.5
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 1200,
+    "decisions": 10
+  },
+  "solution": [
+    "goto <0,0,${z + 4}> dist=0",
+    "goto <4,0,${z + 4}> dist=0",
+    "goto <4,0,${z - 4}> dist=0",
+    "goto <8,0,${z - 4}> dist=0",
+    "goto @arrivee dist=0"
+  ],
+  "solution_ticks": 400
+}

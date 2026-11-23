@@ -1,0 +1,22 @@
+{
+  "name": "minegpt-bot",
+  "version": "1.0.0",
+  "main": "dsl/parse.js",
+  "scripts": {
+    "test": "node test/golden.js && node test/state.js && node test/interp.js && node test/plan.js",
+    "live": "node test/live.js",
+    "harness": "node harness.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "MineGPT v2 live harness",
+  "dependencies": {
+    "canvas": "^3.2.3",
+    "mineflayer": "^4.39.0",
+    "mineflayer-collectblock": "^1.6.0",
+    "mineflayer-pathfinder": "^2.4.5",
+    "prismarine-viewer": "^1.33.0",
+    "vec3": "^0.2.0"
+  }
+}

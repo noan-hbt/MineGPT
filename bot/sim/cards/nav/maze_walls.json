@@ -1,0 +1,366 @@
+{
+  "card": 1,
+  "id": "nav.maze_walls",
+  "title": "Navigate alternating openings through a stone wall maze",
+  "tags": [
+    "nav",
+    "maze",
+    "pathfinding"
+  ],
+  "difficulty": 3,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "x": {
+      "int": [
+        -2,
+        2
+      ]
+    },
+    "z": {
+      "int": [
+        -1,
+        1
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "radius": 15,
+    "height": 14,
+    "depth": 15,
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "peaceful",
+    "gamerules": {
+      "advance_time": false,
+      "advance_weather": false
+    }
+  },
+  "player": {
+    "at": "<${x},0,${z-1}>",
+    "spawn": "<${x},0,${z-1}>",
+    "inventory": []
+  },
+  "fail": {
+    "died": true
+  },
+  "build": [
+    {
+      "fill": [
+        "<${x-6},0,${z-3}>",
+        "<${x-6},4,${z+13}>"
+      ],
+      "block": "stone"
+    },
+    {
+      "fill": [
+        "<${x+6},0,${z-3}>",
+        "<${x+6},4,${z+13}>"
+      ],
+      "block": "stone"
+    },
+    {
+      "fill": [
+        "<${x-6},0,${z-3}>",
+        "<${x+6},4,${z-3}>"
+      ],
+      "block": "stone"
+    },
+    {
+      "fill": [
+        "<${x-6},0,${z+13}>",
+        "<${x+6},4,${z+13}>"
+      ],
+      "block": "stone"
+    },
+    {
+      "fill": [
+        "<${x-5},0,${z+2}>",
+        "<${x+3},3,${z+2}>"
+      ],
+      "block": "stone"
+    },
+    {
+      "fill": [
+        "<${x-3},0,${z+6}>",
+        "<${x+5},3,${z+6}>"
+      ],
+      "block": "stone"
+    },
+    {
+      "fill": [
+        "<${x-5},0,${z+10}>",
+        "<${x+3},3,${z+10}>"
+      ],
+      "block": "stone"
+    }
+  ],
+  "mind": {
+    "places": {
+      "sortie": "<${x+4},0,${z+11}>"
+    }
+  },
+  "order": {
+    "from": "Noan",
+    "text": "rejoins @sortie en passant par les ouvertures du labyrinthe, sans casser les murs"
+  },
+  "success": {
+    "all": [
+      {
+        "at": "<${x+4},0,${z+11}>",
+        "radius": 1.2
+      },
+      {
+        "block": "<${x-5},0,${z+2}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x-5},1,${z+2}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x-4},0,${z+2}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x-4},1,${z+2}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x-3},0,${z+2}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x-3},1,${z+2}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x-2},0,${z+2}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x-2},1,${z+2}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x-1},0,${z+2}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x-1},1,${z+2}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x+0},0,${z+2}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x+0},1,${z+2}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x+1},0,${z+2}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x+1},1,${z+2}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x+2},0,${z+2}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x+2},1,${z+2}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x+3},0,${z+2}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x+3},1,${z+2}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x-3},0,${z+6}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x-3},1,${z+6}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x-2},0,${z+6}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x-2},1,${z+6}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x-1},0,${z+6}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x-1},1,${z+6}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x+0},0,${z+6}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x+0},1,${z+6}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x+1},0,${z+6}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x+1},1,${z+6}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x+2},0,${z+6}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x+2},1,${z+6}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x+3},0,${z+6}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x+3},1,${z+6}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x+4},0,${z+6}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x+4},1,${z+6}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x+5},0,${z+6}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x+5},1,${z+6}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x-5},0,${z+10}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x-5},1,${z+10}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x-4},0,${z+10}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x-4},1,${z+10}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x-3},0,${z+10}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x-3},1,${z+10}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x-2},0,${z+10}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x-2},1,${z+10}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x-1},0,${z+10}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x-1},1,${z+10}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x+0},0,${z+10}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x+0},1,${z+10}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x+1},0,${z+10}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x+1},1,${z+10}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x+2},0,${z+10}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x+2},1,${z+10}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x+3},0,${z+10}>",
+        "is": "stone"
+      },
+      {
+        "block": "<${x+3},1,${z+10}>",
+        "is": "stone"
+      }
+    ]
+  },
+  "milestones": [
+    {
+      "name": "first_bend",
+      "check": {
+        "at": "<${x+4},0,${z+4}>",
+        "radius": 2
+      }
+    },
+    {
+      "name": "second_bend",
+      "check": {
+        "at": "<${x-4},0,${z+8}>",
+        "radius": 2
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 2400,
+    "decisions": 14
+  },
+  "solution": [
+    "goto <${x+4},0,${z+0}> dist=0",
+    "goto <${x+4},0,${z+4}> dist=0",
+    "goto <${x-4},0,${z+4}> dist=0",
+    "goto <${x-4},0,${z+8}> dist=0",
+    "goto <${x+4},0,${z+8}> dist=0",
+    "goto @sortie dist=0"
+  ],
+  "solution_ticks": 800
+}

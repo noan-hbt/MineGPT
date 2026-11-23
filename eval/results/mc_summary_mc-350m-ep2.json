@@ -1,0 +1,123 @@
+{
+  "tag": "mc-350m-ep2",
+  "model": "C:\\Users\\noanh\\Desktop\\Dev\\localai\\models\\LFM2.5-350M-mc-ep2",
+  "elapsed_s": 12.6,
+  "general_ppl": 213.112,
+  "total_ok": 113,
+  "total_n": 172,
+  "total_acc": 0.657,
+  "buckets": {
+    "general_retention": {
+      "ok": 3,
+      "n": 6,
+      "acc": 0.5
+    },
+    "multihop_reasoning_mc": {
+      "ok": 2,
+      "n": 8,
+      "acc": 0.25
+    },
+    "seen_recipe_qa": {
+      "ok": 40,
+      "n": 47,
+      "acc": 0.8511
+    },
+    "unseen_paraphrase_mc": {
+      "ok": 68,
+      "n": 111,
+      "acc": 0.6126
+    }
+  },
+  "categories": {
+    "blocks": {
+      "ok": 4,
+      "n": 12,
+      "acc": 0.3333
+    },
+    "brewing": {
+      "ok": 1,
+      "n": 1,
+      "acc": 1.0
+    },
+    "crafting": {
+      "ok": 76,
+      "n": 94,
+      "acc": 0.8085
+    },
+    "crafting_fr": {
+      "ok": 7,
+      "n": 10,
+      "acc": 0.7
+    },
+    "enchanting": {
+      "ok": 1,
+      "n": 1,
+      "acc": 1.0
+    },
+    "enchantments": {
+      "ok": 2,
+      "n": 6,
+      "acc": 0.3333
+    },
+    "foods": {
+      "ok": 6,
+      "n": 6,
+      "acc": 1.0
+    },
+    "general": {
+      "ok": 3,
+      "n": 6,
+      "acc": 0.5
+    },
+    "items": {
+      "ok": 4,
+      "n": 8,
+      "acc": 0.5
+    },
+    "multihop": {
+      "ok": 2,
+      "n": 8,
+      "acc": 0.25
+    },
+    "nether_end": {
+      "ok": 2,
+      "n": 3,
+      "acc": 0.6667
+    },
+    "ores": {
+      "ok": 1,
+      "n": 2,
+      "acc": 0.5
+    },
+    "redstone": {
+      "ok": 1,
+      "n": 1,
+      "acc": 1.0
+    },
+    "smelting": {
+      "ok": 1,
+      "n": 9,
+      "acc": 0.1111
+    },
+    "smelting_fuel": {
+      "ok": 0,
+      "n": 2,
+      "acc": 0.0
+    },
+    "smithing": {
+      "ok": 0,
+      "n": 1,
+      "acc": 0.0
+    },
+    "survival": {
+      "ok": 1,
+      "n": 1,
+      "acc": 1.0
+    },
+    "villagers": {
+      "ok": 1,
+      "n": 1,
+      "acc": 1.0
+    }
+  }
+}

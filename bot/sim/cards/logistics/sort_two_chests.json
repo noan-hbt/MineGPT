@@ -1,0 +1,242 @@
+{
+  "card": 1,
+  "id": "logistics.sort_two_chests",
+  "title": "Separate mixed ore and food stacks into two chests",
+  "tags": [
+    "logistics",
+    "containers",
+    "classification"
+  ],
+  "difficulty": 3,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "z": {
+      "int": [
+        -5,
+        5
+      ]
+    },
+    "ore": {
+      "choice": [
+        "iron_ore",
+        "copper_ore",
+        "gold_ore"
+      ]
+    },
+    "food": {
+      "choice": [
+        "bread",
+        "carrot",
+        "potato"
+      ]
+    },
+    "n": {
+      "int": [
+        5,
+        18
+      ]
+    },
+    "m": {
+      "int": [
+        3,
+        12
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "time": 1000,
+    "weather": "clear",
+    "difficulty": "easy",
+    "gamerules": {
+      "advance_time": false,
+      "advance_weather": false,
+      "keep_inventory": false,
+      "mob_griefing": false
+    }
+  },
+  "player": {
+    "at": "<0,0,0>",
+    "spawn": "<0,0,0>",
+    "inventory": [
+      {
+        "item": "iron_pickaxe",
+        "count": 1,
+        "slot": 0
+      },
+      {
+        "item": "${ore}",
+        "count": "${n}",
+        "slot": 9
+      },
+      {
+        "item": "coal",
+        "count": 8,
+        "slot": 10
+      },
+      {
+        "item": "${food}",
+        "count": "${m}",
+        "slot": 11
+      },
+      {
+        "item": "apple",
+        "count": 4,
+        "slot": 12
+      }
+    ]
+  },
+  "order": {
+    "from": "Noan",
+    "text": "Range les minerais et le charbon dans le coffre @minerais, la nourriture dans @nourriture. Garde ta pioche."
+  },
+  "success": {
+    "all": [
+      {
+        "container": "<-5,0,${z}>",
+        "item": "${ore}",
+        "min": "${n}",
+        "max": "${n}"
+      },
+      {
+        "container": "<-5,0,${z}>",
+        "item": "coal",
+        "min": 8,
+        "max": 8
+      },
+      {
+        "container": "<5,0,${z}>",
+        "item": "${food}",
+        "min": "${m}",
+        "max": "${m}"
+      },
+      {
+        "container": "<5,0,${z}>",
+        "item": "apple",
+        "min": 4,
+        "max": 4
+      },
+      {
+        "container": "<-5,0,${z}>",
+        "item": "${food}",
+        "min": 0,
+        "max": 0
+      },
+      {
+        "container": "<-5,0,${z}>",
+        "item": "apple",
+        "min": 0,
+        "max": 0
+      },
+      {
+        "container": "<5,0,${z}>",
+        "item": "${ore}",
+        "min": 0,
+        "max": 0
+      },
+      {
+        "container": "<5,0,${z}>",
+        "item": "coal",
+        "min": 0,
+        "max": 0
+      },
+      {
+        "have": "${ore}",
+        "min": 0,
+        "max": 0
+      },
+      {
+        "have": "coal",
+        "min": 0,
+        "max": 0
+      },
+      {
+        "have": "${food}",
+        "min": 0,
+        "max": 0
+      },
+      {
+        "have": "apple",
+        "min": 0,
+        "max": 0
+      },
+      {
+        "have": "iron_pickaxe",
+        "min": 1,
+        "max": 1
+      }
+    ]
+  },
+  "fail": {
+    "died": true
+  },
+  "milestones": [
+    {
+      "name": "ores_sorted",
+      "check": {
+        "all": [
+          {
+            "container": "<-5,0,${z}>",
+            "item": "${ore}",
+            "min": "${n}"
+          },
+          {
+            "container": "<-5,0,${z}>",
+            "item": "coal",
+            "min": 8
+          }
+        ]
+      }
+    },
+    {
+      "name": "food_sorted",
+      "check": {
+        "all": [
+          {
+            "container": "<5,0,${z}>",
+            "item": "${food}",
+            "min": "${m}"
+          },
+          {
+            "container": "<5,0,${z}>",
+            "item": "apple",
+            "min": 4
+          }
+        ]
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 1200,
+    "decisions": 20
+  },
+  "solution": [
+    "store chest=<-5,0,${z}> filter=[${ore},coal]",
+    "store chest=<5,0,${z}> filter=[${food},apple]"
+  ],
+  "solution_ticks": 400,
+  "build": [
+    {
+      "container": "<-5,0,${z}>",
+      "block": "chest[facing=south]",
+      "items": []
+    },
+    {
+      "container": "<5,0,${z}>",
+      "block": "chest[facing=south]",
+      "items": []
+    }
+  ],
+  "mind": {
+    "places": {
+      "minerais": "<-5,0,${z}>",
+      "nourriture": "<5,0,${z}>"
+    }
+  }
+}

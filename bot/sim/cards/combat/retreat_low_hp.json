@@ -1,0 +1,212 @@
+{
+  "card": 1,
+  "id": "combat.retreat_low_hp",
+  "title": "Retreat to a marked refuge at low health without killing either pursuer",
+  "tags": [
+    "combat",
+    "retreat_low_hp"
+  ],
+  "difficulty": 3,
+  "split": "train",
+  "seeds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "params": {
+    "refuge_x": {
+      "int": [
+        -2,
+        2
+      ]
+    },
+    "refuge_z": {
+      "int": [
+        -11,
+        -9
+      ]
+    },
+    "enemy_z": {
+      "int": [
+        6,
+        8
+      ]
+    }
+  },
+  "world": {
+    "template": "arena",
+    "radius": 15,
+    "height": 8,
+    "depth": 8,
+    "floor": "stone",
+    "dimension": "overworld",
+    "time": 18000,
+    "weather": "clear",
+    "difficulty": "easy",
+    "gamerules": {
+      "advance_time": false,
+      "advance_weather": false,
+      "spawn_monsters": false,
+      "natural_health_regeneration": false,
+      "mob_griefing": false
+    }
+  },
+  "build": [
+    {
+      "fill": [
+        "<-14,0,-14>",
+        "<-14,4,14>"
+      ],
+      "block": "stone_bricks"
+    },
+    {
+      "fill": [
+        "<14,0,-14>",
+        "<14,4,14>"
+      ],
+      "block": "stone_bricks"
+    },
+    {
+      "fill": [
+        "<-13,0,-14>",
+        "<13,4,-14>"
+      ],
+      "block": "stone_bricks"
+    },
+    {
+      "fill": [
+        "<-13,0,14>",
+        "<13,4,14>"
+      ],
+      "block": "stone_bricks"
+    },
+    {
+      "fill": [
+        "<-14,5,-14>",
+        "<14,5,14>"
+      ],
+      "block": "stone_bricks"
+    },
+    {
+      "set": "<${refuge_x},-1,${refuge_z}>",
+      "block": "lime_wool"
+    }
+  ],
+  "entities": [],
+  "player": {
+    "at": "<0,0,0>",
+    "spawn": "<0,0,-10>",
+    "yaw": 0,
+    "pitch": 0,
+    "health": 6,
+    "food": 20,
+    "saturation": 5,
+    "inventory": [],
+    "armor": {},
+    "held": 0
+  },
+  "order": {
+    "from": "Noan",
+    "text": "Tu es mal en point : ne combats pas les zombies, replie-toi sur la laine verte au @refuge.",
+    "at_tick": 0
+  },
+  "timeline": [
+    {
+      "at_tick": 0,
+      "summon": {
+        "type": "zombie",
+        "at": "<-2,0,${enemy_z}>",
+        "tag": "combat_retreat_low_hp_foe",
+        "nbt": "{PersistenceRequired:1b,CanPickUpLoot:0b,IsBaby:0b}"
+      }
+    },
+    {
+      "at_tick": 0,
+      "summon": {
+        "type": "zombie",
+        "at": "<2,0,${enemy_z}>",
+        "tag": "combat_retreat_low_hp_foe",
+        "nbt": "{PersistenceRequired:1b,CanPickUpLoot:0b,IsBaby:0b}"
+      }
+    }
+  ],
+  "fail": {
+    "any": [
+      {
+        "died": true
+      },
+      {
+        "not": {
+          "entity": "zombie",
+          "tag": "combat_retreat_low_hp_foe",
+          "min": 2,
+          "max": 2,
+          "near": "<0,0,0>",
+          "radius": 25
+        }
+      }
+    ]
+  },
+  "milestones": [
+    {
+      "name": "moving_toward_refuge",
+      "check": {
+        "all": [
+          {
+            "at": "<${refuge_x},0,${refuge_z}>",
+            "radius": 6
+          },
+          {
+            "entity": "zombie",
+            "tag": "combat_retreat_low_hp_foe",
+            "min": 2,
+            "max": 2,
+            "near": "<0,0,0>",
+            "radius": 25
+          }
+        ]
+      }
+    }
+  ],
+  "limits": {
+    "ticks": 600,
+    "decisions": 20
+  },
+  "solution": [
+    "wait 1s",
+    "retreat to=@refuge"
+  ],
+  "solution_ticks": 220,
+  "mind": {
+    "places": {
+      "refuge": "<${refuge_x},0,${refuge_z}>"
+    }
+  },
+  "success": {
+    "all": [
+      {
+        "at": "<${refuge_x},0,${refuge_z}>",
+        "radius": 2.8
+      },
+      {
+        "entity": "zombie",
+        "tag": "combat_retreat_low_hp_foe",
+        "min": 2,
+        "max": 2,
+        "near": "<0,0,0>",
+        "radius": 25
+      },
+      {
+        "health": {
+          "min": 1
+        }
+      },
+      {
+        "damage_taken": {
+          "max": 0
+        }
+      }
+    ]
+  }
+}
